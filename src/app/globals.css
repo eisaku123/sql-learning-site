@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-primary: #0a0a1a;
+  --color-bg-alt: #111128;
+  --color-bg-surface: rgba(255, 255, 255, 0.05);
+  --color-bg-surface-hover: rgba(255, 255, 255, 0.1);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text-main: #e0e0f0;
+  --color-text-muted: #8888aa;
+  --color-accent: #667eea;
+  --color-accent-alt: #764ba2;
+  --color-success: #34d399;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #0a0a1a;
+  color: #e0e0f0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.7);
+}
+
+/* コードブロック */
+pre, code {
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+}
+
+/* フォーカスリング */
+:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* SQLキーワードハイライト */
+.sql-keyword { color: #c792ea; font-weight: 600; }
+.sql-string { color: #c3e88d; }
+.sql-number { color: #f78c6c; }
+.sql-comment { color: #546e7a; font-style: italic; }
+.sql-table { color: #82aaff; }
+.sql-function { color: #89ddff; }
+
+/* アニメーション */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-accent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(102, 126, 234, 0); }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
 }

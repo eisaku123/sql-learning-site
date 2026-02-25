@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String         @id @default(cuid())
+  email     String         @unique
+  password  String
+  name      String?
+  createdAt DateTime       @default(now())
+  progress  UserProgress[]
+  exercises UserExercise[]
+}
+
+model UserProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonSlug  String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, lessonSlug])
+}
+
+model UserExercise {
+  id         String    @id @default(cuid())
+  userId     String
+  exerciseId String
+  solved     Boolean   @default(false)
+  attempts   Int       @default(0)
+  solvedAt   DateTime?
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, exerciseId])
+}
