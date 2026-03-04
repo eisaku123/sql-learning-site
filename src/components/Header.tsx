@@ -75,7 +75,7 @@ export default function Header() {
             ログアウト
           </button>
         ) : (
-          <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             <NavLink href="/login">ログイン</NavLink>
             <Link
               href="/register"

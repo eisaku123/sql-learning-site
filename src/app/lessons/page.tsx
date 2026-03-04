@@ -3,6 +3,13 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LESSONS } from "@/lib/curriculum";
 import Header from "@/components/Header";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "レッスン一覧",
+  description: "SQL入門から中級まで全9レッスン。SELECT・WHERE・JOIN・GROUP BYなどを体系的に学べます。ブラウザ上で実際にSQLを書いて練習できます。",
+  alternates: { canonical: "/lessons" },
+};
 import LessonCard from "@/components/LessonCard";
 
 export default async function LessonsPage() {
