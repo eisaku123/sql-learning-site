@@ -7,15 +7,16 @@ interface LessonCardProps {
   lesson: Lesson;
   completed: boolean;
   index: number;
+  href?: string;
 }
 
-export default function LessonCard({ lesson, completed, index }: LessonCardProps) {
+export default function LessonCard({ lesson, completed, index, href }: LessonCardProps) {
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
   const levelLabel = lesson.level === "beginner" ? "初級" : "中級";
 
   return (
     <Link
-      href={`/lessons/${lesson.slug}`}
+      href={href ?? `/lessons/${lesson.slug}`}
       style={{ textDecoration: "none" }}
     >
       <div
