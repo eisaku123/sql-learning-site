@@ -271,7 +271,7 @@ export default function TopPage() {
             今すぐSQL学習を始めよう
           </h2>
           <p style={{ color: "#8888aa", marginBottom: "2rem" }}>
-            無料で全レッスンにアクセスできます
+            無料で基礎レッスンを学習。月額100円のプレミアムで100問に挑戦できます。
           </p>
           <Link
             href="/register"
