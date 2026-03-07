@@ -11,12 +11,15 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
-  const progress = await prisma.userProgress.findMany({
-    where: { userId: session.user.id, completed: true },
-  });
-  const exercises = await prisma.userExercise.findMany({
-    where: { userId: session.user.id, solved: true },
-  });
+  const [progress, exercises, subscription] = await Promise.all([
+    prisma.userProgress.findMany({ where: { userId: session.user.id, completed: true } }),
+    prisma.userExercise.findMany({ where: { userId: session.user.id, solved: true } }),
+    prisma.subscription.findUnique({ where: { userId: session.user.id } }),
+  ]);
+
+  const isPremium =
+    (subscription?.status === "active" || subscription?.status === "cancel_at_period_end") &&
+    subscription.currentPeriodEnd > new Date();
 
   const completedSlugs = new Set(progress.map((p) => p.lessonSlug));
   const completedCount = completedSlugs.size;
@@ -90,6 +93,97 @@ export default async function DashboardPage() {
             <ProgressCircle percent={progressPercent} size={90} label="全体進捗" />
           </div>
         </div>
+
+        {/* プレミアム状態 */}
+        {isPremium ? (
+          <section style={{ marginBottom: "2.5rem" }}>
+            <Link href="/premium/lessons" style={{ textDecoration: "none" }}>
+              <div
+                style={{
+                  background: "linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.12))",
+                  border: "1px solid rgba(102,126,234,0.35)",
+                  borderRadius: "14px",
+                  padding: "1.25rem 1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ fontSize: "1.5rem" }}>⭐</span>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ color: "#e0e0f0", fontWeight: 700, fontSize: "0.95rem" }}>
+                        プレミアム会員
+                      </span>
+                      <span
+                        style={{
+                          background: subscription?.status === "cancel_at_period_end"
+                            ? "rgba(255,150,50,0.15)"
+                            : "rgba(52,211,153,0.15)",
+                          border: `1px solid ${subscription?.status === "cancel_at_period_end" ? "rgba(255,150,50,0.4)" : "rgba(52,211,153,0.4)"}`,
+                          borderRadius: "20px",
+                          padding: "0.1rem 0.6rem",
+                          color: subscription?.status === "cancel_at_period_end" ? "#ffaa44" : "#34d399",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {subscription?.status === "cancel_at_period_end" ? "解約済み" : "有効"}
+                      </span>
+                    </div>
+                    <div style={{ color: "#8888aa", fontSize: "0.8rem", marginTop: "0.2rem" }}>
+                      {subscription?.status === "cancel_at_period_end" ? "有効期限" : "次回更新日"}：
+                      {subscription?.currentPeriodEnd.toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <span style={{ color: "#667eea", fontSize: "0.85rem", fontWeight: 600 }}>
+                  プレミアムレッスンへ →
+                </span>
+              </div>
+            </Link>
+          </section>
+        ) : (
+          <section style={{ marginBottom: "2.5rem" }}>
+            <Link href="/pricing" style={{ textDecoration: "none" }}>
+              <div
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "14px",
+                  padding: "1.25rem 1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ fontSize: "1.5rem" }}>⭐</span>
+                  <div>
+                    <div style={{ color: "#e0e0f0", fontWeight: 600, fontSize: "0.95rem" }}>
+                      プレミアムコース
+                    </div>
+                    <div style={{ color: "#8888aa", fontSize: "0.8rem", marginTop: "0.2rem" }}>
+                      初級50問・中級50問 — 月額100円
+                    </div>
+                  </div>
+                </div>
+                <span style={{ color: "#667eea", fontSize: "0.85rem", fontWeight: 600 }}>
+                  プランを見る →
+                </span>
+              </div>
+            </Link>
+          </section>
+        )}
 
         {/* 次のレッスン */}
         {nextLesson && (
