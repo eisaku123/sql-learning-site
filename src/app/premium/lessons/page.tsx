@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import LessonCard from "@/components/LessonCard";
 import Link from "next/link";
 import type { Metadata } from "next";
+import CancelSubscriptionButton from "@/components/CancelSubscriptionButton";
 
 export const metadata: Metadata = {
   title: "プレミアムレッスン一覧",
@@ -22,7 +23,7 @@ export default async function PremiumLessonsPage() {
     where: { userId: session.user.id },
   });
   const isActive =
-    subscription?.status === "active" &&
+    (subscription?.status === "active" || subscription?.status === "cancel_at_period_end") &&
     subscription.currentPeriodEnd > new Date();
 
   if (!isActive) {
@@ -119,9 +120,15 @@ export default async function PremiumLessonsPage() {
             PREMIUM
           </div>
         </div>
-        <p style={{ color: "#8888aa", marginBottom: "3rem" }}>
-          {PREMIUM_LESSONS.length}レッスン · 初級10 + 中級10 · 合計100問
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <p style={{ color: "#8888aa", margin: 0 }}>
+            {PREMIUM_LESSONS.length}レッスン · 初級10 + 中級10 · 合計100問
+          </p>
+          <CancelSubscriptionButton
+            periodEnd={subscription!.currentPeriodEnd}
+            alreadyCanceling={subscription!.status === "cancel_at_period_end"}
+          />
+        </div>
 
         {/* 初級 */}
         <section style={{ marginBottom: "3rem" }}>

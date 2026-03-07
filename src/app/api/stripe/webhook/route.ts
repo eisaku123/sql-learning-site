@@ -61,14 +61,17 @@ export async function POST(req: NextRequest) {
     }
 
     case "customer.subscription.updated": {
-      const subscription = event.data.object as Stripe.Subscription;
-      const userId = subscription.metadata?.userId;
-      if (!userId) break;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const subscription = event.data.object as any;
+
+      // cancel_at_period_end が true の場合は専用ステータスで記録
+      const status =
+        subscription.cancel_at_period_end ? "cancel_at_period_end" : subscription.status;
 
       await prisma.subscription.updateMany({
         where: { stripeSubscriptionId: subscription.id },
         data: {
-          status: subscription.status,
+          status,
           currentPeriodEnd: getPeriodEnd(subscription),
         },
       });
