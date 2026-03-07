@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LESSONS } from "@/lib/curriculum";
+import { PREMIUM_LESSONS } from "@/lib/premium-curriculum";
 import Header from "@/components/Header";
+import PremiumLessonCard from "@/components/PremiumLessonCard";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,15 +18,22 @@ export default async function LessonsPage() {
   const session = await getServerSession(authOptions);
   let completedSlugs: Set<string> = new Set();
 
+  let isPremium = false;
   if (session?.user?.id) {
-    const progress = await prisma.userProgress.findMany({
-      where: { userId: session.user.id, completed: true },
-    });
+    const [progress, subscription] = await Promise.all([
+      prisma.userProgress.findMany({ where: { userId: session.user.id, completed: true } }),
+      prisma.subscription.findUnique({ where: { userId: session.user.id } }),
+    ]);
     completedSlugs = new Set(progress.map((p) => p.lessonSlug));
+    isPremium =
+      (subscription?.status === "active" || subscription?.status === "cancel_at_period_end") &&
+      (subscription?.currentPeriodEnd ?? new Date(0)) > new Date();
   }
 
   const beginnerLessons = LESSONS.filter((l) => l.level === "beginner").sort((a, b) => a.order - b.order);
   const intermediateLessons = LESSONS.filter((l) => l.level === "intermediate").sort((a, b) => a.order - b.order);
+  const premiumBeginnerLessons = PREMIUM_LESSONS.filter((l) => l.level === "beginner").sort((a, b) => a.order - b.order);
+  const premiumIntermediateLessons = PREMIUM_LESSONS.filter((l) => l.level === "intermediate").sort((a, b) => a.order - b.order);
 
   return (
     <>
@@ -34,7 +43,7 @@ export default async function LessonsPage() {
           レッスン一覧
         </h1>
         <p style={{ color: "#8888aa", marginBottom: "3rem" }}>
-          {LESSONS.length}レッスン · 初級5 + 中級4
+          無料{LESSONS.length}レッスン + プレミアム{PREMIUM_LESSONS.length}レッスン
         </p>
 
         {/* 初級 */}
@@ -98,6 +107,69 @@ export default async function LessonsPage() {
                 lesson={lesson}
                 completed={completedSlugs.has(lesson.slug)}
                 index={i}
+              />
+            ))}
+          </div>
+        </section>
+        {/* プレミアム初級 */}
+        <section style={{ marginBottom: "3rem", marginTop: "3rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
+            <h2 style={{ color: "#34d399", fontWeight: 700, fontSize: "1.1rem" }}>
+              プレミアム初級コース
+            </h2>
+            <span style={{
+              background: "linear-gradient(135deg, #667eea, #764ba2)",
+              borderRadius: "20px", padding: "0.15rem 0.6rem",
+              color: "#fff", fontSize: "0.7rem", fontWeight: 700,
+            }}>PREMIUM</span>
+            <div style={{ height: "1px", flex: 1, background: "rgba(52,211,153,0.2)" }} />
+            {isPremium && (
+              <span style={{ color: "#546e7a", fontSize: "0.8rem" }}>
+                {premiumBeginnerLessons.filter((l) => completedSlugs.has(l.slug)).length} / {premiumBeginnerLessons.length} 完了
+              </span>
+            )}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
+            {premiumBeginnerLessons.map((lesson, i) => (
+              <PremiumLessonCard
+                key={lesson.slug}
+                lesson={lesson}
+                completed={completedSlugs.has(lesson.slug)}
+                index={i}
+                isPremium={isPremium}
+                isLoggedIn={!!session?.user}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* プレミアム中級 */}
+        <section>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
+            <h2 style={{ color: "#667eea", fontWeight: 700, fontSize: "1.1rem" }}>
+              プレミアム中級コース
+            </h2>
+            <span style={{
+              background: "linear-gradient(135deg, #667eea, #764ba2)",
+              borderRadius: "20px", padding: "0.15rem 0.6rem",
+              color: "#fff", fontSize: "0.7rem", fontWeight: 700,
+            }}>PREMIUM</span>
+            <div style={{ height: "1px", flex: 1, background: "rgba(102,126,234,0.2)" }} />
+            {isPremium && (
+              <span style={{ color: "#546e7a", fontSize: "0.8rem" }}>
+                {premiumIntermediateLessons.filter((l) => completedSlugs.has(l.slug)).length} / {premiumIntermediateLessons.length} 完了
+              </span>
+            )}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
+            {premiumIntermediateLessons.map((lesson, i) => (
+              <PremiumLessonCard
+                key={lesson.slug}
+                lesson={lesson}
+                completed={completedSlugs.has(lesson.slug)}
+                index={i}
+                isPremium={isPremium}
+                isLoggedIn={!!session?.user}
               />
             ))}
           </div>
