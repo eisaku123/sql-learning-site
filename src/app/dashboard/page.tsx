@@ -4,6 +4,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { LESSONS } from "@/lib/curriculum";
+import { PREMIUM_LESSONS } from "@/lib/premium-curriculum";
 import Header from "@/components/Header";
 import ProgressCircle from "@/components/ProgressCircle";
 
@@ -314,6 +315,103 @@ export default async function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* プレミアムレッスン進捗（加入中のみ） */}
+        {isPremium && (
+          <section style={{ marginTop: "2.5rem" }}>
+            <h2 style={{ color: "#e0e0f0", fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem" }}>
+              プレミアムレッスン進捗
+            </h2>
+
+            {/* プレミアム初級 */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <span style={{ color: "#34d399", fontSize: "0.82rem", fontWeight: 600 }}>プレミアム初級</span>
+                <div style={{ height: "1px", flex: 1, background: "rgba(52,211,153,0.2)" }} />
+                <span style={{ color: "#546e7a", fontSize: "0.78rem" }}>
+                  {PREMIUM_LESSONS.filter(l => l.level === "beginner" && completedSlugs.has(l.slug)).length}
+                  {" / "}
+                  {PREMIUM_LESSONS.filter(l => l.level === "beginner").length} 完了
+                </span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {PREMIUM_LESSONS.filter(l => l.level === "beginner").sort((a, b) => a.order - b.order).map((lesson) => {
+                  const done = completedSlugs.has(lesson.slug);
+                  return (
+                    <Link key={lesson.slug} href={`/premium/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
+                      <div style={{
+                        background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.03)",
+                        border: done ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "10px", padding: "0.75rem 1.25rem",
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <span style={{
+                            width: "22px", height: "22px", borderRadius: "50%", flexShrink: 0,
+                            background: done ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.06)",
+                            border: done ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "0.7rem", color: done ? "#34d399" : "#546e7a", fontWeight: 700,
+                          }}>
+                            {done ? "✓" : lesson.order}
+                          </span>
+                          <span style={{ color: done ? "#c0c0d8" : "#8888aa", fontSize: "0.88rem" }}>{lesson.title}</span>
+                        </div>
+                        <span style={{ color: done ? "#34d399" : "#667eea", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
+                          {done ? "完了" : `${lesson.exercises.length}問 →`}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* プレミアム中級 */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <span style={{ color: "#667eea", fontSize: "0.82rem", fontWeight: 600 }}>プレミアム中級</span>
+                <div style={{ height: "1px", flex: 1, background: "rgba(102,126,234,0.2)" }} />
+                <span style={{ color: "#546e7a", fontSize: "0.78rem" }}>
+                  {PREMIUM_LESSONS.filter(l => l.level === "intermediate" && completedSlugs.has(l.slug)).length}
+                  {" / "}
+                  {PREMIUM_LESSONS.filter(l => l.level === "intermediate").length} 完了
+                </span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {PREMIUM_LESSONS.filter(l => l.level === "intermediate").sort((a, b) => a.order - b.order).map((lesson) => {
+                  const done = completedSlugs.has(lesson.slug);
+                  return (
+                    <Link key={lesson.slug} href={`/premium/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
+                      <div style={{
+                        background: done ? "rgba(102,126,234,0.06)" : "rgba(255,255,255,0.03)",
+                        border: done ? "1px solid rgba(102,126,234,0.2)" : "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "10px", padding: "0.75rem 1.25rem",
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <span style={{
+                            width: "22px", height: "22px", borderRadius: "50%", flexShrink: 0,
+                            background: done ? "rgba(102,126,234,0.2)" : "rgba(255,255,255,0.06)",
+                            border: done ? "1px solid rgba(102,126,234,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "0.7rem", color: done ? "#667eea" : "#546e7a", fontWeight: 700,
+                          }}>
+                            {done ? "✓" : lesson.order}
+                          </span>
+                          <span style={{ color: done ? "#c0c0d8" : "#8888aa", fontSize: "0.88rem" }}>{lesson.title}</span>
+                        </div>
+                        <span style={{ color: "#667eea", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
+                          {done ? "完了" : `${lesson.exercises.length}問 →`}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </>
   );
