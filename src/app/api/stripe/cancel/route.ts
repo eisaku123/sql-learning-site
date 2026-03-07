@@ -18,10 +18,20 @@ export async function POST() {
     return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
   }
 
+  // すでに解約済みなら何もしない
+  if (subscription.status === "cancel_at_period_end") {
+    return NextResponse.json({ ok: true });
+  }
+
   // 期間終了時にキャンセル（即時停止ではなく期間末まで使える）
-  // DBステータスはStripe webhookが更新する
   await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
     cancel_at_period_end: true,
+  });
+
+  // DBを即時更新（webhookの到着を待たない）
+  await prisma.subscription.update({
+    where: { userId: session.user.id },
+    data: { status: "cancel_at_period_end" },
   });
 
   return NextResponse.json({ ok: true });
