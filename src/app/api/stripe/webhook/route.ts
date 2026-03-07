@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
+import { sendPremiumWelcomeEmail } from "@/lib/email";
 import type Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest) {
         session.subscription as string
       );
 
+      const periodEnd = getPeriodEnd(subscription);
+
       await prisma.subscription.upsert({
         where: { userId },
         create: {
@@ -48,15 +51,28 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: session.customer as string,
           stripeSubscriptionId: subscription.id,
           status: subscription.status,
-          currentPeriodEnd: getPeriodEnd(subscription),
+          currentPeriodEnd: periodEnd,
         },
         update: {
           stripeCustomerId: session.customer as string,
           stripeSubscriptionId: subscription.id,
           status: subscription.status,
-          currentPeriodEnd: getPeriodEnd(subscription),
+          currentPeriodEnd: periodEnd,
         },
       });
+
+      // 購入完了メールを送信
+      if (session.customer_email) {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        await sendPremiumWelcomeEmail({
+          to: session.customer_email,
+          name: user?.name,
+          currentPeriodEnd: periodEnd,
+        }).catch(() => {
+          // メール送信失敗はログのみ（決済処理は成功させる）
+          console.error("Failed to send welcome email");
+        });
+      }
       break;
     }
 
