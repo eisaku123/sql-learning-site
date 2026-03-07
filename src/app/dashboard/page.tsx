@@ -23,11 +23,24 @@ export default async function DashboardPage() {
     subscription.currentPeriodEnd > new Date();
 
   const completedSlugs = new Set(progress.map((p) => p.lessonSlug));
-  const completedCount = completedSlugs.size;
+
+  // 無料レッスン統計
+  const completedCount = LESSONS.filter(l => completedSlugs.has(l.slug)).length;
   const totalLessons = LESSONS.length;
   const totalExercises = LESSONS.reduce((sum, l) => sum + l.exercises.length, 0);
+  const solvedFreeExercises = exercises.filter(e =>
+    LESSONS.some(l => l.exercises.some(ex => ex.id === e.exerciseId))
+  ).length;
   const progressPercent = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
-  const exercisePercent = totalExercises > 0 ? (exercises.length / totalExercises) * 100 : 0;
+
+  // プレミアムレッスン統計
+  const premiumCompletedCount = PREMIUM_LESSONS.filter(l => completedSlugs.has(l.slug)).length;
+  const premiumTotalLessons = PREMIUM_LESSONS.length;
+  const premiumTotalExercises = PREMIUM_LESSONS.reduce((sum, l) => sum + l.exercises.length, 0);
+  const solvedPremiumExercises = exercises.filter(e =>
+    PREMIUM_LESSONS.some(l => l.exercises.some(ex => ex.id === e.exerciseId))
+  ).length;
+  const premiumProgressPercent = premiumTotalLessons > 0 ? (premiumCompletedCount / premiumTotalLessons) * 100 : 0;
 
   // 次のレッスンを推定
   const nextLesson = LESSONS.find((l) => !completedSlugs.has(l.slug));
@@ -50,42 +63,35 @@ export default async function DashboardPage() {
           今日も学習を続けましょう！
         </p>
 
-        {/* 進捗サマリー */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1.25rem",
-            marginBottom: "2.5rem",
-          }}
-        >
-          <StatCard
-            label="レッスン進捗"
-            value={`${completedCount} / ${totalLessons}`}
-            sub="レッスン完了"
-            color="#667eea"
-          />
-          <StatCard
-            label="問題解答数"
-            value={`${exercises.length} / ${totalExercises}`}
-            sub="問題解決"
-            color="#34d399"
-          />
-          <div
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "16px",
-              padding: "1.5rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <ProgressCircle percent={progressPercent} size={90} label="全体進捗" />
+        {/* 無料進捗サマリー */}
+        <div style={{ marginBottom: isPremium ? "1rem" : "2.5rem" }}>
+          <div style={{ color: "#8888aa", fontSize: "0.78rem", fontWeight: 600, marginBottom: "0.6rem", letterSpacing: "0.05em" }}>
+            無料コース
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.25rem" }}>
+            <StatCard label="レッスン進捗" value={`${completedCount} / ${totalLessons}`} sub="レッスン完了" color="#667eea" />
+            <StatCard label="問題解答数" value={`${solvedFreeExercises} / ${totalExercises}`} sub="問題解決" color="#34d399" />
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "1.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+              <ProgressCircle percent={progressPercent} size={90} label="全体進捗" />
+            </div>
           </div>
         </div>
+
+        {/* プレミアム進捗サマリー（加入中のみ） */}
+        {isPremium && (
+          <div style={{ marginBottom: "2.5rem" }}>
+            <div style={{ color: "#667eea", fontSize: "0.78rem", fontWeight: 600, marginBottom: "0.6rem", letterSpacing: "0.05em" }}>
+              ⭐ プレミアムコース
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.25rem" }}>
+              <StatCard label="レッスン進捗" value={`${premiumCompletedCount} / ${premiumTotalLessons}`} sub="レッスン完了" color="#764ba2" />
+              <StatCard label="問題解答数" value={`${solvedPremiumExercises} / ${premiumTotalExercises}`} sub="問題解決" color="#a78bfa" />
+              <div style={{ background: "rgba(102,126,234,0.06)", border: "1px solid rgba(102,126,234,0.2)", borderRadius: "16px", padding: "1.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+                <ProgressCircle percent={premiumProgressPercent} size={90} label="全体進捗" />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* プレミアム状態 */}
         {isPremium ? (
