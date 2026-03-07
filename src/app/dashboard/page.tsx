@@ -30,14 +30,6 @@ export default async function DashboardPage() {
 
   // 次のレッスンを推定
   const nextLesson = LESSONS.find((l) => !completedSlugs.has(l.slug));
-  // 最近完了したレッスン
-  const recentSlugs = progress
-    .sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0))
-    .slice(0, 3)
-    .map((p) => p.lessonSlug);
-  const recentLessons = recentSlugs
-    .map((slug) => LESSONS.find((l) => l.slug === slug))
-    .filter(Boolean);
 
   return (
     <>
@@ -216,53 +208,112 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* 最近完了したレッスン */}
-        {recentLessons.length > 0 && (
-          <section>
-            <h2 style={{ color: "#e0e0f0", fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem" }}>
-              最近完了したレッスン
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              {recentLessons.map((lesson) => lesson && (
-                <Link key={lesson.slug} href={`/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(52,211,153,0.15)",
+        {/* レッスン一覧 */}
+        <section>
+          <h2 style={{ color: "#e0e0f0", fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem" }}>
+            無料レッスン進捗
+          </h2>
+
+          {/* 初級 */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+              <span style={{ color: "#34d399", fontSize: "0.82rem", fontWeight: 600 }}>初級</span>
+              <div style={{ height: "1px", flex: 1, background: "rgba(52,211,153,0.2)" }} />
+              <span style={{ color: "#546e7a", fontSize: "0.78rem" }}>
+                {LESSONS.filter(l => l.level === "beginner" && completedSlugs.has(l.slug)).length}
+                {" / "}
+                {LESSONS.filter(l => l.level === "beginner").length} 完了
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {LESSONS.filter(l => l.level === "beginner").sort((a, b) => a.order - b.order).map((lesson) => {
+                const done = completedSlugs.has(lesson.slug);
+                return (
+                  <Link key={lesson.slug} href={`/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.03)",
+                      border: done ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(255,255,255,0.07)",
                       borderRadius: "10px",
-                      padding: "0.85rem 1.25rem",
+                      padding: "0.75rem 1.25rem",
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "space-between",
                       gap: "0.75rem",
-                    }}
-                  >
-                    <span style={{ color: "#34d399", fontSize: "1rem" }}>✓</span>
-                    <span style={{ color: "#c0c0d8", fontSize: "0.9rem" }}>{lesson.title}</span>
-                  </div>
-                </Link>
-              ))}
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <span style={{
+                          width: "22px", height: "22px", borderRadius: "50%", flexShrink: 0,
+                          background: done ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.06)",
+                          border: done ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "0.7rem", color: done ? "#34d399" : "#546e7a", fontWeight: 700,
+                        }}>
+                          {done ? "✓" : lesson.order}
+                        </span>
+                        <span style={{ color: done ? "#c0c0d8" : "#8888aa", fontSize: "0.88rem" }}>
+                          {lesson.title}
+                        </span>
+                      </div>
+                      <span style={{ color: done ? "#34d399" : "#667eea", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
+                        {done ? "完了" : `${lesson.exercises.length}問 →`}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
-          </section>
-        )}
-
-        {completedCount === 0 && (
-          <div style={{ textAlign: "center", padding: "3rem", color: "#8888aa" }}>
-            <p style={{ marginBottom: "1rem" }}>まだレッスンを完了していません</p>
-            <Link
-              href="/lessons"
-              style={{
-                background: "linear-gradient(135deg, #667eea, #764ba2)",
-                color: "#fff",
-                textDecoration: "none",
-                padding: "0.7rem 1.5rem",
-                borderRadius: "8px",
-                fontWeight: 600,
-              }}
-            >
-              レッスンを始める
-            </Link>
           </div>
-        )}
+
+          {/* 中級 */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+              <span style={{ color: "#667eea", fontSize: "0.82rem", fontWeight: 600 }}>中級</span>
+              <div style={{ height: "1px", flex: 1, background: "rgba(102,126,234,0.2)" }} />
+              <span style={{ color: "#546e7a", fontSize: "0.78rem" }}>
+                {LESSONS.filter(l => l.level === "intermediate" && completedSlugs.has(l.slug)).length}
+                {" / "}
+                {LESSONS.filter(l => l.level === "intermediate").length} 完了
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {LESSONS.filter(l => l.level === "intermediate").sort((a, b) => a.order - b.order).map((lesson) => {
+                const done = completedSlugs.has(lesson.slug);
+                return (
+                  <Link key={lesson.slug} href={`/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      background: done ? "rgba(102,126,234,0.06)" : "rgba(255,255,255,0.03)",
+                      border: done ? "1px solid rgba(102,126,234,0.2)" : "1px solid rgba(255,255,255,0.07)",
+                      borderRadius: "10px",
+                      padding: "0.75rem 1.25rem",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "0.75rem",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <span style={{
+                          width: "22px", height: "22px", borderRadius: "50%", flexShrink: 0,
+                          background: done ? "rgba(102,126,234,0.2)" : "rgba(255,255,255,0.06)",
+                          border: done ? "1px solid rgba(102,126,234,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "0.7rem", color: done ? "#667eea" : "#546e7a", fontWeight: 700,
+                        }}>
+                          {done ? "✓" : lesson.order}
+                        </span>
+                        <span style={{ color: done ? "#c0c0d8" : "#8888aa", fontSize: "0.88rem" }}>
+                          {lesson.title}
+                        </span>
+                      </div>
+                      <span style={{ color: done ? "#667eea" : "#667eea", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
+                        {done ? "完了" : `${lesson.exercises.length}問 →`}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );
