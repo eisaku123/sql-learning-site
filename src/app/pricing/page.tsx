@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -11,6 +11,14 @@ export default function PricingPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/subscription")
+      .then((r) => r.json())
+      .then((data) => setIsPremium(data.active));
+  }, [session]);
 
   const handleCheckout = async () => {
     if (!session?.user) {
@@ -241,26 +249,46 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <LoadingButton
-              onClick={handleCheckout}
-              loading={loading}
-              loadingText="処理中..."
-              style={{
-                width: "100%",
-                background: "linear-gradient(135deg, #667eea, #764ba2)",
-                border: "none",
-                borderRadius: "12px",
-                color: "#fff",
-                padding: "0.9rem",
-                fontWeight: 700,
-                fontSize: "1rem",
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-            >
-              {session?.user ? "プレミアムに申し込む" : "ログインして申し込む"}
-            </LoadingButton>
+            {isPremium ? (
+              <Link
+                href="/premium/lessons"
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  background: "linear-gradient(135deg, #667eea, #764ba2)",
+                  border: "none",
+                  borderRadius: "12px",
+                  color: "#fff",
+                  textDecoration: "none",
+                  padding: "0.9rem",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                }}
+              >
+                プレミアムレッスンへ →
+              </Link>
+            ) : (
+              <LoadingButton
+                onClick={handleCheckout}
+                loading={loading}
+                loadingText="処理中..."
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg, #667eea, #764ba2)",
+                  border: "none",
+                  borderRadius: "12px",
+                  color: "#fff",
+                  padding: "0.9rem",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+              >
+                {session?.user ? "プレミアムに申し込む" : "ログインして申し込む"}
+              </LoadingButton>
+            )}
           </div>
         </section>
 
