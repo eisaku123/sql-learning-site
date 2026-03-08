@@ -83,6 +83,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
 
   const allSolved = lesson.exercises.every((ex) => solvedIds.includes(ex.id));
+  const [showExplanation, setShowExplanation] = useState(true);
 
   return (
     <>
@@ -134,68 +135,108 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
               </span>
             )}
           </div>
-          <h1 style={{ color: "#e0e0f0", fontSize: "1.5rem", fontWeight: 700 }}>{lesson.title}</h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <h1 style={{ color: "#e0e0f0", fontSize: "1.5rem", fontWeight: 700 }}>{lesson.title}</h1>
+            <button
+              onClick={() => setShowExplanation((v) => !v)}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                color: "#8888aa",
+                padding: "0.35rem 0.85rem",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
+            </button>
+          </div>
         </div>
 
-        {/* 2カラムレイアウト */}
+        {/* レイアウト */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: showExplanation ? "1fr 1fr" : "1fr 1fr",
             maxWidth: "1400px",
             margin: "0 auto",
             minHeight: "calc(100vh - 130px)",
           }}
         >
-          {/* 左: 解説 */}
-          <div
-            style={{
-              padding: "2rem",
-              borderRight: "1px solid rgba(255,255,255,0.06)",
-              overflowY: "auto",
-            }}
-          >
+          {/* 左: 解説 or 練習問題 */}
+          {showExplanation ? (
             <div
               style={{
-                color: "#c0c0d8",
-                lineHeight: 1.8,
-                fontSize: "0.92rem",
-              }}
-              dangerouslySetInnerHTML={{ __html: lesson.content }}
-            />
-
-            {/* ナビゲーション */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "3rem",
-                paddingTop: "1.5rem",
-                borderTop: "1px solid rgba(255,255,255,0.06)",
+                padding: "2rem",
+                borderRight: "1px solid rgba(255,255,255,0.06)",
+                overflowY: "auto",
               }}
             >
-              {prevLesson ? (
-                <Link
-                  href={`/lessons/${prevLesson.slug}`}
-                  style={{ color: "#667eea", textDecoration: "none", fontSize: "0.85rem" }}
+              <div
+                style={{ color: "#c0c0d8", lineHeight: 1.8, fontSize: "0.92rem" }}
+                dangerouslySetInnerHTML={{ __html: lesson.content }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "3rem",
+                  paddingTop: "1.5rem",
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {prevLesson ? (
+                  <Link href={`/lessons/${prevLesson.slug}`} style={{ color: "#667eea", textDecoration: "none", fontSize: "0.85rem" }}>
+                    ← {prevLesson.title}
+                  </Link>
+                ) : <span />}
+                {nextLesson && (
+                  <Link href={`/lessons/${nextLesson.slug}`} style={{ color: "#667eea", textDecoration: "none", fontSize: "0.85rem" }}>
+                    {nextLesson.title} →
+                  </Link>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: "2rem", borderRight: "1px solid rgba(255,255,255,0.06)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <section>
+                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+                  練習問題
+                </h3>
+                <ExercisePanel
+                  exercises={lesson.exercises}
+                  lessonSlug={slug}
+                  solvedIds={solvedIds}
+                  onSolve={handleSolve}
+                  lastResultColumns={lastResultColumns}
+                />
+              </section>
+              {session?.user && (
+                <button
+                  onClick={handleComplete}
+                  disabled={lessonCompleted}
+                  style={{
+                    background: lessonCompleted ? "rgba(52,211,153,0.15)" : allSolved ? "linear-gradient(135deg, #34d399, #059669)" : "rgba(255,255,255,0.05)",
+                    border: lessonCompleted ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
+                    padding: "0.75rem",
+                    cursor: lessonCompleted ? "not-allowed" : "pointer",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    transition: "all 0.2s",
+                  }}
                 >
-                  ← {prevLesson.title}
-                </Link>
-              ) : (
-                <span />
-              )}
-              {nextLesson && (
-                <Link
-                  href={`/lessons/${nextLesson.slug}`}
-                  style={{ color: "#667eea", textDecoration: "none", fontSize: "0.85rem" }}
-                >
-                  {nextLesson.title} →
-                </Link>
+                  {lessonCompleted ? "✅ レッスン完了済み" : "このレッスンを完了にする"}
+                </button>
               )}
             </div>
-          </div>
+          )}
 
-          {/* 右: エディタ + 練習問題 */}
+          {/* 右: 練習問題＋エディタ or エディタのみ */}
           <div
             style={{
               padding: "2rem",
@@ -205,39 +246,23 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
               overflowY: "auto",
             }}
           >
-            <section>
-              <h3
-                style={{
-                  color: "#8888aa",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: "0.75rem",
-                }}
-              >
-                練習問題
-              </h3>
-              <ExercisePanel
-                exercises={lesson.exercises}
-                lessonSlug={slug}
-                solvedIds={solvedIds}
-                onSolve={handleSolve}
-                lastResultColumns={lastResultColumns}
-              />
-            </section>
+            {showExplanation && (
+              <section>
+                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+                  練習問題
+                </h3>
+                <ExercisePanel
+                  exercises={lesson.exercises}
+                  lessonSlug={slug}
+                  solvedIds={solvedIds}
+                  onSolve={handleSolve}
+                  lastResultColumns={lastResultColumns}
+                />
+              </section>
+            )}
 
             <section>
-              <h3
-                style={{
-                  color: "#8888aa",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  marginBottom: "0.75rem",
-                }}
-              >
+              <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
                 SQL エディタ
               </h3>
               <SqlEditor
@@ -246,20 +271,13 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
               />
             </section>
 
-            {/* レッスン完了ボタン */}
-            {session?.user && (
+            {showExplanation && session?.user && (
               <button
                 onClick={handleComplete}
                 disabled={lessonCompleted}
                 style={{
-                  background: lessonCompleted
-                    ? "rgba(52,211,153,0.15)"
-                    : allSolved
-                      ? "linear-gradient(135deg, #34d399, #059669)"
-                      : "rgba(255,255,255,0.05)",
-                  border: lessonCompleted
-                    ? "1px solid rgba(52,211,153,0.4)"
-                    : "1px solid rgba(255,255,255,0.1)",
+                  background: lessonCompleted ? "rgba(52,211,153,0.15)" : allSolved ? "linear-gradient(135deg, #34d399, #059669)" : "rgba(255,255,255,0.05)",
+                  border: lessonCompleted ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: "10px",
                   color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
                   padding: "0.75rem",
