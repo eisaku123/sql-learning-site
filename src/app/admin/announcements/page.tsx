@@ -13,6 +13,7 @@ type Announcement = {
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [form, setForm] = useState({ title: "", content: "", isPublished: false });
   const [saving, setSaving] = useState(false);
@@ -29,11 +30,13 @@ export default function AdminAnnouncementsPage() {
   function startNew() {
     setEditing(null);
     setForm({ title: "", content: "", isPublished: false });
+    setShowForm(true);
   }
 
   function startEdit(a: Announcement) {
     setEditing(a);
     setForm({ title: a.title, content: a.content, isPublished: a.isPublished });
+    setShowForm(true);
   }
 
   async function handleSave() {
@@ -54,6 +57,7 @@ export default function AdminAnnouncementsPage() {
     await fetchAll();
     setEditing(null);
     setForm({ title: "", content: "", isPublished: false });
+    setShowForm(false);
     setSaving(false);
   }
 
@@ -106,7 +110,7 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       {/* フォーム */}
-      {(editing !== null || form.title || form.content) ? (
+      {showForm ? (
         <div
           style={{
             background: "rgba(102,126,234,0.06)",
@@ -167,7 +171,7 @@ export default function AdminAnnouncementsPage() {
                 {saving ? "保存中..." : "保存"}
               </button>
               <button
-                onClick={() => { setEditing(null); setForm({ title: "", content: "", isPublished: false }); }}
+                onClick={() => { setEditing(null); setForm({ title: "", content: "", isPublished: false }); setShowForm(false); }}
                 style={{
                   background: "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.1)",
