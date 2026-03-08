@@ -216,11 +216,14 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
                   marginBottom: "0.75rem",
                 }}
               >
-                SQL エディタ
+                練習問題
               </h3>
-              <SqlEditor
-                initialQuery="SELECT * FROM employees LIMIT 5;"
-                onResult={setLastResultColumns}
+              <ExercisePanel
+                exercises={lesson.exercises}
+                lessonSlug={slug}
+                solvedIds={solvedIds}
+                onSolve={handleSolve}
+                lastResultColumns={lastResultColumns}
               />
             </section>
 
@@ -235,14 +238,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
                   marginBottom: "0.75rem",
                 }}
               >
-                練習問題
+                SQL エディタ
               </h3>
-              <ExercisePanel
-                exercises={lesson.exercises}
-                lessonSlug={slug}
-                solvedIds={solvedIds}
-                onSolve={handleSolve}
-                lastResultColumns={lastResultColumns}
+              <SqlEditor
+                initialQuery="SELECT * FROM employees LIMIT 5;"
+                onResult={setLastResultColumns}
               />
             </section>
 

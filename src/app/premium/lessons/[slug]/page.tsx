@@ -312,11 +312,14 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   marginBottom: "0.75rem",
                 }}
               >
-                SQL エディタ
+                練習問題（{lesson.exercises.length}問）
               </h3>
-              <SqlEditor
-                initialQuery="SELECT * FROM employees LIMIT 5;"
-                onResult={setLastResultColumns}
+              <ExercisePanel
+                exercises={lesson.exercises}
+                lessonSlug={slug}
+                solvedIds={solvedIds}
+                onSolve={handleSolve}
+                lastResultColumns={lastResultColumns}
               />
             </section>
 
@@ -331,14 +334,11 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   marginBottom: "0.75rem",
                 }}
               >
-                練習問題（{lesson.exercises.length}問）
+                SQL エディタ
               </h3>
-              <ExercisePanel
-                exercises={lesson.exercises}
-                lessonSlug={slug}
-                solvedIds={solvedIds}
-                onSolve={handleSolve}
-                lastResultColumns={lastResultColumns}
+              <SqlEditor
+                initialQuery="SELECT * FROM employees LIMIT 5;"
+                onResult={setLastResultColumns}
               />
             </section>
 
