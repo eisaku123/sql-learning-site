@@ -40,6 +40,7 @@ export default async function TopPage() {
               padding: "0.75rem 2rem",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: "0.75rem",
             }}
           >
