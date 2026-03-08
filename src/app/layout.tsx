@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import Link from "next/link";
+import { version } from "../../package.json";
 
 export const metadata: Metadata = {
   title: {
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               特定商取引法に基づく表記
             </Link>
             <span>© 2026 SQLLearn</span>
+            <span style={{ marginLeft: "1.5rem", opacity: 0.5 }}>v{version}</span>
           </footer>
         </SessionProvider>
       </body>
