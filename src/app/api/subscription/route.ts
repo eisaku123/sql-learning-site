@@ -14,7 +14,7 @@ export async function GET() {
   });
 
   const active =
-    subscription?.status === "active" &&
+    (subscription?.status === "active" || subscription?.status === "cancel_at_period_end") &&
     subscription.currentPeriodEnd > new Date();
 
   return NextResponse.json({ active, subscription });
