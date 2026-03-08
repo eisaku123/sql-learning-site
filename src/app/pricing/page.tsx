@@ -12,12 +12,17 @@ export default function PricingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [premiumSignupEnabled, setPremiumSignupEnabled] = useState(true);
 
   useEffect(() => {
-    if (!session?.user) return;
-    fetch("/api/subscription")
+    if (session?.user) {
+      fetch("/api/subscription")
+        .then((r) => r.json())
+        .then((data) => setIsPremium(data.active));
+    }
+    fetch("/api/announcements/settings")
       .then((r) => r.json())
-      .then((data) => setIsPremium(data.active));
+      .then((data) => setPremiumSignupEnabled(data.premiumSignupEnabled));
   }, [session]);
 
   const handleCheckout = async () => {
@@ -267,6 +272,21 @@ export default function PricingPage() {
               >
                 プレミアムレッスンへ →
               </Link>
+            ) : !premiumSignupEnabled ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "12px",
+                  color: "#8888aa",
+                  padding: "0.9rem",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                }}
+              >
+                現在、新規申し込みを停止しています
+              </div>
             ) : (
               <LoadingButton
                 onClick={handleCheckout}
