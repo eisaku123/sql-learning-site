@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { jwtVerify } from "jose";
 import { version } from "../../package.json";
 
 export const metadata: Metadata = {
@@ -37,7 +41,43 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") ?? "";
+
+  // /admin, /maintenance, /api は除外
+  const skipMaintenance =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/maintenance") ||
+    pathname.startsWith("/api");
+
+  if (!skipMaintenance) {
+    // 管理者クッキーチェック
+    const cookieHeader = headersList.get("cookie") ?? "";
+    const adminToken = cookieHeader
+      .split(";")
+      .find((c) => c.trim().startsWith("admin_token="))
+      ?.split("=")[1];
+
+    let isAdmin = false;
+    if (adminToken) {
+      try {
+        const secret = new TextEncoder().encode(process.env.ADMIN_SECRET ?? "fallback-secret");
+        await jwtVerify(adminToken, secret);
+        isAdmin = true;
+      } catch {}
+    }
+
+    if (!isAdmin) {
+      const setting = await prisma.siteSetting.findUnique({
+        where: { key: "maintenance_mode" },
+      });
+      if (setting?.value === "true") {
+        redirect("/maintenance");
+      }
+    }
+  }
+
   return (
     <html lang="ja">
       <body>

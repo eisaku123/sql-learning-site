@@ -93,3 +93,8 @@ pre, code {
 .fade-in-up {
   animation: fadeInUp 0.5s ease forwards;
 }
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(102,126,234,0.3) !important;
+}

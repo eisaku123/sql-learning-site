@@ -1,9 +1,13 @@
-"use client";
-
 import Link from "next/link";
 import Header from "@/components/Header";
+import { prisma } from "@/lib/db";
 
-export default function TopPage() {
+export default async function TopPage() {
+  const announcements = await prisma.announcement.findMany({
+    where: { isPublished: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   const features = [
     {
       icon: "⌨️",
@@ -26,6 +30,40 @@ export default function TopPage() {
     <>
       <Header />
       <main style={{ paddingTop: "60px" }}>
+        {/* お知らせバナー */}
+        {announcements.map((a) => (
+          <div
+            key={a.id}
+            style={{
+              background: "rgba(102,126,234,0.1)",
+              borderBottom: "1px solid rgba(102,126,234,0.2)",
+              padding: "0.75rem 2rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+            }}
+          >
+            <span
+              style={{
+                background: "linear-gradient(135deg, #667eea, #764ba2)",
+                borderRadius: "4px",
+                padding: "0.1rem 0.5rem",
+                color: "#fff",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              お知らせ
+            </span>
+            <span style={{ color: "#c0c0d8", fontSize: "0.88rem" }}>
+              <strong style={{ color: "#e0e0f0" }}>{a.title}</strong>
+              {a.content && (
+                <span style={{ marginLeft: "0.5rem", color: "#8888aa" }}>{a.content}</span>
+              )}
+            </span>
+          </div>
+        ))}
         {/* ヒーロー */}
         <section
           style={{
@@ -223,22 +261,13 @@ export default function TopPage() {
             {features.map((f) => (
               <div
                 key={f.title}
+                className="feature-card"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "16px",
                   padding: "2rem",
                   transition: "all 0.25s",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget;
-                  el.style.transform = "translateY(-4px)";
-                  el.style.borderColor = "rgba(102,126,234,0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.style.transform = "";
-                  el.style.borderColor = "rgba(255,255,255,0.08)";
                 }}
               >
                 <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>{f.icon}</div>
