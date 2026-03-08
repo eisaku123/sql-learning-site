@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function CancelSubscriptionButton({
   periodEnd,
@@ -72,22 +73,22 @@ export default function CancelSubscriptionButton({
           本当に解約しますか？{periodEndStr}まで使えますが、以降は更新されません。
         </p>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button
+          <LoadingButton
             onClick={handleCancel}
-            disabled={loading}
+            loading={loading}
+            loadingText="処理中..."
             style={{
               background: "rgba(255,80,80,0.2)",
               border: "1px solid rgba(255,80,80,0.4)",
               borderRadius: "8px",
               color: "#ff8888",
               padding: "0.5rem 1.25rem",
-              cursor: loading ? "wait" : "pointer",
               fontSize: "0.88rem",
               fontWeight: 600,
             }}
           >
-            {loading ? "処理中..." : "解約する"}
-          </button>
+            解約する
+          </LoadingButton>
           <button
             onClick={() => setConfirm(false)}
             style={{

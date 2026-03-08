@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function PricingPage() {
   const { data: session } = useSession();
@@ -240,29 +241,26 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <button
+            <LoadingButton
               onClick={handleCheckout}
-              disabled={loading}
+              loading={loading}
+              loadingText="処理中..."
               style={{
-                display: "block",
                 width: "100%",
-                background: loading
-                  ? "rgba(102,126,234,0.4)"
-                  : "linear-gradient(135deg, #667eea, #764ba2)",
+                background: "linear-gradient(135deg, #667eea, #764ba2)",
                 border: "none",
                 borderRadius: "12px",
                 color: "#fff",
                 padding: "0.9rem",
                 fontWeight: 700,
                 fontSize: "1rem",
-                cursor: loading ? "not-allowed" : "pointer",
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
             >
-              {loading ? "処理中..." : session?.user ? "プレミアムに申し込む" : "ログインして申し込む"}
-            </button>
+              {session?.user ? "プレミアムに申し込む" : "ログインして申し込む"}
+            </LoadingButton>
           </div>
         </section>
 

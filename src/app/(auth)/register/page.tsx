@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -161,23 +162,24 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button
+          <LoadingButton
             type="submit"
-            disabled={loading}
+            loading={loading}
+            loadingText="登録中..."
             style={{
-              background: loading ? "rgba(102,126,234,0.3)" : "linear-gradient(135deg, #667eea, #764ba2)",
+              background: "linear-gradient(135deg, #667eea, #764ba2)",
               color: "#fff",
               border: "none",
               borderRadius: "10px",
               padding: "0.8rem",
-              cursor: loading ? "not-allowed" : "pointer",
               fontWeight: 700,
               fontSize: "0.95rem",
               marginTop: "0.5rem",
+              width: "100%",
             }}
           >
-            {loading ? "登録中..." : "アカウント作成"}
-          </button>
+            アカウント作成
+          </LoadingButton>
         </form>
 
         <p style={{ textAlign: "center", color: "#8888aa", fontSize: "0.85rem", marginTop: "1.5rem" }}>

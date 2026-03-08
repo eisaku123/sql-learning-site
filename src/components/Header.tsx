@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import LoadingButton from "@/components/LoadingButton";
 
 export default function Header() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   return (
     <header
@@ -55,15 +57,18 @@ export default function Header() {
         <NavLink href="/pricing">料金</NavLink>
 
         {session ? (
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+          <LoadingButton
+            loading={signingOut}
+            onClick={async () => {
+              setSigningOut(true);
+              await signOut({ callbackUrl: "/" });
+            }}
             style={{
               background: "rgba(102,126,234,0.15)",
               border: "1px solid rgba(102,126,234,0.3)",
               borderRadius: "8px",
               color: "#e0e0f0",
               padding: "0.4rem 1rem",
-              cursor: "pointer",
               fontSize: "0.9rem",
               transition: "all 0.2s",
             }}
@@ -75,7 +80,7 @@ export default function Header() {
             }}
           >
             ログアウト
-          </button>
+          </LoadingButton>
         ) : (
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             <NavLink href="/login">ログイン</NavLink>
