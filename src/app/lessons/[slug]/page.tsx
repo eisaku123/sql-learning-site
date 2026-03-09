@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import dynamic from "next/dynamic";
 import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
+import TableReferenceModal from "@/components/TableReferenceModal";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
 
@@ -293,6 +294,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
           </div>
         </div>
       </main>
+      <TableReferenceModal />
       <style>{lessonContentStyle}</style>
     </>
   );
