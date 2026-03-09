@@ -21,6 +21,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
   const [lastResultColumns, setLastResultColumns] = useState<string[]>([]);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
 
   // 既存の進捗を取得
   useEffect(() => {
@@ -213,6 +214,8 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
                   lastResultColumns={lastResultColumns}
+                  activeIdx={activeExerciseIdx}
+                  onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
               {session?.user && (
@@ -258,6 +261,8 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
                   lastResultColumns={lastResultColumns}
+                  activeIdx={activeExerciseIdx}
+                  onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
             )}

@@ -9,6 +9,8 @@ interface ExercisePanelProps {
   solvedIds: string[];
   onSolve: (exerciseId: string) => void;
   lastResultColumns: string[];
+  activeIdx: number;
+  onChangeIdx: (idx: number) => void;
 }
 
 export default function ExercisePanel({
@@ -17,8 +19,9 @@ export default function ExercisePanel({
   solvedIds,
   onSolve,
   lastResultColumns,
+  activeIdx,
+  onChangeIdx,
 }: ExercisePanelProps) {
-  const [activeIdx, setActiveIdx] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
@@ -66,7 +69,7 @@ export default function ExercisePanel({
   };
 
   const handleNext = () => {
-    setActiveIdx((i) => Math.min(i + 1, exercises.length - 1));
+    onChangeIdx(Math.min(activeIdx + 1, exercises.length - 1));
     setShowHint(false);
     setShowAnswer(false);
     setFeedback(null);
@@ -93,7 +96,7 @@ export default function ExercisePanel({
             <button
               key={ex.id}
               onClick={() => {
-                setActiveIdx(i);
+                onChangeIdx(i);
                 setShowHint(false);
                 setShowAnswer(false);
                 setFeedback(null);

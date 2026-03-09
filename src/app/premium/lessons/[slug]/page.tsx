@@ -24,6 +24,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const [showExplanation, setShowExplanation] = useState(true);
+  const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
 
   // 認証チェック
   useEffect(() => {
@@ -322,6 +323,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
                   lastResultColumns={lastResultColumns}
+                  activeIdx={activeExerciseIdx}
+                  onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
               {session?.user && (
@@ -376,6 +379,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
                   lastResultColumns={lastResultColumns}
+                  activeIdx={activeExerciseIdx}
+                  onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
             )}
