@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback, useEffect } from "react";
+import { use, useState, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import dynamic from "next/dynamic";
 import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
+import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
 
@@ -20,11 +21,13 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
 
   const [isActive, setIsActive] = useState<boolean | null>(null);
   const [solvedIds, setSolvedIds] = useState<string[]>([]);
-  const [lastResultColumns, setLastResultColumns] = useState<string[]>([]);
+  const [lastResult, setLastResult] = useState<{ columns: string[]; rows: (string | number | null)[][] } | null>(null);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const [showExplanation, setShowExplanation] = useState(true);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
+  const sqlEditorRef = useRef<SqlEditorHandle>(null);
+  const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
 
   // 認証チェック
   useEffect(() => {
@@ -322,7 +325,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   lessonSlug={slug}
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
-                  lastResultColumns={lastResultColumns}
+                  lastResult={lastResult}
+                  runAnswerSql={runAnswerSql}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />
@@ -378,7 +382,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   lessonSlug={slug}
                   solvedIds={solvedIds}
                   onSolve={handleSolve}
-                  lastResultColumns={lastResultColumns}
+                  lastResult={lastResult}
+                  runAnswerSql={runAnswerSql}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />
@@ -399,8 +404,9 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                 SQL エディタ
               </h3>
               <SqlEditor
+                ref={sqlEditorRef as any}
                 initialQuery="SELECT * FROM employees LIMIT 5;"
-                onResult={setLastResultColumns}
+                onResult={(columns, rows) => setLastResult({ columns, rows })}
               />
             </section>
 

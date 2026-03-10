@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { SAMPLE_DB_SQL } from "@/lib/curriculum";
 
 interface QueryResult {
@@ -8,15 +8,19 @@ interface QueryResult {
   rows: (string | number | null)[][];
 }
 
-interface SqlEditorProps {
-  initialQuery?: string;
-  onResult?: (columns: string[]) => void;
+export interface SqlEditorHandle {
+  runSql: (sql: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
 }
 
-export default function SqlEditor({
-  initialQuery = "SELECT * FROM employees LIMIT 10;",
-  onResult,
-}: SqlEditorProps) {
+interface SqlEditorProps {
+  initialQuery?: string;
+  onResult?: (columns: string[], rows: (string | number | null)[][]) => void;
+}
+
+const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
+  { initialQuery = "SELECT * FROM employees LIMIT 10;", onResult },
+  ref
+) {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<QueryResult[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +33,6 @@ export default function SqlEditor({
 
     (async () => {
       try {
-        // dynamic import → Turbopack はブラウザ向け sql-wasm-browser.js を使用
         const mod = await import("sql.js");
         const initSqlJs = (mod as unknown as { default: (cfg: object) => Promise<unknown> }).default ?? mod;
         const SQL = await (initSqlJs as (cfg: object) => Promise<{ Database: new () => { run: (s: string) => void; exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } }>)({
@@ -52,6 +55,26 @@ export default function SqlEditor({
       cancelled = true;
     };
   }, []);
+
+  // 外部から任意のSQLを実行できるメソッドをrefで公開
+  useImperativeHandle(ref, () => ({
+    runSql: (sql: string) => {
+      if (!dbRef.current) return null;
+      try {
+        const db = dbRef.current as {
+          exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[];
+        };
+        const res = db.exec(sql);
+        if (res.length === 0) return { columns: [], rows: [] };
+        return {
+          columns: res[0].columns ?? [],
+          rows: res[0].values ?? [],
+        };
+      } catch {
+        return null;
+      }
+    },
+  }));
 
   const runQuery = useCallback(() => {
     if (!query.trim()) return;
@@ -86,10 +109,8 @@ export default function SqlEditor({
             dmlCount++;
           }
         } else if (isSelect) {
-          // SELECT だが結果0件（sql.js は空テーブルに対して [] を返す）
           allResults.push({ columns: [], rows: [] });
         } else {
-          // INSERT / UPDATE / DELETE / DDL
           dmlCount++;
         }
       }
@@ -97,10 +118,10 @@ export default function SqlEditor({
       setResults(allResults);
 
       if (allResults.length > 0 && onResult) {
-        onResult(allResults[allResults.length - 1].columns);
+        const last = allResults[allResults.length - 1];
+        onResult(last.columns, last.rows);
       }
 
-      // DML のみで SELECT 結果がない場合のフィードバック
       if (allResults.length === 0 && dmlCount > 0) {
         setError(`✅ ${dmlCount}件のクエリを実行しました（結果なし）`);
       }
@@ -289,7 +310,9 @@ export default function SqlEditor({
       )}
     </div>
   );
-}
+});
+
+export default SqlEditor;
 
 function translateError(msg: string): string {
   if (msg.includes("no such table")) {

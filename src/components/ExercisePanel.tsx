@@ -3,12 +3,15 @@
 import { useState } from "react";
 import type { Exercise } from "@/types";
 
+type SqlResult = { columns: string[]; rows: (string | number | null)[][] };
+
 interface ExercisePanelProps {
   exercises: Exercise[];
   lessonSlug: string;
   solvedIds: string[];
   onSolve: (exerciseId: string) => void;
-  lastResultColumns: string[];
+  lastResult: SqlResult | null;
+  runAnswerSql: (sql: string) => SqlResult | null;
   activeIdx: number;
   onChangeIdx: (idx: number) => void;
 }
@@ -18,7 +21,8 @@ export default function ExercisePanel({
   lessonSlug,
   solvedIds,
   onSolve,
-  lastResultColumns,
+  lastResult,
+  runAnswerSql,
   activeIdx,
   onChangeIdx,
 }: ExercisePanelProps) {
@@ -31,38 +35,42 @@ export default function ExercisePanel({
   const isSolved = solvedIds.includes(exercise.id);
 
   const handleCheck = async () => {
-    if (lastResultColumns.length === 0) {
+    if (!lastResult || lastResult.columns.length === 0) {
       setFeedback({ correct: false, message: "まずSQLを実行してください" });
       return;
     }
+
     setChecking(true);
     try {
-      const res = await fetch("/api/exercises/check", {
+      // 模範解答SQLをブラウザ内SQLiteで実行
+      const expected = runAnswerSql(exercise.answer);
+      if (!expected) {
+        setFeedback({ correct: false, message: "判定に失敗しました。もう一度試してください" });
+        return;
+      }
+
+      const correct = compareResults(
+        lastResult.columns, lastResult.rows,
+        expected.columns, expected.rows
+      );
+
+      setFeedback({
+        correct,
+        message: correct
+          ? "正解です！"
+          : `不正解です。期待: ${expected.columns.join(", ")}（${expected.rows.length}件）`,
+      });
+
+      if (correct) {
+        onSolve(exercise.id);
+      }
+
+      // 進捗をサーバーに記録
+      await fetch("/api/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lessonSlug,
-          exerciseId: exercise.id,
-          resultColumns: lastResultColumns,
-        }),
+        body: JSON.stringify({ exerciseId: exercise.id, solved: correct }),
       });
-      const data = await res.json();
-      setFeedback(data);
-      if (data.correct) {
-        onSolve(exercise.id);
-        // 進捗を記録
-        await fetch("/api/progress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ exerciseId: exercise.id, solved: true }),
-        });
-      } else {
-        await fetch("/api/progress", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ exerciseId: exercise.id, solved: false }),
-        });
-      }
     } finally {
       setChecking(false);
     }
@@ -75,6 +83,9 @@ export default function ExercisePanel({
     setFeedback(null);
   };
 
+  // lessonSlug は将来の拡張用に保持
+  void lessonSlug;
+
   return (
     <div
       style={{
@@ -85,13 +96,7 @@ export default function ExercisePanel({
       }}
     >
       <div style={{ marginBottom: "1rem" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            marginBottom: "1rem",
-          }}
-        >
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
           {exercises.map((ex, i) => (
             <button
               key={ex.id}
@@ -124,14 +129,7 @@ export default function ExercisePanel({
           ))}
         </div>
 
-        <h4
-          style={{
-            color: "#e0e0f0",
-            fontSize: "0.95rem",
-            fontWeight: 600,
-            marginBottom: "0.5rem",
-          }}
-        >
+        <h4 style={{ color: "#e0e0f0", fontSize: "0.95rem", fontWeight: 600, marginBottom: "0.5rem" }}>
           問題 {activeIdx + 1}
           {isSolved && (
             <span
@@ -267,9 +265,7 @@ export default function ExercisePanel({
       {feedback && (
         <div
           style={{
-            background: feedback.correct
-              ? "rgba(52,211,153,0.1)"
-              : "rgba(248,113,113,0.1)",
+            background: feedback.correct ? "rgba(52,211,153,0.1)" : "rgba(248,113,113,0.1)",
             border: `1px solid ${feedback.correct ? "rgba(52,211,153,0.3)" : "rgba(248,113,113,0.3)"}`,
             borderRadius: "8px",
             padding: "0.75rem",
@@ -283,4 +279,37 @@ export default function ExercisePanel({
       )}
     </div>
   );
+}
+
+// ブラウザ内で2つのSQL結果を比較する
+function compareResults(
+  userCols: string[], userRows: (string | number | null)[][],
+  answerCols: string[], answerRows: (string | number | null)[][]
+): boolean {
+  // カラム数
+  if (userCols.length !== answerCols.length) return false;
+
+  // カラム名（小文字・ソートして比較）
+  const sortedUser = [...userCols].map((c) => c.toLowerCase()).sort();
+  const sortedAnswer = [...answerCols].map((c) => c.toLowerCase()).sort();
+  if (!sortedUser.every((c, i) => c === sortedAnswer[i])) return false;
+
+  // 行数
+  if (userRows.length !== answerRows.length) return false;
+  if (userRows.length === 0) return true;
+
+  // ユーザー結果の列順をanswerColsに揃える
+  const colIndexMap = answerCols.map((ac) =>
+    userCols.findIndex((uc) => uc.toLowerCase() === ac.toLowerCase())
+  );
+  const normalizedUserRows = userRows.map((row) => colIndexMap.map((i) => row[i]));
+
+  // 行を文字列化してソート（ORDER BYの違いを吸収）
+  const rowToStr = (row: (string | number | null)[]) =>
+    row.map((c) => (c === null ? "\x00NULL" : String(c))).join("\x01");
+
+  const sortedUserRows = [...normalizedUserRows].map(rowToStr).sort();
+  const sortedAnswerRows = [...answerRows].map(rowToStr).sort();
+
+  return sortedUserRows.every((r, i) => r === sortedAnswerRows[i]);
 }
