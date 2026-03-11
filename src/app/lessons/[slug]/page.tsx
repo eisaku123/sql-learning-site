@@ -23,6 +23,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
+  const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
 
@@ -41,32 +42,32 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
             p.lessonSlug === slug && p.completed
         );
         setLessonCompleted(done);
+        setProgressLoaded(true);
       })
       .catch(() => {});
   }, [session, slug]);
 
+  // 全問正解時に自動でレッスン完了・花火（初回ロード後のユーザー操作のみ対象）
+  useEffect(() => {
+    if (!progressLoaded || !lesson || !session?.user || lessonCompleted) return;
+    if (solvedIds.length === 0) return;
+    if (lesson.exercises.every((ex) => solvedIds.includes(ex.id))) {
+      setTimeout(() => setShowFireworks(true), 200);
+      setLessonCompleted(true);
+      fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonSlug: slug }),
+      }).catch(() => {});
+    }
+  }, [solvedIds, progressLoaded, lesson, session, slug, lessonCompleted]);
+
   const handleSolve = useCallback((exerciseId: string) => {
     setSolvedIds((prev) => {
       if (prev.includes(exerciseId)) return prev;
-      const next = [...prev, exerciseId];
-      // 全問正解になったら花火を打ち上げ、レッスンを自動完了
-      if (lesson?.exercises.every((ex) => next.includes(ex.id))) {
-        setTimeout(() => setShowFireworks(true), 200);
-        // セッションがある場合はレッスンを自動完了
-        setLessonCompleted((alreadyDone) => {
-          if (!alreadyDone) {
-            fetch("/api/progress", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ lessonSlug: slug }),
-            }).catch(() => {});
-          }
-          return true;
-        });
-      }
-      return next;
+      return [...prev, exerciseId];
     });
-  }, [lesson, slug]);
+  }, []);
 
   if (!lesson) {
     return (
