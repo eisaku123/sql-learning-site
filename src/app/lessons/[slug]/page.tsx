@@ -49,23 +49,24 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
     setSolvedIds((prev) => {
       if (prev.includes(exerciseId)) return prev;
       const next = [...prev, exerciseId];
-      // 全問正解になったら花火を打ち上げる（初回ロード時は除く）
+      // 全問正解になったら花火を打ち上げ、レッスンを自動完了
       if (lesson?.exercises.every((ex) => next.includes(ex.id))) {
         setTimeout(() => setShowFireworks(true), 200);
+        // セッションがある場合はレッスンを自動完了
+        setLessonCompleted((alreadyDone) => {
+          if (!alreadyDone) {
+            fetch("/api/progress", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ lessonSlug: slug }),
+            }).catch(() => {});
+          }
+          return true;
+        });
       }
       return next;
     });
-  }, [lesson]);
-
-  const handleComplete = async () => {
-    if (!session?.user || lessonCompleted) return;
-    await fetch("/api/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lessonSlug: slug }),
-    });
-    setLessonCompleted(true);
-  };
+  }, [lesson, slug]);
 
   if (!lesson) {
     return (
@@ -87,7 +88,6 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
   const levelLabel = lesson.level === "beginner" ? "初級" : "中級";
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
 
-  const allSolved = lesson.exercises.every((ex) => solvedIds.includes(ex.id));
   const [showExplanation, setShowExplanation] = useState(true);
 
   return (
@@ -222,24 +222,21 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
                   onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
-              {session?.user && (
-                <button
-                  onClick={handleComplete}
-                  disabled={lessonCompleted}
+              {session?.user && lessonCompleted && (
+                <div
                   style={{
-                    background: lessonCompleted ? "rgba(52,211,153,0.15)" : allSolved ? "linear-gradient(135deg, #34d399, #059669)" : "rgba(255,255,255,0.05)",
-                    border: lessonCompleted ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(52,211,153,0.1)",
+                    border: "1px solid rgba(52,211,153,0.4)",
                     borderRadius: "10px",
-                    color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
+                    color: "#34d399",
                     padding: "0.75rem",
-                    cursor: lessonCompleted ? "not-allowed" : "pointer",
                     fontWeight: 600,
                     fontSize: "0.9rem",
-                    transition: "all 0.2s",
+                    textAlign: "center",
                   }}
                 >
-                  {lessonCompleted ? "✅ レッスン完了済み" : "このレッスンを完了にする"}
-                </button>
+                  ✅ レッスン完了済み
+                </div>
               )}
             </div>
           )}
@@ -283,24 +280,21 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
               />
             </section>
 
-            {showExplanation && session?.user && (
-              <button
-                onClick={handleComplete}
-                disabled={lessonCompleted}
+            {showExplanation && session?.user && lessonCompleted && (
+              <div
                 style={{
-                  background: lessonCompleted ? "rgba(52,211,153,0.15)" : allSolved ? "linear-gradient(135deg, #34d399, #059669)" : "rgba(255,255,255,0.05)",
-                  border: lessonCompleted ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(52,211,153,0.1)",
+                  border: "1px solid rgba(52,211,153,0.4)",
                   borderRadius: "10px",
-                  color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
+                  color: "#34d399",
                   padding: "0.75rem",
-                  cursor: lessonCompleted ? "not-allowed" : "pointer",
                   fontWeight: 600,
                   fontSize: "0.9rem",
-                  transition: "all 0.2s",
+                  textAlign: "center",
                 }}
               >
-                {lessonCompleted ? "✅ レッスン完了済み" : "このレッスンを完了にする"}
-              </button>
+                ✅ レッスン完了済み
+              </div>
             )}
           </div>
         </div>
