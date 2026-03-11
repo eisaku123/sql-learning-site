@@ -882,10 +882,10 @@ export const PREMIUM_LESSONS: Lesson[] = [
   },
   {
     slug: "pi-exists",
-    title: "EXISTS・NOT EXISTS・ALL・ANY",
+    title: "EXISTS・NOT EXISTS・サブクエリ比較",
     level: "intermediate",
     order: 14,
-    description: "相関サブクエリを使ったEXISTS・NOT EXISTS・ALL・ANYを学びます",
+    description: "相関サブクエリを使ったEXISTS・NOT EXISTSとMAX/MIN・INを使ったサブクエリ比較を学びます",
     content: `
 <h2>EXISTS — 存在チェック</h2>
 <p>サブクエリが1行でも返すなら真を返します。</p>
@@ -903,12 +903,13 @@ export const PREMIUM_LESSONS: Lesson[] = [
   <span class="sql-keyword">AND</span> salary > <span class="sql-number">550000</span>
 );</code></pre>
 
-<h2>ALL / ANY</h2>
-<pre><code><span class="sql-comment">-- ALL: サブクエリの全値と比較して真</span>
-<span class="sql-keyword">WHERE</span> salary > <span class="sql-keyword">ALL</span> (<span class="sql-keyword">SELECT</span> salary <span class="sql-keyword">FROM</span> ...)
+<h2>サブクエリによる比較（MAX/MIN）</h2>
+<p>「全員より高い」は MAX、「誰かより高い」は MIN を使って実現できます。</p>
+<pre><code><span class="sql-comment">-- 全員より高い（ALLの代替）</span>
+<span class="sql-keyword">WHERE</span> salary > (<span class="sql-keyword">SELECT</span> <span class="sql-function">MAX</span>(salary) <span class="sql-keyword">FROM</span> ...)
 
-<span class="sql-comment">-- ANY: サブクエリのいずれかと比較して真</span>
-<span class="sql-keyword">WHERE</span> salary > <span class="sql-keyword">ANY</span> (<span class="sql-keyword">SELECT</span> salary <span class="sql-keyword">FROM</span> ...)</code></pre>
+<span class="sql-comment">-- 誰かより高い（ANYの代替）</span>
+<span class="sql-keyword">WHERE</span> salary > (<span class="sql-keyword">SELECT</span> <span class="sql-function">MIN</span>(salary) <span class="sql-keyword">FROM</span> ...)</code></pre>
     `,
     exercises: [
       {
@@ -934,16 +935,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-exists-4",
-        question: "ALLを使い、department_id=3の全従業員より高い給与を持つ従業員のname・salaryを取得してください",
-        hint: "WHERE salary > ALL (SELECT salary FROM employees WHERE department_id = 3)",
-        answer: "SELECT name, salary FROM employees WHERE salary > ALL (SELECT salary FROM employees WHERE department_id = 3)",
+        question: "サブクエリを使い、department_id=3の全従業員の最高給与より高い給与を持つ従業員のname・salaryを取得してください",
+        hint: "WHERE salary > (SELECT MAX(salary) FROM employees WHERE department_id = 3)",
+        answer: "SELECT name, salary FROM employees WHERE salary > (SELECT MAX(salary) FROM employees WHERE department_id = 3)",
         expectedColumns: ["name", "salary"],
       },
       {
         id: "pi-exists-5",
-        question: "ANYを使い、パソコンカテゴリのいずれかの商品より高いpriceを持つ商品のname・priceを取得してください",
-        hint: "WHERE price > ANY (SELECT price FROM products WHERE category = 'パソコン')",
-        answer: "SELECT name, price FROM products WHERE price > ANY (SELECT price FROM products WHERE category = 'パソコン')",
+        question: "サブクエリを使い、パソコンカテゴリの最安値より高いpriceを持つ商品のname・priceを取得してください",
+        hint: "WHERE price > (SELECT MIN(price) FROM products WHERE category = 'パソコン')",
+        answer: "SELECT name, price FROM products WHERE price > (SELECT MIN(price) FROM products WHERE category = 'パソコン')",
         expectedColumns: ["name", "price"],
       },
     ],
@@ -1128,9 +1129,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-view-4",
-        question: "v_tempビュー（employeesのname）を作成後、DROP VIEWで削除し、sqlite_masterに残るビューのnameを取得してください",
-        hint: "CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
-        answer: "CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
+        question: "v_baseビュー（employeesのname）とv_tempビュー（employeesのname）を作成後、v_tempをDROP VIEWで削除し、sqlite_masterに残るビューのnameを取得してください",
+        hint: "CREATE VIEW IF NOT EXISTS v_base AS SELECT name FROM employees; CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
+        answer: "CREATE VIEW IF NOT EXISTS v_base AS SELECT name FROM employees; CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
         expectedColumns: ["name"],
       },
       {
@@ -1271,6 +1272,80 @@ export const PREMIUM_LESSONS: Lesson[] = [
         hint: "GROUP BY category HAVING COUNT(DISTINCT o.id) >= 3 ORDER BY 総数量 DESC",
         answer: "SELECT p.category AS カテゴリ, COUNT(DISTINCT o.id) AS 注文件数, SUM(o.quantity) AS 総数量, ROUND(AVG(p.price * o.quantity)) AS 平均注文額, MAX(p.price * o.quantity) AS 最大注文額 FROM orders o JOIN products p ON o.product_id = p.id GROUP BY p.category HAVING COUNT(DISTINCT o.id) >= 3 ORDER BY 総数量 DESC",
         expectedColumns: ["カテゴリ", "注文件数", "総数量", "平均注文額", "最大注文額"],
+      },
+    ],
+  },
+  {
+    slug: "pi-window-advanced",
+    title: "ウィンドウ関数応用（NTILE・FIRST_VALUE・移動平均）",
+    level: "intermediate",
+    order: 20,
+    description: "NTILE・FIRST_VALUE・LAST_VALUE・移動平均・累計など実践的なウィンドウ関数を学びます",
+    content: `
+<h2>NTILE — データをN等分に分ける</h2>
+<p>行を指定した数のグループ（タイル）に均等に分割します。四分位数や十分位数の算出に便利です。</p>
+<pre><code><span class="sql-keyword">SELECT</span> name, salary,
+  <span class="sql-function">NTILE</span>(<span class="sql-number">4</span>) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary) <span class="sql-keyword">AS</span> 四分位
+<span class="sql-keyword">FROM</span> employees;</code></pre>
+
+<h2>FIRST_VALUE / LAST_VALUE — グループ内の最初・最後の値</h2>
+<p>パーティション内で最初または最後の行の値を取得します。</p>
+<pre><code><span class="sql-keyword">SELECT</span> name, salary, department_id,
+  <span class="sql-function">FIRST_VALUE</span>(name) <span class="sql-keyword">OVER</span> (
+    <span class="sql-keyword">PARTITION BY</span> department_id <span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>
+  ) <span class="sql-keyword">AS</span> 部署最高給与者
+<span class="sql-keyword">FROM</span> employees;</code></pre>
+
+<h2>移動平均（ROWS BETWEEN）</h2>
+<p><code>ROWS BETWEEN N PRECEDING AND CURRENT ROW</code> でフレームを指定して移動平均を計算します。</p>
+<pre><code><span class="sql-keyword">SELECT</span> name, salary,
+  <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">OVER</span> (
+    <span class="sql-keyword">ORDER BY</span> salary
+    <span class="sql-keyword">ROWS BETWEEN</span> <span class="sql-number">2</span> <span class="sql-keyword">PRECEDING AND CURRENT ROW</span>
+  ) <span class="sql-keyword">AS</span> 移動平均
+<span class="sql-keyword">FROM</span> employees;</code></pre>
+
+<h2>累計（SUM OVER）</h2>
+<p>ORDER BY と組み合わせて累積合計を計算できます。</p>
+<pre><code><span class="sql-keyword">SELECT</span> name, salary,
+  <span class="sql-function">SUM</span>(salary) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary) <span class="sql-keyword">AS</span> 累計給与
+<span class="sql-keyword">FROM</span> employees;</code></pre>
+    `,
+    exercises: [
+      {
+        id: "pi-wadv-1",
+        question: "NTILE(4)を使い、employeesのname・salaryと給与四分位数を「四分位」という列名でsalary昇順に取得してください",
+        hint: "NTILE(4) OVER (ORDER BY salary) AS 四分位",
+        answer: "SELECT name, salary, NTILE(4) OVER (ORDER BY salary) AS 四分位 FROM employees ORDER BY salary",
+        expectedColumns: ["name", "salary", "四分位"],
+      },
+      {
+        id: "pi-wadv-2",
+        question: "FIRST_VALUEを使い、employeesのname・salary・department_idと、部署内salary降順で最も給与が高い従業員名を「部署最高給与者」として取得してください",
+        hint: "FIRST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署最高給与者",
+        answer: "SELECT name, salary, department_id, FIRST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署最高給与者 FROM employees",
+        expectedColumns: ["name", "salary", "department_id", "部署最高給与者"],
+      },
+      {
+        id: "pi-wadv-3",
+        question: "LAST_VALUEを使い、employeesのname・salary・department_idと、部署内salary昇順で最も給与が低い従業員名を「部署最低給与者」としてROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWINGで取得してください",
+        hint: "LAST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS 部署最低給与者",
+        answer: "SELECT name, salary, department_id, LAST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS 部署最低給与者 FROM employees",
+        expectedColumns: ["name", "salary", "department_id", "部署最低給与者"],
+      },
+      {
+        id: "pi-wadv-4",
+        question: "salary昇順で直前2行を含む移動平均をROUNDして「移動平均給与」として、employeesのname・salary・移動平均給与をsalary昇順で取得してください",
+        hint: "ROUND(AVG(salary) OVER (ORDER BY salary ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)) AS 移動平均給与",
+        answer: "SELECT name, salary, ROUND(AVG(salary) OVER (ORDER BY salary ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)) AS 移動平均給与 FROM employees ORDER BY salary",
+        expectedColumns: ["name", "salary", "移動平均給与"],
+      },
+      {
+        id: "pi-wadv-5",
+        question: "SUM OVER を使い、employeesのname・salary・salary昇順での累計給与を「累計給与」としてsalary昇順で取得してください",
+        hint: "SUM(salary) OVER (ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計給与",
+        answer: "SELECT name, salary, SUM(salary) OVER (ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計給与 FROM employees ORDER BY salary",
+        expectedColumns: ["name", "salary", "累計給与"],
       },
     ],
   },
