@@ -49,9 +49,13 @@ export default function ExercisePanel({
         return;
       }
 
+      // ORDER BY がある場合は行の順番も考慮する
+      const respectOrder = /\bORDER\s+BY\b/i.test(exercise.answer);
+
       const correct = compareResults(
         lastResult.columns, lastResult.rows,
-        expected.columns, expected.rows
+        expected.columns, expected.rows,
+        respectOrder
       );
 
       setFeedback({
@@ -284,15 +288,16 @@ export default function ExercisePanel({
 // ブラウザ内で2つのSQL結果を比較する
 function compareResults(
   userCols: string[], userRows: (string | number | null)[][],
-  answerCols: string[], answerRows: (string | number | null)[][]
+  answerCols: string[], answerRows: (string | number | null)[][],
+  respectOrder = false
 ): boolean {
   // カラム数
   if (userCols.length !== answerCols.length) return false;
 
   // カラム名（小文字・ソートして比較）
-  const sortedUser = [...userCols].map((c) => c.toLowerCase()).sort();
-  const sortedAnswer = [...answerCols].map((c) => c.toLowerCase()).sort();
-  if (!sortedUser.every((c, i) => c === sortedAnswer[i])) return false;
+  const sortedUserCols = [...userCols].map((c) => c.toLowerCase()).sort();
+  const sortedAnswerCols = [...answerCols].map((c) => c.toLowerCase()).sort();
+  if (!sortedUserCols.every((c, i) => c === sortedAnswerCols[i])) return false;
 
   // 行数
   if (userRows.length !== answerRows.length) return false;
@@ -304,12 +309,18 @@ function compareResults(
   );
   const normalizedUserRows = userRows.map((row) => colIndexMap.map((i) => row[i]));
 
-  // 行を文字列化してソート（ORDER BYの違いを吸収）
-  const rowToStr = (row: (string | number | null)[]) =>
-    row.map((c) => (c === null ? "\x00NULL" : String(c))).join("\x01");
+  const cellStr = (c: string | number | null) => (c === null ? "\x00NULL" : String(c));
 
-  const sortedUserRows = [...normalizedUserRows].map(rowToStr).sort();
-  const sortedAnswerRows = [...answerRows].map(rowToStr).sort();
-
-  return sortedUserRows.every((r, i) => r === sortedAnswerRows[i]);
+  if (respectOrder) {
+    // 順番通りに比較（ORDER BY の正確さを確認）
+    return normalizedUserRows.every((row, i) =>
+      row.every((cell, j) => cellStr(cell) === cellStr(answerRows[i][j]))
+    );
+  } else {
+    // ソートして比較（順番は問わない）
+    const rowToStr = (row: (string | number | null)[]) => row.map(cellStr).join("\x01");
+    const sortedUserRows = [...normalizedUserRows].map(rowToStr).sort();
+    const sortedAnswerRows = [...answerRows].map(rowToStr).sort();
+    return sortedUserRows.every((r, i) => r === sortedAnswerRows[i]);
+  }
 }

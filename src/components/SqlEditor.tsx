@@ -26,6 +26,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "running">("loading");
   const dbRef = useRef<unknown>(null);
+  const sqlConstructorRef = useRef<{ Database: new () => { exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } } | null>(null);
 
   // sql.js をロード
   useEffect(() => {
@@ -39,6 +40,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
           locateFile: (f: string) => `/${f}`,
         });
         if (cancelled) return;
+        sqlConstructorRef.current = SQL as unknown as { Database: new () => { exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } };
         const db = new SQL.Database();
         db.exec(SAMPLE_DB_SQL);
         dbRef.current = db;
@@ -59,17 +61,20 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   // 外部から任意のSQLを実行できるメソッドをrefで公開
   useImperativeHandle(ref, () => ({
     runSql: (sql: string) => {
-      if (!dbRef.current) return null;
+      if (!sqlConstructorRef.current) return null;
       try {
-        const db = dbRef.current as {
-          exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[];
-        };
-        const res = db.exec(sql);
-        if (res.length === 0) return { columns: [], rows: [] };
-        return {
-          columns: res[0].columns ?? [],
-          rows: res[0].values ?? [],
-        };
+        const freshDb = new sqlConstructorRef.current.Database();
+        freshDb.exec(SAMPLE_DB_SQL);
+        // 複数文を1文ずつ実行し、SELECT結果を集める
+        const statements = sql.split(";").map(s => s.trim()).filter(Boolean);
+        let lastSelectResult: { columns: string[]; rows: (string | number | null)[][] } | null = null;
+        for (const stmt of statements) {
+          const res = freshDb.exec(stmt);
+          if (res.length > 0 && res[0].columns && res[0].columns.length > 0) {
+            lastSelectResult = { columns: res[0].columns, rows: res[0].values ?? [] };
+          }
+        }
+        return lastSelectResult ?? { columns: [], rows: [] };
       } catch {
         return null;
       }

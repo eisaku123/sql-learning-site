@@ -645,7 +645,7 @@ export const LESSONS: Lesson[] = [
         id: "idx-3",
         question: "先ほど作成したインデックス idx_emp_salary を削除して、SQLite_masterで確認してください",
         hint: "DROP INDEX idx_emp_salary;",
-        answer: "DROP INDEX idx_emp_salary; SELECT * FROM sqlite_master WHERE type='index';",
+        answer: "CREATE INDEX IF NOT EXISTS idx_emp_salary ON employees(salary); DROP INDEX idx_emp_salary; SELECT * FROM sqlite_master WHERE type='index';",
         expectedColumns: ["type", "name", "tbl_name", "rootpage", "sql"],
       },
     ],
