@@ -206,28 +206,50 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         />
       </div>
 
-      {/* 実行ボタン */}
-      <button
-        onClick={runQuery}
-        disabled={isLoading || isRunning}
-        style={{
-          background:
-            isLoading || isRunning
-              ? "rgba(102,126,234,0.2)"
-              : "linear-gradient(135deg, #667eea, #764ba2)",
-          color: isLoading || isRunning ? "#8888aa" : "#fff",
-          border: "none",
-          borderRadius: "8px",
-          padding: "0.6rem 1.5rem",
-          cursor: isLoading || isRunning ? "not-allowed" : "pointer",
-          fontWeight: 600,
-          fontSize: "0.9rem",
-          alignSelf: "flex-start",
-          transition: "all 0.2s",
-        }}
-      >
-        {isLoading ? "⏳ 読み込み中..." : isRunning ? "⚙️ 実行中..." : "▶ 実行"}
-      </button>
+      {/* 実行ボタン・クリアボタン */}
+      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <button
+          onClick={runQuery}
+          disabled={isLoading || isRunning}
+          style={{
+            background:
+              isLoading || isRunning
+                ? "rgba(102,126,234,0.2)"
+                : "linear-gradient(135deg, #667eea, #764ba2)",
+            color: isLoading || isRunning ? "#8888aa" : "#fff",
+            border: "none",
+            borderRadius: "8px",
+            padding: "0.6rem 1.5rem",
+            cursor: isLoading || isRunning ? "not-allowed" : "pointer",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            transition: "all 0.2s",
+          }}
+        >
+          {isLoading ? "⏳ 読み込み中..." : isRunning ? "⚙️ 実行中..." : "▶ 実行"}
+        </button>
+        <button
+          onClick={() => {
+            setQuery("");
+            setResults([]);
+            setError(null);
+          }}
+          disabled={isLoading || isRunning}
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            color: isLoading || isRunning ? "#546e7a" : "#8888aa",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "8px",
+            padding: "0.6rem 1rem",
+            cursor: isLoading || isRunning ? "not-allowed" : "pointer",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            transition: "all 0.2s",
+          }}
+        >
+          ✕ クリア
+        </button>
+      </div>
 
       {/* エラー / DML フィードバック */}
       {error && (
