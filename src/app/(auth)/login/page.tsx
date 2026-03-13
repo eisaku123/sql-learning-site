@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import LoadingButton from "@/components/LoadingButton";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const resetDone = params.get("reset") === "1";
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,6 +65,23 @@ export default function LoginPage() {
             ログイン
           </h1>
         </div>
+
+        {resetDone && (
+          <div
+            style={{
+              background: "rgba(52,211,153,0.08)",
+              border: "1px solid rgba(52,211,153,0.2)",
+              borderRadius: "8px",
+              padding: "0.7rem 1rem",
+              color: "#34d399",
+              fontSize: "0.85rem",
+              marginBottom: "1rem",
+              textAlign: "center",
+            }}
+          >
+            パスワードを更新しました。新しいパスワードでログインしてください。
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
@@ -139,6 +159,12 @@ export default function LoginPage() {
             </div>
           )}
 
+          <div style={{ textAlign: "right" }}>
+            <Link href="/forgot-password" style={{ color: "#8888aa", fontSize: "0.8rem", textDecoration: "none" }}>
+              パスワードをお忘れの方
+            </Link>
+          </div>
+
           <LoadingButton
             type="submit"
             loading={loading}
@@ -167,6 +193,14 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
 

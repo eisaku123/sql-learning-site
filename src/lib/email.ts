@@ -67,6 +67,74 @@ export async function sendVerificationEmail(email: string, token: string) {
   });
 }
 
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://www.sql-learning.net";
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  await resend.emails.send({
+    from: "SQLLearn <noreply@sql-learning.net>",
+    to: email,
+    subject: "【SQLLearn】パスワードのリセット",
+    html: `
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#0a0a1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <span style="font-size:1.4rem;font-weight:800;">
+        <span style="color:#667eea;">SQL</span><span style="color:#764ba2;">Learn</span>
+      </span>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;width:56px;height:56px;line-height:56px;font-size:1.6rem;text-align:center;">
+          🔑
+        </div>
+      </div>
+
+      <h1 style="color:#e0e0f0;font-size:1.25rem;font-weight:700;text-align:center;margin:0 0 8px;">
+        パスワードのリセット
+      </h1>
+      <p style="color:#8888aa;text-align:center;font-size:0.88rem;margin:0 0 28px;">
+        パスワードリセットのリクエストを受け付けました。<br>
+        以下のボタンをクリックして新しいパスワードを設定してください。
+      </p>
+
+      <div style="text-align:center;margin-bottom:24px;">
+        <a href="${resetUrl}"
+           style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 32px;border-radius:50px;font-weight:700;font-size:0.95rem;">
+          パスワードをリセットする
+        </a>
+      </div>
+
+      <p style="color:#8888aa;font-size:0.8rem;line-height:1.7;margin:0;text-align:center;">
+        このリンクの有効期限は <strong style="color:#e0e0f0;">1時間</strong> です。<br>
+        心当たりがない場合はこのメールを無視してください。<br>
+        パスワードは変更されません。
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;">
+      <p style="color:#546e7a;font-size:0.75rem;line-height:1.7;margin:0;">
+        このメールはSQLLearnからの自動送信です。<br>
+        ご不明な点は <a href="mailto:eisaku546@gmail.com" style="color:#667eea;">eisaku546@gmail.com</a> までご連絡ください。
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
+    `.trim(),
+  });
+}
+
 export async function sendPremiumWelcomeEmail({
   to,
   name,
