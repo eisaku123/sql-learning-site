@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import dynamic from "next/dynamic";
 import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
+import TableReferenceModal from "@/components/TableReferenceModal";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
@@ -26,6 +27,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const [showFireworks, setShowFireworks] = useState(false);
   const [showExplanation, setShowExplanation] = useState(true);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
+  const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
 
@@ -59,33 +61,32 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
             p.lessonSlug === slug && p.completed
         );
         setLessonCompleted(done);
+        setProgressLoaded(true);
       })
       .catch(() => {});
   }, [session, isActive, slug]);
 
-  const handleSolve = useCallback(
-    (exerciseId: string) => {
-      setSolvedIds((prev) => {
-        if (prev.includes(exerciseId)) return prev;
-        const next = [...prev, exerciseId];
-        if (lesson?.exercises.every((ex) => next.includes(ex.id))) {
-          setTimeout(() => setShowFireworks(true), 200);
-        }
-        return next;
-      });
-    },
-    [lesson]
-  );
+  // 全問正解時に自動でレッスン完了・花火
+  useEffect(() => {
+    if (!progressLoaded || !lesson || !session?.user || lessonCompleted) return;
+    if (solvedIds.length === 0) return;
+    if (lesson.exercises.every((ex) => solvedIds.includes(ex.id))) {
+      setTimeout(() => setShowFireworks(true), 200);
+      setLessonCompleted(true);
+      fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonSlug: slug }),
+      }).catch(() => {});
+    }
+  }, [solvedIds, progressLoaded, lesson, session, slug, lessonCompleted]);
 
-  const handleComplete = async () => {
-    if (!session?.user || lessonCompleted) return;
-    await fetch("/api/progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lessonSlug: slug }),
+  const handleSolve = useCallback((exerciseId: string) => {
+    setSolvedIds((prev) => {
+      if (prev.includes(exerciseId)) return prev;
+      return [...prev, exerciseId];
     });
-    setLessonCompleted(true);
-  };
+  }, []);
 
   // ロード中
   if (status === "loading" || isActive === null) {
@@ -177,7 +178,6 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const nextLesson = lessonIdx < PREMIUM_LESSONS.length - 1 ? PREMIUM_LESSONS[lessonIdx + 1] : null;
   const levelLabel = lesson.level === "beginner" ? "初級" : "中級";
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
-  const allSolved = lesson.exercises.every((ex) => solvedIds.includes(ex.id));
 
   return (
     <>
@@ -331,24 +331,21 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                   onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
-              {session?.user && (
-                <button
-                  onClick={handleComplete}
-                  disabled={lessonCompleted}
+              {session?.user && lessonCompleted && (
+                <div
                   style={{
-                    background: lessonCompleted ? "rgba(52,211,153,0.15)" : allSolved ? "linear-gradient(135deg, #34d399, #059669)" : "rgba(255,255,255,0.05)",
-                    border: lessonCompleted ? "1px solid rgba(52,211,153,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(52,211,153,0.1)",
+                    border: "1px solid rgba(52,211,153,0.4)",
                     borderRadius: "10px",
-                    color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
+                    color: "#34d399",
                     padding: "0.75rem",
-                    cursor: lessonCompleted ? "not-allowed" : "pointer",
                     fontWeight: 600,
                     fontSize: "0.9rem",
-                    transition: "all 0.2s",
+                    textAlign: "center",
                   }}
                 >
-                  {lessonCompleted ? "✅ レッスン完了済み" : "このレッスンを完了にする"}
-                </button>
+                  ✅ レッスン完了済み
+                </div>
               )}
             </div>
           )}
@@ -410,35 +407,26 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
               />
             </section>
 
-            {/* レッスン完了ボタン */}
-            {showExplanation && session?.user && (
-              <button
-                onClick={handleComplete}
-                disabled={lessonCompleted}
+            {showExplanation && session?.user && lessonCompleted && (
+              <div
                 style={{
-                  background: lessonCompleted
-                    ? "rgba(52,211,153,0.15)"
-                    : allSolved
-                      ? "linear-gradient(135deg, #34d399, #059669)"
-                      : "rgba(255,255,255,0.05)",
-                  border: lessonCompleted
-                    ? "1px solid rgba(52,211,153,0.4)"
-                    : "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(52,211,153,0.1)",
+                  border: "1px solid rgba(52,211,153,0.4)",
                   borderRadius: "10px",
-                  color: lessonCompleted ? "#34d399" : allSolved ? "#fff" : "#8888aa",
+                  color: "#34d399",
                   padding: "0.75rem",
-                  cursor: lessonCompleted ? "not-allowed" : "pointer",
                   fontWeight: 600,
                   fontSize: "0.9rem",
-                  transition: "all 0.2s",
+                  textAlign: "center",
                 }}
               >
-                {lessonCompleted ? "✅ レッスン完了済み" : "このレッスンを完了にする"}
-              </button>
+                ✅ レッスン完了済み
+              </div>
             )}
           </div>
         </div>
       </main>
+      <TableReferenceModal />
       <style>{lessonContentStyle}</style>
     </>
   );
