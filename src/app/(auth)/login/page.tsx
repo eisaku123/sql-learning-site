@@ -23,7 +23,9 @@ export default function LoginPage() {
       redirect: false,
     });
     setLoading(false);
-    if (res?.error) {
+    if (res?.error === "EMAIL_NOT_VERIFIED") {
+      setError("メールアドレスの確認が完了していません。届いたメールのリンクをクリックしてください。");
+    } else if (res?.error) {
       setError("メールアドレスまたはパスワードが正しくありません");
     } else {
       router.push("/dashboard");

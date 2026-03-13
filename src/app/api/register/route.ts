@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -20,10 +22,19 @@ export async function POST(req: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, password: hashed, name: name || null },
+      data: { email, password: hashed, name: name || null, emailVerified: false },
     });
 
-    return NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
+    // 認証トークン生成（24時間有効）
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await prisma.emailVerificationToken.create({
+      data: { userId: user.id, token, expiresAt },
+    });
+
+    await sendVerificationEmail(email, token);
+
+    return NextResponse.json({ message: "確認メールを送信しました" }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
   }

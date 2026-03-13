@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LoadingButton from "@/components/LoadingButton";
@@ -29,13 +28,7 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
-      // 登録後、自動ログイン
-      await signIn("credentials", {
-        email: form.email,
-        password: form.password,
-        redirect: false,
-      });
-      router.push("/dashboard");
+      router.push("/auth/verify-email");
     } catch {
       setError("サーバーエラーが発生しました");
     }

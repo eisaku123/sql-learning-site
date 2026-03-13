@@ -8,14 +8,23 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  password     String
-  name         String?
-  createdAt    DateTime       @default(now())
-  progress     UserProgress[]
-  exercises    UserExercise[]
-  subscription Subscription?
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  name          String?
+  emailVerified Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  progress      UserProgress[]
+  exercises     UserExercise[]
+  subscription  Subscription?
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Subscription {
