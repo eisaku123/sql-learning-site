@@ -1,0 +1,909 @@
+openapi: 3.0.3
+
+info:
+  title: SQLLearn API
+  version: 1.7.3
+  description: |
+    SQLLearn（https://www.sql-learning.net）のバックエンドAPI仕様。
+    Next.js App Router で実装された REST API。
+
+servers:
+  - url: https://www.sql-learning.net
+    description: 本番環境
+  - url: http://localhost:3000
+    description: ローカル開発環境
+
+tags:
+  - name: auth
+    description: 認証・アカウント管理
+  - name: progress
+    description: 学習進捗
+  - name: exercises
+    description: 練習問題
+  - name: announcements
+    description: お知らせ
+  - name: subscription
+    description: サブスクリプション（Stripe）
+  - name: admin
+    description: 管理者専用（管理者Cookieが必要）
+
+# ─────────────────────────────────────────
+# セキュリティスキーム
+# ─────────────────────────────────────────
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth.js セッションCookie（通常ユーザー認証）
+    adminCookie:
+      type: apiKey
+      in: cookie
+      name: admin_token
+      description: 管理者JWT Cookie（管理者認証）
+    stripeSignature:
+      type: apiKey
+      in: header
+      name: stripe-signature
+      description: Stripe Webhook 署名検証用ヘッダー
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        emailVerified:
+          type: boolean
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        isPublished:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        stripeCustomerId:
+          type: string
+        stripeSubscriptionId:
+          type: string
+        status:
+          type: string
+          example: active
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserProgress:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        lessonSlug:
+          type: string
+        completed:
+          type: boolean
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    UserExercise:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        exerciseId:
+          type: string
+        solved:
+          type: boolean
+        attempts:
+          type: integer
+        solvedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+# ─────────────────────────────────────────
+# パス定義
+# ─────────────────────────────────────────
+paths:
+
+  # ── 認証 ────────────────────────────────
+
+  /api/register:
+    post:
+      tags: [auth]
+      summary: 新規ユーザー登録
+      description: |
+        アカウントを作成し、メールアドレス確認メールを送信する。
+        登録後は `emailVerified: false` 状態となり、メール認証完了までログイン不可。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                name:
+                  type: string
+                  description: 任意
+            example:
+              email: user@example.com
+              password: secret123
+              name: 田中 太郎
+      responses:
+        '201':
+          description: 確認メール送信済み
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 確認メールを送信しました
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                required:
+                  value: { error: メールアドレスとパスワードは必須です }
+                shortPassword:
+                  value: { error: パスワードは6文字以上で入力してください }
+        '409':
+          description: メールアドレス重複
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error: このメールアドレスはすでに登録されています
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/auth/verify-email:
+    get:
+      tags: [auth]
+      summary: メールアドレス認証
+      description: |
+        登録メールのリンクに含まれるトークンを検証し、アカウントを有効化する。
+        結果に応じて `/auth/verify-email` へリダイレクト。
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 登録メールに含まれる認証トークン（有効期限 24 時間）
+      responses:
+        '302':
+          description: 検証結果に応じてリダイレクト
+          headers:
+            Location:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: /auth/verify-email?success=1
+                invalid:
+                  value: /auth/verify-email?error=invalid
+                expired:
+                  value: /auth/verify-email?error=expired
+
+  /api/auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: パスワードリセットメール送信
+      description: |
+        入力されたメールアドレスにパスワードリセットリンクを送信する。
+        メールアドレスが存在しない場合も同じレスポンスを返す（メールアドレス漏洩防止）。
+        リセットトークンの有効期限は 1 時間。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            example:
+              email: user@example.com
+      responses:
+        '200':
+          description: メール送信済み（メールアドレスの存在有無は返さない）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: パスワードリセットメールを送信しました
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/auth/reset-password:
+    post:
+      tags: [auth]
+      summary: パスワードリセット実行
+      description: トークンを検証して新しいパスワードに更新する。トークンは使用後即削除。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                  description: パスワードリセットメールに含まれるトークン
+                password:
+                  type: string
+                  minLength: 6
+            example:
+              token: abc123...
+              password: newpassword
+      responses:
+        '200':
+          description: パスワード更新完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: パスワードを更新しました
+        '400':
+          description: バリデーションエラー / トークン無効 / トークン期限切れ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              examples:
+                invalid:
+                  value: { error: 無効なリンクです }
+                expired:
+                  value: { error: リンクの有効期限が切れています。再度パスワードリセットを行ってください。 }
+                shortPassword:
+                  value: { error: パスワードは6文字以上で入力してください }
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ── 進捗 ────────────────────────────────
+
+  /api/progress:
+    get:
+      tags: [progress]
+      summary: 学習進捗取得
+      description: ログインユーザーのレッスン完了状況と問題解答状況を返す。
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: 進捗データ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  progress:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserProgress' }
+                  exercises:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserExercise' }
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: 未認証 }
+
+    post:
+      tags: [progress]
+      summary: 学習進捗記録
+      description: |
+        レッスン完了または問題解答を記録する。
+        - `lessonSlug` を指定 → レッスン完了を upsert
+        - `exerciseId` を指定 → 問題解答を upsert（attempts 自動インクリメント）
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [lessonSlug]
+                  properties:
+                    lessonSlug:
+                      type: string
+                      example: intro
+                - type: object
+                  required: [exerciseId, solved]
+                  properties:
+                    exerciseId:
+                      type: string
+                      example: intro-1
+                    solved:
+                      type: boolean
+      responses:
+        '200':
+          description: 記録完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '400':
+          description: パラメータ不正
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ── 練習問題 ─────────────────────────────
+
+  /api/exercises/check:
+    post:
+      tags: [exercises]
+      summary: 練習問題の正誤判定
+      description: |
+        ユーザーがSQL実行で得た列名と期待列名を比較して正誤を返す。
+        認証不要（列名比較のみ実施）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lessonSlug, exerciseId, resultColumns]
+              properties:
+                lessonSlug:
+                  type: string
+                  example: intro
+                exerciseId:
+                  type: string
+                  example: intro-1
+                resultColumns:
+                  type: array
+                  items:
+                    type: string
+                  example: [id, name, department_id]
+            example:
+              lessonSlug: intro
+              exerciseId: intro-1
+              resultColumns: [id, name, department_id]
+      responses:
+        '200':
+          description: 正誤判定結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  correct:
+                    type: boolean
+                  message:
+                    type: string
+              examples:
+                correct:
+                  value: { correct: true, message: 正解です！ }
+                wrong:
+                  value: { correct: false, message: "不正解です。期待するカラム: id, name, ..." }
+                notFound:
+                  value: { correct: false, message: レッスンが見つかりません }
+
+  # ── お知らせ ─────────────────────────────
+
+  /api/announcements:
+    get:
+      tags: [announcements]
+      summary: 公開お知らせ一覧取得
+      description: isPublished=true のお知らせを作成日降順で返す。認証不要。
+      responses:
+        '200':
+          description: お知らせ一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Announcement' }
+
+  /api/announcements/settings:
+    get:
+      tags: [announcements]
+      summary: サイト設定取得（公開）
+      description: プレミアム新規申し込み受付状態を返す。認証不要。
+      responses:
+        '200':
+          description: サイト設定
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  premiumSignupEnabled:
+                    type: boolean
+                    example: true
+
+  # ── サブスクリプション ────────────────────
+
+  /api/subscription:
+    get:
+      tags: [subscription]
+      summary: サブスクリプション状態確認
+      description: "ログインユーザーのプレミアムサブスクリプションの有効状態を返す。未認証の場合は `active: false`。"
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: サブスクリプション状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  subscription:
+                    nullable: true
+                    allOf:
+                      - $ref: '#/components/schemas/Subscription'
+              examples:
+                active:
+                  value:
+                    active: true
+                    subscription:
+                      id: sub_xxx
+                      status: active
+                      currentPeriodEnd: '2026-04-14T00:00:00Z'
+                inactive:
+                  value:
+                    active: false
+                    subscription: null
+                unauthenticated:
+                  value:
+                    active: false
+
+  /api/stripe/checkout:
+    post:
+      tags: [subscription]
+      summary: Stripe チェックアウトセッション作成
+      description: |
+        プレミアムプランの決済セッションURLを生成して返す。
+        新規申し込み停止中の場合は 403 を返す。
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: チェックアウトURL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    example: https://checkout.stripe.com/pay/cs_test_xxx
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: 新規申し込み停止中
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: 現在、新規申し込みを停止しています }
+
+  /api/stripe/cancel:
+    post:
+      tags: [subscription]
+      summary: サブスクリプションキャンセル
+      description: 現在の契約期間終了時にキャンセルするよう Stripe に設定する（即時解約ではない）。
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: キャンセル設定完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: サブスクリプション未検出
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: Subscription not found }
+
+  /api/stripe/webhook:
+    post:
+      tags: [subscription]
+      summary: Stripe Webhook 受信
+      description: |
+        Stripe からのイベントを受信・処理する。
+        処理するイベント:
+        - `checkout.session.completed` — サブスクリプション初期化・ウェルカムメール送信
+        - `customer.subscription.updated` — サブスクリプション更新
+        - `customer.subscription.deleted` — サブスクリプション削除
+      security:
+        - stripeSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Stripe イベントペイロード（raw JSON）
+      responses:
+        '200':
+          description: 受信確認
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+
+  # ── 管理者 ───────────────────────────────
+
+  /api/admin/auth:
+    post:
+      tags: [admin]
+      summary: 管理者ログイン
+      description: 管理者IDとパスワードを検証し、HTTP-Only Cookie（有効期間 7 日）を発行する。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, password]
+              properties:
+                id:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: ログイン成功（admin_token Cookie をセット）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: IDまたはパスワードが違います }
+
+  /api/admin/logout:
+    post:
+      tags: [admin]
+      summary: 管理者ログアウト
+      description: admin_token Cookie をクリアする。
+      responses:
+        '200':
+          description: ログアウト完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+
+  /api/admin/users:
+    get:
+      tags: [admin]
+      summary: ユーザー一覧取得
+      description: 全ユーザーの情報（サブスクリプション・進捗・解答数含む）を返す。
+      security:
+        - adminCookie: []
+      responses:
+        '200':
+          description: ユーザー一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/User'
+                    - type: object
+                      properties:
+                        subscription:
+                          $ref: '#/components/schemas/Subscription'
+                        _count:
+                          type: object
+                          properties:
+                            progress:
+                              type: integer
+                            exercises:
+                              type: integer
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: Unauthorized }
+
+  /api/admin/announcements:
+    get:
+      tags: [admin]
+      summary: お知らせ一覧取得（管理者）
+      description: 公開・非公開を含む全お知らせを作成日降順で返す。
+      security:
+        - adminCookie: []
+      responses:
+        '200':
+          description: お知らせ一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Announcement' }
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    post:
+      tags: [admin]
+      summary: お知らせ作成
+      security:
+        - adminCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, content]
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                isPublished:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: 作成されたお知らせ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    put:
+      tags: [admin]
+      summary: お知らせ更新
+      security:
+        - adminCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, title, content, isPublished]
+              properties:
+                id:
+                  type: string
+                title:
+                  type: string
+                content:
+                  type: string
+                isPublished:
+                  type: boolean
+      responses:
+        '200':
+          description: 更新されたお知らせ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    delete:
+      tags: [admin]
+      summary: お知らせ削除
+      security:
+        - adminCookie: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 削除するお知らせのID
+      responses:
+        '200':
+          description: 削除完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/admin/maintenance:
+    get:
+      tags: [admin]
+      summary: メンテナンス設定取得
+      security:
+        - adminCookie: []
+      responses:
+        '200':
+          description: メンテナンス状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                    description: メンテナンスモード有効フラグ
+                  premiumSignupEnabled:
+                    type: boolean
+                    description: プレミアム新規申し込み受付フラグ
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+    post:
+      tags: [admin]
+      summary: メンテナンス設定更新
+      description: 指定したフィールドのみ更新（部分更新対応）。
+      security:
+        - adminCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                  description: メンテナンスモード
+                premiumSignupEnabled:
+                  type: boolean
+                  description: プレミアム新規申し込み受付
+            example:
+              enabled: true
+      responses:
+        '200':
+          description: 更新完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
