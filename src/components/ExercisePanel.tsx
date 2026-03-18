@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Exercise } from "@/types";
 
 type SqlResult = { columns: string[]; rows: (string | number | null)[][] };
@@ -33,6 +33,10 @@ export default function ExercisePanel({
 
   const exercise = exercises[activeIdx];
   const isSolved = solvedIds.includes(exercise.id);
+
+  useEffect(() => {
+    setFeedback(null);
+  }, [lastResult]);
 
   const handleCheck = async () => {
     if (!lastResult || lastResult.columns.length === 0) {
