@@ -18,7 +18,7 @@ interface SqlEditorProps {
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "SELECT * FROM employees LIMIT 10;", onResult },
+  { initialQuery = "", onResult },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);

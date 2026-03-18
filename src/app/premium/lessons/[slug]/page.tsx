@@ -402,7 +402,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
               </h3>
               <SqlEditor
                 ref={sqlEditorRef as any}
-                initialQuery="SELECT * FROM employees LIMIT 5;"
+                initialQuery=""
                 onResult={(columns, rows) => setLastResult({ columns, rows })}
               />
             </section>

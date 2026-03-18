@@ -276,7 +276,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string 
               </h3>
               <SqlEditor
                 ref={sqlEditorRef as any}
-                initialQuery="SELECT * FROM employees LIMIT 5;"
+                initialQuery=""
                 onResult={(columns, rows) => setLastResult({ columns, rows })}
               />
             </section>
