@@ -132,6 +132,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       }
     } catch (e) {
       setError(translateError((e as Error).message));
+      if (onResult) onResult([], []);
     } finally {
       setStatus("ready");
     }
