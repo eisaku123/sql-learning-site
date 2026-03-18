@@ -39,8 +39,12 @@ export default function ExercisePanel({
   }, [lastResult]);
 
   const handleCheck = async () => {
-    if (!lastResult || lastResult.columns.length === 0) {
+    if (!lastResult) {
       setFeedback({ correct: false, message: "まずSQLを実行してください" });
+      return;
+    }
+    if (lastResult.columns.length === 0) {
+      setFeedback({ correct: false, message: "SQLエラーが発生しています。修正してから再試行してください" });
       return;
     }
 
