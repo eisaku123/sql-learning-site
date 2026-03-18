@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { prisma } from "@/lib/db";
+
+export const metadata: Metadata = {
+  title: "SQLLearn - ブラウザで学ぶSQL入門",
+  description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料のSQL学習サイト。SELECT・WHERE・JOIN・GROUP BYなど初級から中級まで全9レッスン・27問の練習問題を収録。",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "SQLLearn - ブラウザで学ぶSQL入門",
+    description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料のSQL学習サイト。初級から中級まで全9レッスン収録。",
+    url: "https://www.sql-learning.net",
+  },
+};
 
 export default async function TopPage() {
   const announcements = await prisma.announcement.findMany({
