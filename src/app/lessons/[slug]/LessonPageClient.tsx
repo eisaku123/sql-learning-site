@@ -16,7 +16,7 @@ const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false }
 export default function LessonPageClient({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const lesson = getLessonBySlug(slug);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const [solvedIds, setSolvedIds] = useState<string[]>([]);
   const [lastResult, setLastResult] = useState<{ columns: string[]; rows: (string | number | null)[][] } | null>(null);
@@ -76,6 +76,82 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
           <Link href="/lessons" style={{ color: "#667eea" }}>
             レッスン一覧へ
           </Link>
+        </main>
+      </>
+    );
+  }
+
+  // 中級レッスンはログイン必須
+  if (lesson.level === "intermediate" && status === "unauthenticated") {
+    return (
+      <>
+        <Header />
+        <main
+          style={{
+            paddingTop: "60px",
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "60px 2rem",
+          }}
+        >
+          <div style={{ textAlign: "center", maxWidth: "480px" }}>
+            <div
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                background: "rgba(102,126,234,0.1)",
+                border: "2px solid rgba(102,126,234,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.8rem",
+                margin: "0 auto 1.5rem",
+              }}
+            >
+              🔒
+            </div>
+            <h1 style={{ color: "#e0e0f0", fontWeight: 800, fontSize: "1.6rem", marginBottom: "1rem" }}>
+              ログインが必要です
+            </h1>
+            <p style={{ color: "#8888aa", lineHeight: 1.8, marginBottom: "2rem" }}>
+              中級レッスンはアカウント登録（無料）が必要です。<br />
+              初級レッスンはログインなしでお試しいただけます。
+            </p>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+              <Link
+                href={`/login?callbackUrl=/lessons/${slug}`}
+                style={{
+                  background: "linear-gradient(135deg, #667eea, #764ba2)",
+                  color: "#fff",
+                  textDecoration: "none",
+                  padding: "0.85rem 2rem",
+                  borderRadius: "50px",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                }}
+              >
+                ログイン
+              </Link>
+              <Link
+                href="/register"
+                style={{
+                  background: "transparent",
+                  color: "#e0e0f0",
+                  textDecoration: "none",
+                  padding: "0.85rem 2rem",
+                  borderRadius: "50px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                }}
+              >
+                無料登録
+              </Link>
+            </div>
+          </div>
         </main>
       </>
     );

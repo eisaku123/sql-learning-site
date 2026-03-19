@@ -8,11 +8,13 @@ interface LessonCardProps {
   completed: boolean;
   index: number;
   href?: string;
+  isLoggedIn?: boolean;
 }
 
-export default function LessonCard({ lesson, completed, index, href }: LessonCardProps) {
+export default function LessonCard({ lesson, completed, index, href, isLoggedIn = true }: LessonCardProps) {
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
   const levelLabel = lesson.level === "beginner" ? "初級" : "中級";
+  const locked = lesson.level === "intermediate" && !isLoggedIn;
 
   return (
     <Link
@@ -45,6 +47,26 @@ export default function LessonCard({ lesson, completed, index, href }: LessonCar
           el.style.boxShadow = "";
         }}
       >
+        {/* 鍵バッジ（未ログイン中級） */}
+        {locked && (
+          <div
+            style={{
+              position: "absolute",
+              top: "0.75rem",
+              right: "0.75rem",
+              background: "rgba(102,126,234,0.15)",
+              border: "1px solid rgba(102,126,234,0.3)",
+              borderRadius: "20px",
+              padding: "0.15rem 0.6rem",
+              color: "#667eea",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+            }}
+          >
+            🔒 要ログイン
+          </div>
+        )}
+
         {/* 完了バッジ */}
         {completed && (
           <div

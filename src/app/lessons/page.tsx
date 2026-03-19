@@ -107,6 +107,7 @@ export default async function LessonsPage() {
                 lesson={lesson}
                 completed={completedSlugs.has(lesson.slug)}
                 index={i}
+                isLoggedIn={!!session?.user}
               />
             ))}
           </div>
