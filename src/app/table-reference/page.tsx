@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 
+const TABLE_LABELS: Record<string, string> = {
+  employees: "社員",
+  departments: "部署",
+  products: "商品",
+  orders: "注文",
+};
+
 const TABLES = {
   employees: {
     label: "employees",
@@ -136,6 +143,9 @@ export default function TableReferencePage() {
             }}
           >
             {TABLES[key].label}
+            <span style={{ marginLeft: "0.35rem", fontSize: "0.75rem", opacity: 0.7, fontFamily: "sans-serif" }}>
+              {TABLE_LABELS[key]}
+            </span>
           </button>
         ))}
       </div>
