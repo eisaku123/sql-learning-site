@@ -88,7 +88,7 @@ function ErDiagram() {
   // テーブルボックスの定義
   const tables = [
     {
-      name: "departments", label: "部署", x: 30, y: 60,
+      name: "departments", label: "部署", x: 30, y: 30,
       cols: [
         { name: "id", note: "PK" },
         { name: "name", note: "" },
@@ -106,7 +106,7 @@ function ErDiagram() {
       ],
     },
     {
-      name: "products", label: "商品", x: 30, y: 300,
+      name: "products", label: "商品", x: 30, y: 260,
       cols: [
         { name: "id", note: "PK" },
         { name: "name", note: "" },
@@ -116,7 +116,7 @@ function ErDiagram() {
       ],
     },
     {
-      name: "orders", label: "注文", x: 320, y: 300,
+      name: "orders", label: "注文", x: 320, y: 260,
       cols: [
         { name: "id", note: "PK" },
         { name: "product_id", note: "FK" },
@@ -131,38 +131,45 @@ function ErDiagram() {
   const headerH = 30;
   const boxW = 200;
 
+  // departments: y=30, id row y = 30+30+11 = 71
+  // employees: y=30, department_id row (index 2) y = 30+30+2*22+11 = 115
+  // products: y=260, id row y = 260+30+11 = 301
+  // orders: y=260, product_id row (index 1) y = 260+30+1*22+11 = 323
+
   return (
     <div>
       <p style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
         テーブル間のリレーション（外部キー）を示しています
       </p>
-      <svg viewBox="0 0 600 500" style={{ width: "100%", maxWidth: "600px", display: "block" }}>
+      <svg viewBox="0 0 600 470" style={{ width: "100%", maxWidth: "600px", display: "block" }}>
         <defs>
-          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
             <path d="M0,0 L0,6 L8,3 z" fill="#667eea" />
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#34d399" />
           </marker>
         </defs>
 
         {/* リレーション線: employees.department_id → departments.id */}
-        {/* employees box left edge (320, 30+30+22) → departments box right edge (30+200, 60+30+0) */}
         <line
           x1={320} y1={30 + headerH + rowH * 2 + rowH / 2}
-          x2={30 + boxW} y2={60 + headerH + rowH / 2}
+          x2={30 + boxW} y2={30 + headerH + rowH / 2}
           stroke="#667eea" strokeWidth="1.5" strokeDasharray="5,3"
-          markerEnd="url(#arrow)"
+          markerEnd="url(#arrow-blue)"
         />
-        <text x={210} y={110} fill="#667eea" fontSize="10" textAnchor="middle">N</text>
-        <text x={280} y={90} fill="#667eea" fontSize="10" textAnchor="middle">1</text>
+        <text x={242} y={108} fill="#667eea" fontSize="10" textAnchor="middle">N</text>
+        <text x={308} y={83} fill="#667eea" fontSize="10" textAnchor="middle">1</text>
 
         {/* リレーション線: orders.product_id → products.id */}
         <line
-          x1={320} y1={300 + headerH + rowH + rowH / 2}
-          x2={30 + boxW} y2={300 + headerH + rowH / 2}
+          x1={320} y1={260 + headerH + rowH + rowH / 2}
+          x2={30 + boxW} y2={260 + headerH + rowH / 2}
           stroke="#34d399" strokeWidth="1.5" strokeDasharray="5,3"
-          markerEnd="url(#arrow)"
+          markerEnd="url(#arrow-green)"
         />
-        <text x={310} y={340} fill="#34d399" fontSize="10" textAnchor="middle">N</text>
-        <text x={240} y={328} fill="#34d399" fontSize="10" textAnchor="middle">1</text>
+        <text x={242} y={338} fill="#34d399" fontSize="10" textAnchor="middle">N</text>
+        <text x={308} y={316} fill="#34d399" fontSize="10" textAnchor="middle">1</text>
 
         {/* テーブルボックス */}
         {tables.map((t) => {
