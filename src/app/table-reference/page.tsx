@@ -82,10 +82,150 @@ const TABLES = {
 } as const;
 
 type TableKey = keyof typeof TABLES;
+type Tab = TableKey | "er";
+
+function ErDiagram() {
+  // テーブルボックスの定義
+  const tables = [
+    {
+      name: "departments", label: "部署", x: 30, y: 60,
+      cols: [
+        { name: "id", note: "PK" },
+        { name: "name", note: "" },
+        { name: "location", note: "" },
+      ],
+    },
+    {
+      name: "employees", label: "社員", x: 320, y: 30,
+      cols: [
+        { name: "id", note: "PK" },
+        { name: "name", note: "" },
+        { name: "department_id", note: "FK" },
+        { name: "salary", note: "" },
+        { name: "hire_date", note: "" },
+      ],
+    },
+    {
+      name: "products", label: "商品", x: 30, y: 300,
+      cols: [
+        { name: "id", note: "PK" },
+        { name: "name", note: "" },
+        { name: "category", note: "" },
+        { name: "price", note: "" },
+        { name: "stock", note: "" },
+      ],
+    },
+    {
+      name: "orders", label: "注文", x: 320, y: 300,
+      cols: [
+        { name: "id", note: "PK" },
+        { name: "product_id", note: "FK" },
+        { name: "quantity", note: "" },
+        { name: "order_date", note: "" },
+        { name: "customer_name", note: "" },
+      ],
+    },
+  ];
+
+  const rowH = 22;
+  const headerH = 30;
+  const boxW = 200;
+
+  return (
+    <div>
+      <p style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
+        テーブル間のリレーション（外部キー）を示しています
+      </p>
+      <svg viewBox="0 0 600 500" style={{ width: "100%", maxWidth: "600px", display: "block" }}>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#667eea" />
+          </marker>
+        </defs>
+
+        {/* リレーション線: employees.department_id → departments.id */}
+        {/* employees box left edge (320, 30+30+22) → departments box right edge (30+200, 60+30+0) */}
+        <line
+          x1={320} y1={30 + headerH + rowH * 2 + rowH / 2}
+          x2={30 + boxW} y2={60 + headerH + rowH / 2}
+          stroke="#667eea" strokeWidth="1.5" strokeDasharray="5,3"
+          markerEnd="url(#arrow)"
+        />
+        <text x={210} y={110} fill="#667eea" fontSize="10" textAnchor="middle">N</text>
+        <text x={280} y={90} fill="#667eea" fontSize="10" textAnchor="middle">1</text>
+
+        {/* リレーション線: orders.product_id → products.id */}
+        <line
+          x1={320} y1={300 + headerH + rowH + rowH / 2}
+          x2={30 + boxW} y2={300 + headerH + rowH / 2}
+          stroke="#34d399" strokeWidth="1.5" strokeDasharray="5,3"
+          markerEnd="url(#arrow)"
+        />
+        <text x={310} y={340} fill="#34d399" fontSize="10" textAnchor="middle">N</text>
+        <text x={240} y={328} fill="#34d399" fontSize="10" textAnchor="middle">1</text>
+
+        {/* テーブルボックス */}
+        {tables.map((t) => {
+          return (
+            <g key={t.name}>
+              {/* ヘッダー */}
+              <rect x={t.x} y={t.y} width={boxW} height={headerH} rx="4" ry="4"
+                fill="rgba(102,126,234,0.25)" stroke="rgba(102,126,234,0.6)" strokeWidth="1" />
+              <text x={t.x + boxW / 2} y={t.y + 19} fill="#e0e0f0" fontSize="12"
+                fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                {t.name}
+              </text>
+              <text x={t.x + boxW / 2} y={t.y + 19} fill="#8888aa" fontSize="10"
+                textAnchor="middle" fontFamily="sans-serif" dy="0">
+              </text>
+              {/* カラム行 */}
+              <rect x={t.x} y={t.y + headerH} width={boxW} height={t.cols.length * rowH}
+                fill="rgba(255,255,255,0.03)" stroke="rgba(102,126,234,0.3)" strokeWidth="1" />
+              {t.cols.map((col, i) => (
+                <g key={col.name}>
+                  {i > 0 && (
+                    <line x1={t.x} y1={t.y + headerH + i * rowH}
+                      x2={t.x + boxW} y2={t.y + headerH + i * rowH}
+                      stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                  )}
+                  {col.note && (
+                    <text x={t.x + 8} y={t.y + headerH + i * rowH + 15}
+                      fill={col.note === "PK" ? "#fbbf24" : "#34d399"}
+                      fontSize="9" fontFamily="monospace" fontWeight="bold">
+                      {col.note}
+                    </text>
+                  )}
+                  <text x={t.x + (col.note ? 32 : 10)} y={t.y + headerH + i * rowH + 15}
+                    fill={col.note === "FK" ? "#34d399" : "#c0c0d8"}
+                    fontSize="11" fontFamily="monospace">
+                    {col.name}
+                  </text>
+                </g>
+              ))}
+              {/* テーブル名（日本語） */}
+              <text x={t.x + boxW + 6} y={t.y + headerH / 2 + 5}
+                fill="#8888aa" fontSize="10" fontFamily="sans-serif">
+                （{t.label}）
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* 凡例 */}
+      <div style={{ display: "flex", gap: "1.25rem", marginTop: "0.75rem", fontSize: "0.75rem", color: "#8888aa" }}>
+        <span><span style={{ color: "#fbbf24", fontWeight: 700 }}>PK</span> 主キー</span>
+        <span><span style={{ color: "#34d399", fontWeight: 700 }}>FK</span> 外部キー</span>
+        <span style={{ color: "#667eea" }}>──── </span><span>employees → departments</span>
+        <span style={{ color: "#34d399" }}>──── </span><span>orders → products</span>
+      </div>
+    </div>
+  );
+}
 
 export default function TableReferencePage() {
-  const [activeTab, setActiveTab] = useState<TableKey>("employees");
-  const table = TABLES[activeTab];
+  const [activeTab, setActiveTab] = useState<Tab>("employees");
+  const table = activeTab !== "er" ? TABLES[activeTab] : null;
 
   return (
     <div
@@ -148,59 +288,81 @@ export default function TableReferencePage() {
             </span>
           </button>
         ))}
+        <button
+          onClick={() => setActiveTab("er")}
+          style={{
+            background: activeTab === "er" ? "rgba(251,191,36,0.15)" : "transparent",
+            border: activeTab === "er" ? "1px solid rgba(251,191,36,0.4)" : "1px solid transparent",
+            borderBottom: "none",
+            borderRadius: "6px 6px 0 0",
+            color: activeTab === "er" ? "#fbbf24" : "#8888aa",
+            padding: "0.35rem 0.85rem",
+            cursor: "pointer",
+            fontSize: "0.82rem",
+            fontWeight: activeTab === "er" ? 700 : 400,
+          }}
+        >
+          ER図
+        </button>
       </div>
 
-      {/* テーブルデータ */}
+      {/* コンテンツ */}
       <div style={{ padding: "1rem 1.25rem", overflowY: "auto", flex: 1 }}>
-        <p style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.6rem" }}>
-          {table.rows.length} 件
-        </p>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.83rem" }}>
-            <thead>
-              <tr>
-                {table.columns.map((col) => (
-                  <th
-                    key={col}
-                    style={{
-                      background: "rgba(102,126,234,0.12)",
-                      color: "#667eea",
-                      padding: "0.4rem 0.75rem",
-                      textAlign: "left",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      fontFamily: "monospace",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {table.rows.map((row, i) => (
-                <tr
-                  key={i}
-                  style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}
-                >
-                  {row.map((cell, j) => (
-                    <td
-                      key={j}
-                      style={{
-                        padding: "0.35rem 0.75rem",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                        color: "#c0c0d8",
-                        whiteSpace: "nowrap",
-                      }}
+        {activeTab === "er" ? (
+          <ErDiagram />
+        ) : table ? (
+          <>
+            <p style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.6rem" }}>
+              {table.rows.length} 件
+            </p>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.83rem" }}>
+                <thead>
+                  <tr>
+                    {table.columns.map((col) => (
+                      <th
+                        key={col}
+                        style={{
+                          background: "rgba(102,126,234,0.12)",
+                          color: "#667eea",
+                          padding: "0.4rem 0.75rem",
+                          textAlign: "left",
+                          border: "1px solid rgba(255,255,255,0.07)",
+                          fontFamily: "monospace",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {table.rows.map((row, i) => (
+                    <tr
+                      key={i}
+                      style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}
                     >
-                      {String(cell)}
-                    </td>
+                      {row.map((cell, j) => (
+                        <td
+                          key={j}
+                          style={{
+                            padding: "0.35rem 0.75rem",
+                            border: "1px solid rgba(255,255,255,0.05)",
+                            color: "#c0c0d8",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {String(cell)}
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );
