@@ -264,7 +264,7 @@ export default function ExercisePanel({
               whiteSpace: "pre-wrap",
             }}
           >
-            {exercise.answer}
+            {formatSql(exercise.answer)}
           </code>
         </div>
       )}
@@ -287,6 +287,21 @@ export default function ExercisePanel({
       )}
     </div>
   );
+}
+
+// SQLを見やすく改行フォーマットする
+function formatSql(sql: string): string {
+  const keywords = [
+    "SELECT", "FROM", "WHERE", "ORDER BY", "GROUP BY", "HAVING",
+    "JOIN", "LEFT JOIN", "RIGHT JOIN", "INNER JOIN",
+    "INSERT INTO", "UPDATE", "SET", "DELETE FROM", "VALUES",
+    "LIMIT", "OFFSET",
+  ];
+  const pattern = new RegExp(
+    `\\s+(${keywords.map((k) => k.replace(" ", "\\s+")).join("|")})\\b`,
+    "gi"
+  );
+  return sql.replace(pattern, "\n$1");
 }
 
 // ブラウザ内で2つのSQL結果を比較する
