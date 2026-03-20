@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
 import TableReferenceModal from "@/components/TableReferenceModal";
+import LessonCompletionModal from "@/components/LessonCompletionModal";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
@@ -22,6 +23,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [lastResult, setLastResult] = useState<{ columns: string[]; rows: (string | number | null)[][] } | null>(null);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
@@ -168,7 +170,17 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   return (
     <>
       {showFireworks && (
-        <Fireworks onDone={() => setShowFireworks(false)} />
+        <Fireworks onDone={() => {
+          setShowFireworks(false);
+          setShowCompletionModal(true);
+        }} />
+      )}
+      {showCompletionModal && (
+        <LessonCompletionModal
+          nextLesson={nextLesson}
+          lessonListHref="/lessons"
+          onClose={() => setShowCompletionModal(false)}
+        />
       )}
       <Header />
       <main style={{ paddingTop: "60px" }}>

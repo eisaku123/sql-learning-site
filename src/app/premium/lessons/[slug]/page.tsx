@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
 import TableReferenceModal from "@/components/TableReferenceModal";
+import LessonCompletionModal from "@/components/LessonCompletionModal";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
@@ -25,6 +26,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const [lastResult, setLastResult] = useState<{ columns: string[]; rows: (string | number | null)[][] } | null>(null);
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showExplanation, setShowExplanation] = useState(true);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -181,7 +183,18 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      {showFireworks && <Fireworks onDone={() => setShowFireworks(false)} />}
+      {showFireworks && <Fireworks onDone={() => {
+        setShowFireworks(false);
+        setShowCompletionModal(true);
+      }} />}
+      {showCompletionModal && (
+        <LessonCompletionModal
+          nextLesson={nextLesson}
+          nextLessonHref={nextLesson ? `/premium/lessons/${nextLesson.slug}` : undefined}
+          lessonListHref="/premium/lessons"
+          onClose={() => setShowCompletionModal(false)}
+        />
+      )}
       <Header />
       <main style={{ paddingTop: "60px" }}>
         {/* ヘッダー帯 */}
