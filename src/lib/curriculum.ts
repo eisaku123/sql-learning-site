@@ -629,21 +629,28 @@ export const LESSONS: Lesson[] = [
     exercises: [
       {
         id: "idx-1",
-        question: "employeesテーブルのsalaryカラムにインデックス idx_emp_salary を作成し、SQLite_masterで確認してください",
-        hint: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
-        answer: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
-        expectedColumns: ["type", "name", "tbl_name", "rootpage", "sql"],
-      },
-      {
-        id: "idx-2",
-        question: "EXPLAIN QUERY PLANを使って、salary > 500000 の検索計画を確認してください",
+        question: "【STEP 1: インデックスなし・遅い検索】まずインデックスを作らずに EXPLAIN QUERY PLAN で salary > 500000 の検索計画を確認してください。結果の detail 列に「SCAN employees」と表示され、全件チェック（遅い）していることが分かります",
         hint: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
         answer: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
         expectedColumns: ["id", "parent", "notused", "detail"],
       },
       {
+        id: "idx-2",
+        question: "【STEP 2: インデックス作成】salary カラムにインデックス idx_emp_salary を作成して、sqlite_master で登録されたことを確認してください",
+        hint: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
+        answer: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
+        expectedColumns: ["type", "name", "tbl_name", "rootpage", "sql"],
+      },
+      {
         id: "idx-3",
-        question: "インデックス idx_emp_salary を削除し、EXPLAIN QUERY PLAN で salary > 500000 の検索がフルスキャン（SCAN employees）になることを確認してください",
+        question: "【STEP 3: インデックスあり・速い検索】インデックス作成後に同じ EXPLAIN QUERY PLAN を実行してください。detail 列が「SCAN」から「SEARCH employees USING INDEX idx_emp_salary」に変わり、インデックスを使った高速検索になったことが確認できます",
+        hint: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
+        answer: "CREATE INDEX IF NOT EXISTS idx_emp_salary ON employees(salary); EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
+        expectedColumns: ["id", "parent", "notused", "detail"],
+      },
+      {
+        id: "idx-4",
+        question: "【STEP 4: インデックス削除・遅い検索に戻る】インデックス idx_emp_salary を削除し、EXPLAIN QUERY PLAN で再び「SCAN employees」に戻ることを確認してください。インデックスがなければ検索速度が落ちることが分かります",
         hint: "DROP INDEX IF EXISTS idx_emp_salary; の後に EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000; を実行してください",
         answer: "DROP INDEX IF EXISTS idx_emp_salary; EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
         expectedColumns: ["id", "parent", "notused", "detail"],
