@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS departments (
 );
 CREATE TABLE IF NOT EXISTS employees (
   id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT,
   department_id INTEGER,
   salary INTEGER,
   hire_date TEXT,
@@ -52,8 +52,8 @@ INSERT OR IGNORE INTO employees VALUES
   (11, '井上 拓也', 2, 530000, '2020-01-15'),
   (12, '木村 麻衣', 5, 440000, '2022-10-01'),
   (13, '林 浩二', 4, 470000, '2018-07-01'),
-  (14, '清水 奈々', 1, 360000, '2023-10-01'),
-  (15, '山口 博', 2, 580000, '2016-04-01');
+  (14, NULL, 1, NULL, NULL),
+  (15, NULL, 2, NULL, NULL);
 
 INSERT OR IGNORE INTO products VALUES
   (1, 'ノートPC', 'パソコン', 120000, 50),
@@ -64,8 +64,8 @@ INSERT OR IGNORE INTO products VALUES
   (6, 'デスクトップPC', 'パソコン', 180000, 20),
   (7, 'ヘッドセット', '周辺機器', 12000, 80),
   (8, 'Webカメラ', '周辺機器', 7500, 60),
-  (9, 'タブレット', 'パソコン', 65000, 40),
-  (10, 'プリンター', '周辺機器', 25000, 25);
+  (9, 'タブレット', 'パソコン', 65000, NULL),
+  (10, 'プリンター', '周辺機器', 25000, NULL);
 
 INSERT OR IGNORE INTO orders VALUES
   (1, 1, 2, '2024-01-15', '株式会社ABC'),
@@ -82,7 +82,10 @@ INSERT OR IGNORE INTO orders VALUES
   (12, 6, 1, '2024-05-01', '松本商会'),
   (13, 4, 2, '2024-05-10', '井上企業'),
   (14, 8, 6, '2024-05-20', '木村商店'),
-  (15, 10, 3, '2024-06-01', '林商事');
+  (15, 10, 3, '2024-06-01', '林商事'),
+  (16, 2, 3, '2023-11-15', '木村商事'),
+  (17, 4, 1, '2023-12-01', '青木工業'),
+  (18, 1, 2, '2023-08-20', '橋本商店');
 `;
 
 export const LESSONS: Lesson[] = [
@@ -116,7 +119,7 @@ export const LESSONS: Lesson[] = [
   <li><code>employees</code> — 従業員テーブル（15名のデータ）</li>
   <li><code>departments</code> — 部署テーブル（5部署）</li>
   <li><code>products</code> — 商品テーブル（10商品）</li>
-  <li><code>orders</code> — 注文テーブル（15件）</li>
+  <li><code>orders</code> — 注文テーブル（18件）</li>
 </ul>
 
 <p>右のエディタで以下のSQLを実行してみましょう：</p>

@@ -33,6 +33,12 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
 
+  // 問題切り替え時にDBをリセットして前の問題のCREATE TABLEなどを消す
+  useEffect(() => {
+    sqlEditorRef.current?.resetDb();
+    setLastResult(null);
+  }, [activeExerciseIdx]);
+
   // 認証チェック
   useEffect(() => {
     if (status === "unauthenticated") {

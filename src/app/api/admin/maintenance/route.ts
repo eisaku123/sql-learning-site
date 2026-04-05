@@ -6,13 +6,15 @@ export async function GET() {
   const isAdmin = await requireAdmin();
   if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [maintenance, premiumSignup] = await Promise.all([
+  const [maintenance, premiumSignup, stripeMode] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "maintenance_mode" } }),
     prisma.siteSetting.findUnique({ where: { key: "premium_signup_enabled" } }),
+    prisma.siteSetting.findUnique({ where: { key: "stripe_mode" } }),
   ]);
   return NextResponse.json({
     enabled: maintenance?.value === "true",
     premiumSignupEnabled: premiumSignup?.value !== "false",
+    stripeMode: stripeMode?.value === "live" ? "live" : "test",
   });
 }
 
@@ -35,6 +37,14 @@ export async function POST(req: NextRequest) {
       where: { key: "premium_signup_enabled" },
       update: { value: String(body.premiumSignupEnabled) },
       create: { key: "premium_signup_enabled", value: String(body.premiumSignupEnabled) },
+    });
+  }
+
+  if ("stripeMode" in body && (body.stripeMode === "test" || body.stripeMode === "live")) {
+    await prisma.siteSetting.upsert({
+      where: { key: "stripe_mode" },
+      update: { value: body.stripeMode },
+      create: { key: "stripe_mode", value: body.stripeMode },
     });
   }
 

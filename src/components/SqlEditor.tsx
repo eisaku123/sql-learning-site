@@ -10,15 +10,18 @@ interface QueryResult {
 
 export interface SqlEditorHandle {
   runSql: (sql: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
+  resetDb: () => void;
 }
 
 interface SqlEditorProps {
   initialQuery?: string;
   onResult?: (columns: string[], rows: (string | number | null)[][]) => void;
+  showExplanation?: boolean;
+  onToggleExplanation?: () => void;
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "", onResult },
+  { initialQuery = "", onResult, showExplanation, onToggleExplanation },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
@@ -60,12 +63,12 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
 
   // 外部から任意のSQLを実行できるメソッドをrefで公開
   useImperativeHandle(ref, () => ({
+    // 模範解答の比較用：フレッシュDBで実行
     runSql: (sql: string) => {
       if (!sqlConstructorRef.current) return null;
       try {
         const freshDb = new sqlConstructorRef.current.Database();
         freshDb.exec(SAMPLE_DB_SQL);
-        // 複数文を1文ずつ実行し、SELECT結果を集める
         const statements = sql.split(";").map(s => s.trim()).filter(Boolean);
         let lastSelectResult: { columns: string[]; rows: (string | number | null)[][] } | null = null;
         for (const stmt of statements) {
@@ -78,6 +81,13 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       } catch {
         return null;
       }
+    },
+    // 問題切り替え時にDBをリセット
+    resetDb: () => {
+      if (!sqlConstructorRef.current) return;
+      const db = new sqlConstructorRef.current.Database();
+      db.exec(SAMPLE_DB_SQL);
+      dbRef.current = db;
     },
   }));
 
@@ -186,6 +196,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
           </span>
         </div>
         <textarea
+          id="tour-sql-editor"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -210,6 +221,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       {/* 実行ボタン・クリアボタン */}
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
         <button
+          id="tour-run-button"
           onClick={runQuery}
           disabled={isLoading || isRunning}
           style={{
@@ -250,6 +262,26 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         >
           ✕ クリア
         </button>
+        {onToggleExplanation && (
+          <button
+            id="tour-toggle-explanation"
+            onClick={onToggleExplanation}
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              color: "#8888aa",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "8px",
+              padding: "0.6rem 1rem",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              transition: "all 0.2s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
+          </button>
+        )}
       </div>
 
       {/* エラー / DML フィードバック */}

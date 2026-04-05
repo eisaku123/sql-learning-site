@@ -11,6 +11,7 @@ export default function TableReferenceModal() {
 
   return (
     <button
+      id="tour-table-button"
       onClick={openPopup}
       style={{
         position: "fixed",

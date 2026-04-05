@@ -53,7 +53,6 @@ export default function Header() {
         <NavLink href="/lessons">レッスン</NavLink>
         {session && <NavLink href="/premium/lessons">プレミアム</NavLink>}
         {session && <NavLink href="/dashboard">ダッシュボード</NavLink>}
-        {session && <NavLink href="/progress">進捗</NavLink>}
         <NavLink href="/pricing">料金</NavLink>
 
         {session ? (

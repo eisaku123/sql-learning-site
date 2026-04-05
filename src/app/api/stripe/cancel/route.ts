@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { getStripeClient } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 
 export async function POST() {
@@ -22,6 +22,8 @@ export async function POST() {
   if (subscription.status === "cancel_at_period_end") {
     return NextResponse.json({ ok: true });
   }
+
+  const stripe = await getStripeClient();
 
   // 期間終了時にキャンセル（即時停止ではなく期間末まで使える）
   await stripe.subscriptions.update(subscription.stripeSubscriptionId, {

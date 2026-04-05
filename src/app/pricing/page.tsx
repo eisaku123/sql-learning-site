@@ -5,12 +5,10 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
-import LoadingButton from "@/components/LoadingButton";
 
 export default function PricingPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [premiumSignupEnabled, setPremiumSignupEnabled] = useState(true);
 
@@ -25,21 +23,16 @@ export default function PricingPage() {
       .then((data) => setPremiumSignupEnabled(data.premiumSignupEnabled));
   }, [session]);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!session?.user) {
-      router.push("/login");
+      router.push("/login?callbackUrl=/premium/confirm");
       return;
     }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/stripe/checkout", { method: "POST" });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } finally {
-      setLoading(false);
+    if (isPremium) {
+      router.push("/premium/lessons");
+      return;
     }
+    router.push("/premium/confirm");
   };
 
   const freePlan = [
@@ -170,7 +163,7 @@ export default function PricingPage() {
             </ul>
 
             <Link
-              href="/register"
+              href={session?.user ? "/lessons" : "/register"}
               style={{
                 display: "block",
                 textAlign: "center",
@@ -184,7 +177,7 @@ export default function PricingPage() {
                 fontSize: "0.95rem",
               }}
             >
-              無料で始める
+              {session?.user ? "レッスンへ →" : "無料で始める"}
             </Link>
           </div>
 
@@ -288,10 +281,8 @@ export default function PricingPage() {
                 現在、新規申し込みを停止しています
               </div>
             ) : (
-              <LoadingButton
+              <button
                 onClick={handleCheckout}
-                loading={loading}
-                loadingText="処理中..."
                 style={{
                   width: "100%",
                   background: "linear-gradient(135deg, #667eea, #764ba2)",
@@ -301,13 +292,14 @@ export default function PricingPage() {
                   padding: "0.9rem",
                   fontWeight: 700,
                   fontSize: "1rem",
+                  cursor: "pointer",
                   transition: "opacity 0.2s",
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
               >
-                {session?.user ? "プレミアムに申し込む" : "ログインして申し込む"}
-              </LoadingButton>
+                {session?.user ? "プレミアムに申し込む →" : "ログインして申し込む →"}
+              </button>
             )}
           </div>
         </section>

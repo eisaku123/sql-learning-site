@@ -163,6 +163,7 @@ export default function ExercisePanel({
       {/* アクション */}
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
         <button
+          id="tour-check-button"
           onClick={handleCheck}
           disabled={checking}
           style={{
@@ -179,6 +180,7 @@ export default function ExercisePanel({
           {checking ? "確認中..." : "答え合わせ"}
         </button>
         <button
+          id="tour-hint-button"
           onClick={() => setShowHint(!showHint)}
           style={{
             background: "rgba(251,191,36,0.1)",

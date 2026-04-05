@@ -10,6 +10,7 @@ import ExercisePanel from "@/components/ExercisePanel";
 import Fireworks from "@/components/Fireworks";
 import TableReferenceModal from "@/components/TableReferenceModal";
 import LessonCompletionModal from "@/components/LessonCompletionModal";
+import LessonTour from "@/components/LessonTour";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
@@ -28,6 +29,12 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
+
+  // 問題切り替え時にDBをリセットして前の問題のCREATE TABLEなどを消す
+  useEffect(() => {
+    sqlEditorRef.current?.resetDb();
+    setLastResult(null);
+  }, [activeExerciseIdx]);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -228,22 +235,6 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <h1 style={{ color: "#e0e0f0", fontSize: "1.5rem", fontWeight: 700 }}>{lesson.title}</h1>
-            <button
-              onClick={() => setShowExplanation((v) => !v)}
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                color: "#8888aa",
-                padding: "0.35rem 0.85rem",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
-            </button>
           </div>
         </div>
 
@@ -258,6 +249,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
         >
           {showExplanation ? (
             <div
+              id="tour-lesson-content"
               style={{
                 padding: "2rem",
                 borderRight: "1px solid rgba(255,255,255,0.06)",
@@ -335,7 +327,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
             }}
           >
             {showExplanation && (
-              <section>
+              <section id="tour-exercise-panel">
                 <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
                   練習問題
                 </h3>
@@ -360,6 +352,8 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                 ref={sqlEditorRef as any}
                 initialQuery=""
                 onResult={(columns, rows) => setLastResult({ columns, rows })}
+                showExplanation={showExplanation}
+                onToggleExplanation={() => setShowExplanation((v) => !v)}
               />
             </section>
 
@@ -383,6 +377,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
         </div>
       </main>
       <TableReferenceModal />
+      <LessonTour />
       <style>{lessonContentStyle}</style>
     </>
   );

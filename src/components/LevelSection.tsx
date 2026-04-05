@@ -9,6 +9,7 @@ interface LevelSectionProps {
   lessons: Lesson[];
   completedSlugs: string[];
   solvedExIds: string[];
+  hrefPrefix?: string;
 }
 
 export default function LevelSection({
@@ -17,6 +18,7 @@ export default function LevelSection({
   lessons,
   completedSlugs,
   solvedExIds,
+  hrefPrefix = "/lessons",
 }: LevelSectionProps) {
   const completedSet = new Set(completedSlugs);
   const solvedSet = new Set(solvedExIds);
@@ -36,7 +38,7 @@ export default function LevelSection({
           const exPercent = total > 0 ? (solved / total) * 100 : 0;
 
           return (
-            <Link key={lesson.slug} href={`/lessons/${lesson.slug}`} style={{ textDecoration: "none" }}>
+            <Link key={lesson.slug} href={`${hrefPrefix}/${lesson.slug}`} style={{ textDecoration: "none" }}>
               <div
                 style={{
                   background: done ? "rgba(52,211,153,0.05)" : "rgba(255,255,255,0.03)",

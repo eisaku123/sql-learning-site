@@ -257,9 +257,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-date-5",
-        question: "employeesテーブルのnameと、hire_dateを年月形式（YYYY-MM）にした「入社年月」をhire_dateの昇順で取得してください",
-        hint: "strftime('%Y-%m', hire_date) AS 入社年月 ORDER BY hire_date",
-        answer: "SELECT name, strftime('%Y-%m', hire_date) AS 入社年月 FROM employees ORDER BY hire_date",
+        question: "employeesテーブルのnameと、hire_dateを年月形式（YYYY-MM）にした「入社年月」を、hire_dateがNULLでない従業員のみhire_dateの昇順で取得してください",
+        hint: "WHERE hire_date IS NOT NULL ... strftime('%Y-%m', hire_date) AS 入社年月 ORDER BY hire_date",
+        answer: "SELECT name, strftime('%Y-%m', hire_date) AS 入社年月 FROM employees WHERE hire_date IS NOT NULL ORDER BY hire_date",
         expectedColumns: ["name", "入社年月"],
       },
     ],
