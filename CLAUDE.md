@@ -89,22 +89,28 @@ Next.js 16 App Router + Prisma 7 + PostgreSQL（Neon）+ sql.js（WebAssembly）
 ### 決済（Stripe）
 
 - 月額100円のサブスクリプション
-- `POST /api/stripe/checkout` → Stripe Checkout セッション作成
-- `POST /api/stripe/webhook` → 支払い成功時に `Subscription` レコードを upsert
+- `/premium/confirm` → 2ステップの購入フロー（確認画面 → カード入力）
+- `POST /api/stripe/create-setup-intent` → SetupIntent 作成（顧客作成・重複チェック含む）
+- `POST /api/stripe/subscribe` → SetupIntent 確認後にサブスク有効化・DB記録・ウェルカムメール送信
+- `POST /api/stripe/webhook` → `invoice.payment_succeeded` / `checkout.session.completed` でDB upsert
 - `POST /api/stripe/cancel` → サブスクリプションキャンセル
 - `GET /api/subscription` → 有効期限・ステータス確認
+- Stripe Link は非表示（`wallets: { link: "never" }`）
+- 重複サブスク作成は 409 `ALREADY_SUBSCRIBED` でブロック
+- テスト時は Stripe ダッシュボードで既存サブスクをキャンセルしてから試す
 
 ### 主要コンポーネント
 
 | コンポーネント | 役割 |
 |--------------|------|
-| `SqlEditor` | sql.js を使ったブラウザ内SQLエディタ。`ref` で `runSql()` を外部公開 |
+| `SqlEditor` | sql.js を使ったブラウザ内SQLエディタ。`ref` で `runSql()` / `resetDb()` を外部公開 |
 | `ExercisePanel` | 練習問題表示・答え合わせ・ヒント・解答表示 |
-| `Fireworks` | 全問正解時の花火アニメーション（Canvas） |
+| `Fireworks` | 全問正解時の花火アニメーション（Canvas）。ログインユーザーのみ発火 |
 | `LessonCompletionModal` | 花火終了後に表示する完了モーダル（次レッスンへのリンク付き） |
 | `TableReferenceModal` | テーブル参照ボタン（押すと `/table-reference` をポップアップウィンドウで開く） |
-| `Header` | ナビゲーションヘッダー（ログイン状態に応じて表示切替） |
+| `Header` | ナビゲーションヘッダー（ログイン状態に応じて表示切替）。進捗リンクは削除済み |
 | `LessonCard` | レッスン一覧カード（中級は未ログイン時に🔒バッジ表示） |
+| `LessonTour` | driver.js を使った初回訪問ガイドツアー（9ステップ）。`localStorage` の `lesson_tour_done` で管理 |
 
 ### テーブル参照ポップアップ（`/table-reference`）
 
@@ -148,3 +154,42 @@ npm run dev
 - デプロイするときはバージョン番号をあげてアップしてください（`vercel --prod`）
 - ドキュメント（CLAUDE.md）は変更があれば自動で追記していく
 - 機能追加の提案を求められたときは必ず案を出す
+
+---
+
+## 開発履歴
+
+### v2.1.x（2026-04-05）
+
+#### ナビゲーション整理
+- Header から「進捗」リンクを削除
+- `/progress` は `/dashboard` にリダイレクト
+
+#### 練習問題のDB汚染バグ修正
+- `SqlEditor` に `resetDb()` を追加（`SqlEditorHandle` インターフェースに追記）
+- 問題切り替え時（`activeExerciseIdx` 変化）に DB をリセットし `lastResult` もクリア
+- 原因: 前の問題で実行した `CREATE TABLE` がメモリDB上に残り、次の問題の答え合わせが失敗していた
+- 修正: モデル解答は常にフレッシュなDBで実行する
+
+#### Stripe 組み込み決済フロー
+- Stripe Checkout（外部リダイレクト）→ 自前の決済ページ `/premium/confirm` に変更
+- SetupIntent 方式を採用（Stripe API 2026-02-25.clover で payment_intent が invoice から削除されたため）
+- Step1: 購入内容確認・特定商取引法リンク・利用規約同意チェック
+- Step2: Stripe PaymentElement（カード入力）
+- 確認後 `/premium/success` でサブスクリプション有効化 → DB記録 → ウェルカムメール送信
+
+#### オンボーディングツアー（driver.js）
+- `src/components/LessonTour.tsx` を新規作成
+- 初回訪問時（ログイン有無問わず）に9ステップのガイドを自動表示
+- ツアー対象要素に `id="tour-*"` を付与（SqlEditor, ExercisePanel, TableReferenceModal）
+- 「解説を隠す」ボタンを SQLエディタの「クリア」横に移動（`id="tour-toggle-explanation"`）
+- driver.js のポップオーバーは白背景のため、インラインスタイルの文字色は濃色（`#1a1a3e` 等）を使用
+
+### v1.x 以前
+- 初級・中級レッスン実装（計27問）
+- プレミアムレッスン100問追加
+- NextAuth.js + メール認証 + パスワードリセット
+- Stripe サブスクリプション（月額100円）
+- 管理画面（ユーザー管理・メンテナンスモード・お知らせ）
+- テーブル参照ポップアップ（ER図含む）
+- 花火 + 完了モーダル
