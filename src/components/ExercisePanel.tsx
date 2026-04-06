@@ -12,6 +12,7 @@ interface ExercisePanelProps {
   onSolve: (exerciseId: string) => void;
   lastResult: SqlResult | null;
   runAnswerSql: (sql: string) => SqlResult | null;
+  runCurrentUserSql: () => SqlResult | null;
   activeIdx: number;
   onChangeIdx: (idx: number) => void;
 }
@@ -23,6 +24,7 @@ export default function ExercisePanel({
   onSolve,
   lastResult,
   runAnswerSql,
+  runCurrentUserSql,
   activeIdx,
   onChangeIdx,
 }: ExercisePanelProps) {
@@ -39,8 +41,10 @@ export default function ExercisePanel({
   }, [lastResult]);
 
   const handleCheck = async () => {
-    if (!lastResult) {
-      setFeedback({ correct: false, message: "まずSQLを実行してください" });
+    // 未実行の場合は自動でユーザーのSQLを実行してから判定
+    const userResult = lastResult ?? runCurrentUserSql();
+    if (!userResult) {
+      setFeedback({ correct: false, message: "SQLを入力してから答え合わせしてください" });
       return;
     }
 
@@ -57,7 +61,7 @@ export default function ExercisePanel({
       const respectOrder = /\bORDER\s+BY\b/i.test(exercise.answer);
 
       const correct = compareResults(
-        lastResult.columns, lastResult.rows,
+        userResult.columns, userResult.rows,
         expected.columns, expected.rows,
         respectOrder
       );

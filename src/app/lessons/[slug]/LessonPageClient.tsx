@@ -29,10 +29,12 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
+  const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? null, []);
 
   // 問題切り替え時にDBをリセットして前の問題のCREATE TABLEなどを消す
   useEffect(() => {
     sqlEditorRef.current?.resetDb();
+    sqlEditorRef.current?.clearQuery();
     setLastResult(null);
   }, [activeExerciseIdx]);
 
@@ -294,6 +296,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   onSolve={handleSolve}
                   lastResult={lastResult}
                   runAnswerSql={runAnswerSql}
+                  runCurrentUserSql={runCurrentUserSql}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />
@@ -338,6 +341,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   onSolve={handleSolve}
                   lastResult={lastResult}
                   runAnswerSql={runAnswerSql}
+                  runCurrentUserSql={runCurrentUserSql}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />

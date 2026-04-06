@@ -11,6 +11,8 @@ interface QueryResult {
 export interface SqlEditorHandle {
   runSql: (sql: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
   resetDb: () => void;
+  runCurrentSql: () => { columns: string[]; rows: (string | number | null)[][] } | null;
+  clearQuery: () => void;
 }
 
 interface SqlEditorProps {
@@ -25,6 +27,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
+  const queryRef = useRef(initialQuery);
   const [results, setResults] = useState<QueryResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "running">("loading");
@@ -88,6 +91,34 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       const db = new sqlConstructorRef.current.Database();
       db.exec(SAMPLE_DB_SQL);
       dbRef.current = db;
+    },
+    // エディタの入力・結果をクリア
+    clearQuery: () => {
+      setQuery("");
+      queryRef.current = "";
+      setResults([]);
+      setError(null);
+    },
+    // 現在のエディタ入力をそのまま現在のDBで実行して結果を返す
+    runCurrentSql: () => {
+      const currentQuery = queryRef.current.trim();
+      if (!dbRef.current || !currentQuery) return null;
+      try {
+        const db = dbRef.current as {
+          exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[];
+        };
+        const statements = currentQuery.split(";").map((s) => s.trim()).filter(Boolean);
+        let lastSelectResult: { columns: string[]; rows: (string | number | null)[][] } | null = null;
+        for (const stmt of statements) {
+          const res = db.exec(stmt);
+          if (res.length > 0 && res[0].columns && res[0].columns.length > 0) {
+            lastSelectResult = { columns: res[0].columns, rows: res[0].values ?? [] };
+          }
+        }
+        return lastSelectResult ?? { columns: [], rows: [] };
+      } catch {
+        return null;
+      }
     },
   }));
 
@@ -198,7 +229,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         <textarea
           id="tour-sql-editor"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => { setQuery(e.target.value); queryRef.current = e.target.value; }}
           onKeyDown={handleKeyDown}
           spellCheck={false}
           disabled={isLoading}
