@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 
 export default async function AdminUsersPage() {
@@ -27,7 +28,7 @@ export default async function AdminUsersPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              {["名前", "メール", "登録日", "プレミアム", "レッスン完了", "正解問題数"].map((h) => (
+              {["名前", "メール", "登録日", "プレミアム", "レッスン完了", "正解問題数", ""].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -83,6 +84,24 @@ export default async function AdminUsersPage() {
                   </td>
                   <td style={{ padding: "0.75rem 1rem", color: "#c0c0d8", textAlign: "center" }}>
                     {solvedExercises}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem", textAlign: "center" }}>
+                    <Link
+                      href={`/admin/users/${u.id}/progress`}
+                      style={{
+                        background: "rgba(102,126,234,0.15)",
+                        border: "1px solid rgba(102,126,234,0.3)",
+                        borderRadius: "6px",
+                        color: "#667eea",
+                        padding: "0.3rem 0.75rem",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      詳細 →
+                    </Link>
                   </td>
                 </tr>
               );

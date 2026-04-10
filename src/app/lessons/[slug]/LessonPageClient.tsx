@@ -29,7 +29,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
-  const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? null, []);
+  const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? { result: null, error: null }, []);
 
   // 問題切り替え時にDBをリセットして前の問題のCREATE TABLEなどを消す
   useEffect(() => {
@@ -356,6 +356,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                 ref={sqlEditorRef as any}
                 initialQuery=""
                 onResult={(columns, rows) => setLastResult({ columns, rows })}
+                onResultError={() => setLastResult(null)}
                 showExplanation={showExplanation}
                 onToggleExplanation={() => setShowExplanation((v) => !v)}
               />

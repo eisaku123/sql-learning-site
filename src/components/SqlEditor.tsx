@@ -11,19 +11,20 @@ interface QueryResult {
 export interface SqlEditorHandle {
   runSql: (sql: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
   resetDb: () => void;
-  runCurrentSql: () => { columns: string[]; rows: (string | number | null)[][] } | null;
+  runCurrentSql: () => { result: { columns: string[]; rows: (string | number | null)[][] } | null; error: string | null };
   clearQuery: () => void;
 }
 
 interface SqlEditorProps {
   initialQuery?: string;
   onResult?: (columns: string[], rows: (string | number | null)[][]) => void;
+  onResultError?: () => void;
   showExplanation?: boolean;
   onToggleExplanation?: () => void;
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "", onResult, showExplanation, onToggleExplanation },
+  { initialQuery = "", onResult, onResultError, showExplanation, onToggleExplanation },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
@@ -102,7 +103,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
     // 現在のエディタ入力をそのまま現在のDBで実行して結果を返す
     runCurrentSql: () => {
       const currentQuery = queryRef.current.trim();
-      if (!dbRef.current || !currentQuery) return null;
+      if (!dbRef.current || !currentQuery) return { result: null, error: null };
       try {
         const db = dbRef.current as {
           exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[];
@@ -115,9 +116,9 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
             lastSelectResult = { columns: res[0].columns, rows: res[0].values ?? [] };
           }
         }
-        return lastSelectResult ?? { columns: [], rows: [] };
-      } catch {
-        return null;
+        return { result: lastSelectResult ?? { columns: [], rows: [] }, error: null };
+      } catch (e) {
+        return { result: null, error: translateError((e as Error).message) };
       }
     },
   }));
@@ -173,7 +174,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       }
     } catch (e) {
       setError(translateError((e as Error).message));
-      if (onResult) onResult([], []);
+      if (onResultError) onResultError();
     } finally {
       setStatus("ready");
     }
