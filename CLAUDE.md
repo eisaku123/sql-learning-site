@@ -11,7 +11,7 @@ npm run lint      # ESLint
 npm run test      # Vitest（ユニットテスト）
 npx prisma migrate dev --name <name>  # スキーマ変更時にマイグレーション生成・適用
 npx prisma studio                     # DB GUI（開発用）
-vercel --prod                         # Vercelへ本番デプロイ
+git push origin main                  # Vercelへ本番デプロイ（GitHub連携で自動デプロイ）
 ```
 
 ビルドの型チェックは `npm run build` で行われる（独立した `tsc` コマンドは不要）。
