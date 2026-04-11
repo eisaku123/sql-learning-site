@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import NavigationSpinner from "@/components/NavigationSpinner";
+import FeedbackButton from "@/components/FeedbackButton";
 import Script from "next/script";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -98,6 +99,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider>
           <NavigationSpinner />
           {children}
+          <FeedbackButton />
           <footer
             style={{
               borderTop: "1px solid rgba(255,255,255,0.06)",

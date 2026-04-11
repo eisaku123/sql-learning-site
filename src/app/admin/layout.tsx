@@ -9,6 +9,7 @@ const navItems = [
   { href: "/admin/users", label: "ユーザー一覧", icon: "👥" },
   { href: "/admin/maintenance", label: "メンテナンス", icon: "🔧" },
   { href: "/admin/announcements", label: "お知らせ", icon: "📢" },
+  { href: "/admin/feedback", label: "ご意見箱", icon: "💬" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
