@@ -260,24 +260,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
               </span>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <h1 style={{ color: "#e0e0f0", fontSize: "1.5rem", fontWeight: 700 }}>{lesson.title}</h1>
-            <button
-              onClick={() => setShowExplanation((v) => !v)}
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                color: "#8888aa",
-                padding: "0.35rem 0.85rem",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
-            </button>
           </div>
         </div>
 
@@ -428,6 +412,8 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                 initialQuery=""
                 onResult={(columns, rows) => setLastResult({ columns, rows })}
                 onResultError={() => setLastResult(null)}
+                showExplanation={showExplanation}
+                onToggleExplanation={() => setShowExplanation((v) => !v)}
               />
             </section>
 

@@ -11,6 +11,7 @@ import Fireworks from "@/components/Fireworks";
 import TableReferenceModal from "@/components/TableReferenceModal";
 import LessonCompletionModal from "@/components/LessonCompletionModal";
 import LessonTour from "@/components/LessonTour";
+import GuestCompletionModal from "@/components/GuestCompletionModal";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
@@ -25,6 +26,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [lessonCompleted, setLessonCompleted] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
@@ -70,6 +72,15 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
       }).catch(() => {});
     }
   }, [solvedIds, progressLoaded, lesson, session, slug, lessonCompleted]);
+
+  // 未ログイン時：全問正解で登録促進モーダルを表示
+  useEffect(() => {
+    if (status === "loading" || session?.user || !lesson) return;
+    if (solvedIds.length === 0) return;
+    if (lesson.exercises.every((ex) => solvedIds.includes(ex.id))) {
+      setShowGuestModal(true);
+    }
+  }, [solvedIds, lesson, session, status]);
 
   const handleSolve = useCallback((exerciseId: string) => {
     setSolvedIds((prev) => {
@@ -189,6 +200,13 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
           nextLesson={nextLesson}
           lessonListHref="/lessons"
           onClose={() => setShowCompletionModal(false)}
+        />
+      )}
+      {showGuestModal && (
+        <GuestCompletionModal
+          lessonSlug={slug}
+          nextLesson={nextLesson}
+          onClose={() => setShowGuestModal(false)}
         />
       )}
       <Header />

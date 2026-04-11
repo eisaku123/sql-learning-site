@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
+import NavigationSpinner from "@/components/NavigationSpinner";
 import Script from "next/script";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -95,6 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <SessionProvider>
+          <NavigationSpinner />
           {children}
           <footer
             style={{
