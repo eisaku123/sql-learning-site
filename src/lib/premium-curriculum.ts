@@ -1,5 +1,9 @@
 import type { Lesson } from "@/types";
 
+export function getPremiumLessonBySlug(slug: string): Lesson | undefined {
+  return PREMIUM_LESSONS.find((l) => l.slug === slug);
+}
+
 export const PREMIUM_LESSONS: Lesson[] = [
   // ========= プレミアム初級コース =========
   {
@@ -7,62 +11,62 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "NULL値の扱い",
     level: "beginner",
     order: 1,
-    description: "NULLの概念とIS NULL・COALESCE・NULLIFの使い方を学びます",
+    description: "NULLの概念とIS NULL・COALESCE・NULLIFの使い方をusers・productsテーブルで学びます",
     content: `
 <h2>NULLとは？</h2>
 <p><strong>NULL</strong>は「値が存在しない」ことを表す特別な値です。0でも空文字でもなく、「不明・未入力」を意味します。</p>
+<p>usersテーブルの <code>email</code> や <code>city</code>、productsテーブルの <code>stock</code> にNULLが含まれています。</p>
 
 <h2>IS NULL / IS NOT NULL</h2>
 <p>NULLかどうかの比較には <code>=</code> は使えません。<code>IS NULL</code> / <code>IS NOT NULL</code> を使います。</p>
-
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> salary <span class="sql-keyword">IS NOT NULL</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> email <span class="sql-keyword">IS NULL</span>;</code></pre>
 
 <h2>COALESCE — NULLを別の値に置換</h2>
 <p>引数の中で最初にNULLでない値を返します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">COALESCE</span>(salary, <span class="sql-number">0</span>) <span class="sql-keyword">AS</span> 給与 <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">COALESCE</span>(email, <span class="sql-string">'未登録'</span>) <span class="sql-keyword">AS</span> メール <span class="sql-keyword">FROM</span> users;</code></pre>
 
 <h2>NULLIF — 条件が一致したらNULLを返す</h2>
 <p>2つの値が等しい場合にNULLを返し、そうでなければ第1引数を返します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">NULLIF</span>(salary, <span class="sql-number">0</span>) <span class="sql-keyword">AS</span> salary <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">NULLIF</span>(stock, <span class="sql-number">0</span>) <span class="sql-keyword">AS</span> 在庫 <span class="sql-keyword">FROM</span> products;</code></pre>
 
 <h2>IFNULL（SQLite専用）</h2>
-<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">IFNULL</span>(salary, <span class="sql-number">0</span>) <span class="sql-keyword">AS</span> 給与 <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-function">IFNULL</span>(city, <span class="sql-string">'不明'</span>) <span class="sql-keyword">AS</span> 都市 <span class="sql-keyword">FROM</span> users;</code></pre>
     `,
     exercises: [
       {
         id: "pb-null-1",
-        question: "employeesテーブルからnameがNULLでない従業員のnameを全件取得してください",
-        hint: "WHERE name IS NOT NULL",
-        answer: "SELECT name FROM employees WHERE name IS NOT NULL",
-        expectedColumns: ["name"],
+        question: "usersテーブルからemailがNULLのユーザーのnameとemailを取得してください",
+        hint: "WHERE email IS NULL",
+        answer: "SELECT name, email FROM users WHERE email IS NULL",
+        expectedColumns: ["name", "email"],
       },
       {
         id: "pb-null-2",
-        question: "employeesテーブルのnameとsalaryを取得し、salaryがNULLの場合は0に置換して「給与」という列名で表示してください",
-        hint: "COALESCE(salary, 0) AS 給与",
-        answer: "SELECT name, COALESCE(salary, 0) AS 給与 FROM employees",
-        expectedColumns: ["name", "給与"],
+        question: "usersテーブルのnameとemailを取得し、emailがNULLの場合は「未登録」に置換して「メールアドレス」という列名で表示してください",
+        hint: "COALESCE(email, '未登録') AS メールアドレス",
+        answer: "SELECT name, COALESCE(email, '未登録') AS メールアドレス FROM users",
+        expectedColumns: ["name", "メールアドレス"],
       },
       {
         id: "pb-null-3",
-        question: "employeesテーブルからhire_dateがNULLでない従業員のnameとhire_dateをhire_dateの昇順で取得してください",
-        hint: "WHERE hire_date IS NOT NULL ORDER BY hire_date ASC",
-        answer: "SELECT name, hire_date FROM employees WHERE hire_date IS NOT NULL ORDER BY hire_date ASC",
-        expectedColumns: ["name", "hire_date"],
+        question: "usersテーブルからcityがNULLでないユーザーのnameとcityをid順（昇順）で取得してください",
+        hint: "WHERE city IS NOT NULL ORDER BY id ASC",
+        answer: "SELECT name, city FROM users WHERE city IS NOT NULL ORDER BY id ASC",
+        expectedColumns: ["name", "city"],
       },
       {
         id: "pb-null-4",
-        question: "NULLIF関数を使い、employeesのsalaryが450000の場合はNULLに変換し、nameとadjusted_salaryとして取得してください",
-        hint: "NULLIF(salary, 450000) AS adjusted_salary",
-        answer: "SELECT name, NULLIF(salary, 450000) AS adjusted_salary FROM employees",
-        expectedColumns: ["name", "adjusted_salary"],
+        question: "productsテーブルのnameとstockを取得し、stockがNULLの場合は0に置換して「在庫数」という列名で表示してください",
+        hint: "COALESCE(stock, 0) AS 在庫数",
+        answer: "SELECT name, COALESCE(stock, 0) AS 在庫数 FROM products",
+        expectedColumns: ["name", "在庫数"],
       },
       {
         id: "pb-null-5",
-        question: "productsテーブルからstockがNULLでない商品のname・price・stockを取得してください",
-        hint: "WHERE stock IS NOT NULL",
-        answer: "SELECT name, price, stock FROM products WHERE stock IS NOT NULL",
-        expectedColumns: ["name", "price", "stock"],
+        question: "NULLIF関数を使い、productsのstockが50の場合はNULLに変換し、nameとadjusted_stockとして取得してください",
+        hint: "NULLIF(stock, 50) AS adjusted_stock",
+        answer: "SELECT name, NULLIF(stock, 50) AS adjusted_stock FROM products",
+        expectedColumns: ["name", "adjusted_stock"],
       },
     ],
   },
@@ -71,63 +75,63 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "文字列関数",
     level: "beginner",
     order: 2,
-    description: "LENGTH・SUBSTR・REPLACE・INSTR・文字連結など文字列操作を学びます",
+    description: "LENGTH・SUBSTR・REPLACE・INSTR・文字連結などの文字列操作をusers・productsテーブルで学びます",
     content: `
 <h2>文字列関数一覧</h2>
 <table>
   <tr><th>関数</th><th>説明</th><th>例</th></tr>
-  <tr><td>LENGTH(s)</td><td>文字数を返す</td><td>LENGTH('hello') → 5</td></tr>
-  <tr><td>SUBSTR(s,n,len)</td><td>部分文字列を取得</td><td>SUBSTR('田中太郎',1,2) → '田中'</td></tr>
-  <tr><td>REPLACE(s,old,new)</td><td>文字列を置換</td><td>REPLACE('ab cd','cd','EF')</td></tr>
-  <tr><td>INSTR(s,sub)</td><td>部分文字列の位置</td><td>INSTR('hello','ll') → 3</td></tr>
-  <tr><td>s1 || s2</td><td>文字連結</td><td>'田' || '中' → '田中'</td></tr>
+  <tr><td>LENGTH(s)</td><td>文字数を返す</td><td>LENGTH('田中 太郎') → 5</td></tr>
+  <tr><td>SUBSTR(s,n,len)</td><td>部分文字列を取得</td><td>SUBSTR('田中 太郎',1,2) → '田中'</td></tr>
+  <tr><td>REPLACE(s,old,new)</td><td>文字列を置換</td><td>REPLACE('田中 太郎',' ','')</td></tr>
+  <tr><td>INSTR(s,sub)</td><td>部分文字列の位置</td><td>INSTR('Laptop','op') → 4</td></tr>
+  <tr><td>s1 || s2</td><td>文字連結</td><td>'PC' || '-' || 'Laptop'</td></tr>
   <tr><td>TRIM(s)</td><td>前後の空白を除去</td><td>TRIM(' abc ') → 'abc'</td></tr>
 </table>
 
 <h2>使用例</h2>
 <pre><code><span class="sql-comment">-- 名前の文字数を取得</span>
-<span class="sql-keyword">SELECT</span> name, <span class="sql-function">LENGTH</span>(name) <span class="sql-keyword">AS</span> 文字数 <span class="sql-keyword">FROM</span> employees;
+<span class="sql-keyword">SELECT</span> name, <span class="sql-function">LENGTH</span>(name) <span class="sql-keyword">AS</span> 文字数 <span class="sql-keyword">FROM</span> users;
 
-<span class="sql-comment">-- 名前と部署名を連結</span>
-<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">||</span> <span class="sql-string">' ('</span> <span class="sql-keyword">||</span> department_id <span class="sql-keyword">||</span> <span class="sql-string">')'</span> <span class="sql-keyword">AS</span> 表示名 <span class="sql-keyword">FROM</span> employees;
+<span class="sql-comment">-- 商品名とカテゴリを連結</span>
+<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">||</span> <span class="sql-string">' ['</span> <span class="sql-keyword">||</span> category <span class="sql-keyword">||</span> <span class="sql-string">']'</span> <span class="sql-keyword">AS</span> 商品情報 <span class="sql-keyword">FROM</span> products;
 
-<span class="sql-comment">-- 空白を除去</span>
-<span class="sql-keyword">SELECT</span> <span class="sql-function">REPLACE</span>(name, <span class="sql-string">' '</span>, <span class="sql-string">''</span>) <span class="sql-keyword">AS</span> 連続名 <span class="sql-keyword">FROM</span> employees;</code></pre>
+<span class="sql-comment">-- スペースを除去</span>
+<span class="sql-keyword">SELECT</span> <span class="sql-function">REPLACE</span>(name, <span class="sql-string">' '</span>, <span class="sql-string">''</span>) <span class="sql-keyword">AS</span> 連続名 <span class="sql-keyword">FROM</span> users;</code></pre>
     `,
     exercises: [
       {
         id: "pb-str-1",
-        question: "employeesテーブルのnameと、nameの文字数を「文字数」という列名で取得してください",
+        question: "usersテーブルのnameと、nameの文字数を「文字数」という列名で取得してください",
         hint: "LENGTH(name) AS 文字数",
-        answer: "SELECT name, LENGTH(name) AS 文字数 FROM employees",
+        answer: "SELECT name, LENGTH(name) AS 文字数 FROM users",
         expectedColumns: ["name", "文字数"],
       },
       {
         id: "pb-str-2",
-        question: "employeesテーブルのnameから最初の2文字（苗字）をSUBSTRで取得し、「苗字」として表示してください",
+        question: "usersテーブルのnameから最初の2文字をSUBSTRで取得し、「苗字」として表示してください",
         hint: "SUBSTR(name, 1, 2) AS 苗字",
-        answer: "SELECT name, SUBSTR(name, 1, 2) AS 苗字 FROM employees",
+        answer: "SELECT name, SUBSTR(name, 1, 2) AS 苗字 FROM users",
         expectedColumns: ["name", "苗字"],
       },
       {
         id: "pb-str-3",
-        question: "employeesテーブルのnameの空白をREPLACEで除去し、「連続名」として表示してください",
+        question: "usersテーブルのnameのスペースをREPLACEで除去し、「連続名」として表示してください",
         hint: "REPLACE(name, ' ', '') AS 連続名",
-        answer: "SELECT name, REPLACE(name, ' ', '') AS 連続名 FROM employees",
+        answer: "SELECT name, REPLACE(name, ' ', '') AS 連続名 FROM users",
         expectedColumns: ["name", "連続名"],
       },
       {
         id: "pb-str-4",
-        question: "productsテーブルのnameとcategoryを「|」で連結し、「商品情報」として取得してください",
-        hint: "name || ' | ' || category AS 商品情報",
-        answer: "SELECT name || ' | ' || category AS 商品情報 FROM products",
+        question: "productsテーブルのnameとcategoryを「 [」と「]」で囲んで連結し、「商品情報」として取得してください（例: Laptop [PC]）",
+        hint: "name || ' [' || category || ']' AS 商品情報",
+        answer: "SELECT name || ' [' || category || ']' AS 商品情報 FROM products",
         expectedColumns: ["商品情報"],
       },
       {
         id: "pb-str-5",
-        question: "productsテーブルのnameから「PC」という文字列の開始位置をINSTRで取得し、nameと「位置」として表示してください",
-        hint: "INSTR(name, 'PC') AS 位置",
-        answer: "SELECT name, INSTR(name, 'PC') AS 位置 FROM products",
+        question: "productsテーブルのnameから「op」という文字列の開始位置をINSTRで取得し、nameと「位置」として表示してください",
+        hint: "INSTR(name, 'op') AS 位置",
+        answer: "SELECT name, INSTR(name, 'op') AS 位置 FROM products",
         expectedColumns: ["name", "位置"],
       },
     ],
@@ -137,7 +141,7 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "数値関数",
     level: "beginner",
     order: 3,
-    description: "ROUND・ABS・CAST・算術演算などの数値操作を学びます",
+    description: "ROUND・ABS・CAST・算術演算などの数値操作をproducts・order_detailsテーブルで学びます",
     content: `
 <h2>数値関数一覧</h2>
 <table>
@@ -151,11 +155,11 @@ export const PREMIUM_LESSONS: Lesson[] = [
 </table>
 
 <h2>使用例</h2>
-<pre><code><span class="sql-comment">-- 給与を千円単位に丸める</span>
-<span class="sql-keyword">SELECT</span> name, <span class="sql-function">ROUND</span>(salary / <span class="sql-number">1000.0</span>, <span class="sql-number">1</span>) <span class="sql-keyword">AS</span> 給与_千円 <span class="sql-keyword">FROM</span> employees;
+<pre><code><span class="sql-comment">-- 価格を千円単位に丸める</span>
+<span class="sql-keyword">SELECT</span> name, <span class="sql-function">ROUND</span>(price / <span class="sql-number">1000.0</span>, <span class="sql-number">1</span>) <span class="sql-keyword">AS</span> 価格_千円 <span class="sql-keyword">FROM</span> products;
 
-<span class="sql-comment">-- 50万との差の絶対値</span>
-<span class="sql-keyword">SELECT</span> name, <span class="sql-function">ABS</span>(salary - <span class="sql-number">500000</span>) <span class="sql-keyword">AS</span> 差額 <span class="sql-keyword">FROM</span> employees;
+<span class="sql-comment">-- 10万円との差の絶対値</span>
+<span class="sql-keyword">SELECT</span> name, <span class="sql-function">ABS</span>(price - <span class="sql-number">100000</span>) <span class="sql-keyword">AS</span> 差額 <span class="sql-keyword">FROM</span> products;
 
 <span class="sql-comment">-- 消費税込み価格（整数に変換）</span>
 <span class="sql-keyword">SELECT</span> name, <span class="sql-function">CAST</span>(price * <span class="sql-number">1.1</span> <span class="sql-keyword">AS INTEGER</span>) <span class="sql-keyword">AS</span> 税込価格 <span class="sql-keyword">FROM</span> products;</code></pre>
@@ -170,16 +174,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-num-2",
-        question: "employeesテーブルのnameと、salaryと500000との差の絶対値を「差額」として取得してください",
-        hint: "ABS(salary - 500000) AS 差額",
-        answer: "SELECT name, ABS(salary - 500000) AS 差額 FROM employees",
+        question: "productsテーブルのnameと、priceと100000との差の絶対値を「差額」として取得してください",
+        hint: "ABS(price - 100000) AS 差額",
+        answer: "SELECT name, ABS(price - 100000) AS 差額 FROM products",
         expectedColumns: ["name", "差額"],
       },
       {
         id: "pb-num-3",
-        question: "ordersテーブルのidとquantityと、quantityを3で割った余りを「余り」として取得してください",
+        question: "order_detailsテーブルのidとquantityと、quantityを3で割った余りを「余り」として取得してください",
         hint: "quantity % 3 AS 余り",
-        answer: "SELECT id, quantity, quantity % 3 AS 余り FROM orders",
+        answer: "SELECT id, quantity, quantity % 3 AS 余り FROM order_details",
         expectedColumns: ["id", "quantity", "余り"],
       },
       {
@@ -191,10 +195,10 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-num-5",
-        question: "employeesテーブルのnameとsalaryと、salaryの85%をCAST(AS INTEGER)した「差引額」を取得してください",
-        hint: "CAST(salary * 0.85 AS INTEGER) AS 差引額",
-        answer: "SELECT name, salary, CAST(salary * 0.85 AS INTEGER) AS 差引額 FROM employees",
-        expectedColumns: ["name", "salary", "差引額"],
+        question: "order_detailsテーブルのidとprice・quantityと、price×quantityをCAST(AS INTEGER)した「小計」を取得してください",
+        hint: "CAST(price * quantity AS INTEGER) AS 小計",
+        answer: "SELECT id, price, quantity, CAST(price * quantity AS INTEGER) AS 小計 FROM order_details",
+        expectedColumns: ["id", "price", "quantity", "小計"],
       },
     ],
   },
@@ -203,136 +207,133 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "日付・時刻関数",
     level: "beginner",
     order: 4,
-    description: "strftime・date・年月日の抽出など日付操作を学びます",
+    description: "strftime・date関数などを使ってorders.order_dateを操作する方法を学びます",
     content: `
 <h2>SQLiteの日付関数</h2>
+<p>SQLiteでは日付を文字列（'YYYY-MM-DD'形式）で扱います。<code>strftime</code> 関数で書式変換や部分取得ができます。</p>
+
 <table>
-  <tr><th>関数</th><th>説明</th></tr>
-  <tr><td>date('now')</td><td>今日の日付（YYYY-MM-DD）</td></tr>
-  <tr><td>strftime('%Y', d)</td><td>年を4桁で取得</td></tr>
-  <tr><td>strftime('%m', d)</td><td>月を2桁で取得</td></tr>
-  <tr><td>strftime('%d', d)</td><td>日を2桁で取得</td></tr>
-  <tr><td>strftime('%Y-%m', d)</td><td>年月（YYYY-MM）</td></tr>
+  <tr><th>関数</th><th>説明</th><th>例</th></tr>
+  <tr><td>strftime('%Y', date)</td><td>年を取得</td><td>'2024'</td></tr>
+  <tr><td>strftime('%m', date)</td><td>月を取得（01〜12）</td><td>'01'</td></tr>
+  <tr><td>strftime('%d', date)</td><td>日を取得（01〜31）</td><td>'15'</td></tr>
+  <tr><td>date(date, '+N days')</td><td>N日後の日付</td><td>date('2024-01-15', '+7 days')</td></tr>
+  <tr><td>date('now')</td><td>現在の日付</td><td>'2026-04-12'</td></tr>
 </table>
 
 <h2>使用例</h2>
-<pre><code><span class="sql-comment">-- 入社年を取得</span>
-<span class="sql-keyword">SELECT</span> name, <span class="sql-function">strftime</span>(<span class="sql-string">'%Y'</span>, hire_date) <span class="sql-keyword">AS</span> 入社年 <span class="sql-keyword">FROM</span> employees;
+<pre><code><span class="sql-comment">-- 年と月を取得</span>
+<span class="sql-keyword">SELECT</span> id, order_date,
+  <span class="sql-function">strftime</span>(<span class="sql-string">'%Y'</span>, order_date) <span class="sql-keyword">AS</span> 年,
+  <span class="sql-function">strftime</span>(<span class="sql-string">'%m'</span>, order_date) <span class="sql-keyword">AS</span> 月
+<span class="sql-keyword">FROM</span> orders;
 
-<span class="sql-comment">-- 2020年以降の入社者を絞り込む</span>
-<span class="sql-keyword">SELECT</span> name, hire_date <span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">WHERE</span> <span class="sql-function">strftime</span>(<span class="sql-string">'%Y'</span>, hire_date) >= <span class="sql-string">'2020'</span>;
-
-<span class="sql-comment">-- 今日の日付</span>
-<span class="sql-keyword">SELECT</span> <span class="sql-function">date</span>(<span class="sql-string">'now'</span>) <span class="sql-keyword">AS</span> 今日;</code></pre>
+<span class="sql-comment">-- 特定の月の注文を取得</span>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> orders
+<span class="sql-keyword">WHERE</span> <span class="sql-function">strftime</span>(<span class="sql-string">'%m'</span>, order_date) = <span class="sql-string">'01'</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pb-date-1",
-        question: "employeesテーブルのnameと、hire_dateから年だけを「入社年」として取得してください",
-        hint: "strftime('%Y', hire_date) AS 入社年",
-        answer: "SELECT name, strftime('%Y', hire_date) AS 入社年 FROM employees",
-        expectedColumns: ["name", "入社年"],
+        question: "ordersテーブルのidとorder_dateと、order_dateから年を取得した「年」を表示してください",
+        hint: "strftime('%Y', order_date) AS 年",
+        answer: "SELECT id, order_date, strftime('%Y', order_date) AS 年 FROM orders",
+        expectedColumns: ["id", "order_date", "年"],
       },
       {
         id: "pb-date-2",
-        question: "employeesテーブルのnameと、hire_dateから月だけを「入社月」として取得してください",
-        hint: "strftime('%m', hire_date) AS 入社月",
-        answer: "SELECT name, strftime('%m', hire_date) AS 入社月 FROM employees",
-        expectedColumns: ["name", "入社月"],
+        question: "ordersテーブルのidとorder_dateと、order_dateから月を取得した「月」を表示してください",
+        hint: "strftime('%m', order_date) AS 月",
+        answer: "SELECT id, order_date, strftime('%m', order_date) AS 月 FROM orders",
+        expectedColumns: ["id", "order_date", "月"],
       },
       {
         id: "pb-date-3",
-        question: "今日の日付を「今日」という列名で取得してください",
-        hint: "SELECT date('now') AS 今日",
-        answer: "SELECT date('now') AS 今日",
-        expectedColumns: ["今日"],
+        question: "ordersテーブルから2024年2月（order_dateが'2024-02'で始まる）の注文のidとorder_dateとstatusを取得してください",
+        hint: "WHERE order_date LIKE '2024-02%'",
+        answer: "SELECT id, order_date, status FROM orders WHERE order_date LIKE '2024-02%'",
+        expectedColumns: ["id", "order_date", "status"],
       },
       {
         id: "pb-date-4",
-        question: "ordersテーブルから2024年のデータだけを絞り込み、id・order_date・customer_nameを取得してください",
-        hint: "WHERE strftime('%Y', order_date) = '2024'",
-        answer: "SELECT id, order_date, customer_name FROM orders WHERE strftime('%Y', order_date) = '2024'",
-        expectedColumns: ["id", "order_date", "customer_name"],
+        question: "ordersテーブルのidとorder_dateと、30日後の日付を「期限日」として取得してください",
+        hint: "date(order_date, '+30 days') AS 期限日",
+        answer: "SELECT id, order_date, date(order_date, '+30 days') AS 期限日 FROM orders",
+        expectedColumns: ["id", "order_date", "期限日"],
       },
       {
         id: "pb-date-5",
-        question: "employeesテーブルのnameと、hire_dateを年月形式（YYYY-MM）にした「入社年月」を、hire_dateがNULLでない従業員のみhire_dateの昇順で取得してください",
-        hint: "WHERE hire_date IS NOT NULL ... strftime('%Y-%m', hire_date) AS 入社年月 ORDER BY hire_date",
-        answer: "SELECT name, strftime('%Y-%m', hire_date) AS 入社年月 FROM employees WHERE hire_date IS NOT NULL ORDER BY hire_date",
-        expectedColumns: ["name", "入社年月"],
+        question: "ordersテーブルのidとorder_dateを取得し、order_dateの新しい順（降順）に並べてください",
+        hint: "ORDER BY order_date DESC",
+        answer: "SELECT id, order_date FROM orders ORDER BY order_date DESC",
+        expectedColumns: ["id", "order_date"],
       },
     ],
   },
   {
     slug: "pb-case",
-    title: "CASE式で条件分岐",
+    title: "CASE式",
     level: "beginner",
     order: 5,
-    description: "CASE WHENを使ったデータの分類・ランク付け・集計を学びます",
+    description: "CASE WHEN構文を使ってproducts.price・orders.statusを条件分岐で変換する方法を学びます",
     content: `
-<h2>CASE式の構文</h2>
-<pre><code><span class="sql-keyword">CASE</span>
-  <span class="sql-keyword">WHEN</span> 条件1 <span class="sql-keyword">THEN</span> 値1
-  <span class="sql-keyword">WHEN</span> 条件2 <span class="sql-keyword">THEN</span> 値2
-  <span class="sql-keyword">ELSE</span> デフォルト値
-<span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> 列名</code></pre>
+<h2>CASE式とは</h2>
+<p>SQLの <code>CASE</code> 式は、条件に応じて異なる値を返します。プログラミングのif-else文に相当します。</p>
 
-<h2>給与ランク分類の例</h2>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
+<h2>基本構文（検索CASE）</h2>
+<pre><code><span class="sql-keyword">SELECT</span> name,
   <span class="sql-keyword">CASE</span>
-    <span class="sql-keyword">WHEN</span> salary >= <span class="sql-number">550000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'高'</span>
-    <span class="sql-keyword">WHEN</span> salary >= <span class="sql-number">450000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'中'</span>
-    <span class="sql-keyword">ELSE</span> <span class="sql-string">'低'</span>
-  <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> 給与ランク
-<span class="sql-keyword">FROM</span> employees;</code></pre>
+    <span class="sql-keyword">WHEN</span> price >= <span class="sql-number">100000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'高額'</span>
+    <span class="sql-keyword">WHEN</span> price >= <span class="sql-number">10000</span>  <span class="sql-keyword">THEN</span> <span class="sql-string">'中額'</span>
+    <span class="sql-keyword">ELSE</span> <span class="sql-string">'低額'</span>
+  <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> 価格帯
+<span class="sql-keyword">FROM</span> products;</code></pre>
 
-<h2>CASE式 + GROUP BY で集計</h2>
-<pre><code><span class="sql-keyword">SELECT</span>
-  <span class="sql-keyword">CASE</span>
-    <span class="sql-keyword">WHEN</span> salary >= <span class="sql-number">550000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'高'</span>
-    <span class="sql-keyword">WHEN</span> salary >= <span class="sql-number">450000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'中'</span>
-    <span class="sql-keyword">ELSE</span> <span class="sql-string">'低'</span>
-  <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> 給与ランク,
-  <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">GROUP BY</span> 給与ランク;</code></pre>
+<h2>単純CASE</h2>
+<pre><code><span class="sql-keyword">SELECT</span> id, status,
+  <span class="sql-keyword">CASE</span> status
+    <span class="sql-keyword">WHEN</span> <span class="sql-string">'completed'</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'完了'</span>
+    <span class="sql-keyword">WHEN</span> <span class="sql-string">'pending'</span>   <span class="sql-keyword">THEN</span> <span class="sql-string">'保留'</span>
+    <span class="sql-keyword">WHEN</span> <span class="sql-string">'cancelled'</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'キャンセル'</span>
+    <span class="sql-keyword">ELSE</span> <span class="sql-string">'不明'</span>
+  <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> ステータス
+<span class="sql-keyword">FROM</span> orders;</code></pre>
     `,
     exercises: [
       {
         id: "pb-case-1",
-        question: "employeesのname・salaryと、salary>=550000を「高」、>=450000を「中」、それ以外を「低」とした「給与ランク」を取得してください",
-        hint: "CASE WHEN salary >= 550000 THEN '高' WHEN salary >= 450000 THEN '中' ELSE '低' END AS 給与ランク",
-        answer: "SELECT name, salary, CASE WHEN salary >= 550000 THEN '高' WHEN salary >= 450000 THEN '中' ELSE '低' END AS 給与ランク FROM employees",
-        expectedColumns: ["name", "salary", "給与ランク"],
+        question: "productsテーブルのnameとpriceと、price >= 100000なら「高額」、price >= 10000なら「中額」、それ以外は「低額」という「価格帯」列を取得してください",
+        hint: "CASE WHEN price >= 100000 THEN '高額' WHEN price >= 10000 THEN '中額' ELSE '低額' END AS 価格帯",
+        answer: "SELECT name, price, CASE WHEN price >= 100000 THEN '高額' WHEN price >= 10000 THEN '中額' ELSE '低額' END AS 価格帯 FROM products",
+        expectedColumns: ["name", "price", "価格帯"],
       },
       {
         id: "pb-case-2",
-        question: "departmentsのname・locationと、locationが「東京」なら「首都圏」、それ以外なら「地方」とした「エリア」を取得してください",
-        hint: "CASE WHEN location = '東京' THEN '首都圏' ELSE '地方' END AS エリア",
-        answer: "SELECT name, location, CASE WHEN location = '東京' THEN '首都圏' ELSE '地方' END AS エリア FROM departments",
-        expectedColumns: ["name", "location", "エリア"],
+        question: "ordersテーブルのidとstatusと、statusが'completed'なら「完了」、'pending'なら「保留」、'cancelled'なら「キャンセル」という「状態」列を取得してください",
+        hint: "CASE status WHEN 'completed' THEN '完了' WHEN 'pending' THEN '保留' WHEN 'cancelled' THEN 'キャンセル' END AS 状態",
+        answer: "SELECT id, status, CASE status WHEN 'completed' THEN '完了' WHEN 'pending' THEN '保留' WHEN 'cancelled' THEN 'キャンセル' END AS 状態 FROM orders",
+        expectedColumns: ["id", "status", "状態"],
       },
       {
         id: "pb-case-3",
-        question: "ordersのidとquantityと、quantity>=10なら「大口」、>=5なら「中口」、それ以外なら「小口」とした「規模」を取得してください",
-        hint: "CASE WHEN quantity >= 10 THEN '大口' ...",
-        answer: "SELECT id, quantity, CASE WHEN quantity >= 10 THEN '大口' WHEN quantity >= 5 THEN '中口' ELSE '小口' END AS 規模 FROM orders",
-        expectedColumns: ["id", "quantity", "規模"],
+        question: "productsテーブルのnameとcategoryと、categoryが'PC'なら「パソコン」、'Accessory'なら「周辺機器」、それ以外は「その他」という「カテゴリ日本語」列を取得してください",
+        hint: "CASE category WHEN 'PC' THEN 'パソコン' WHEN 'Accessory' THEN '周辺機器' ELSE 'その他' END AS カテゴリ日本語",
+        answer: "SELECT name, category, CASE category WHEN 'PC' THEN 'パソコン' WHEN 'Accessory' THEN '周辺機器' ELSE 'その他' END AS カテゴリ日本語 FROM products",
+        expectedColumns: ["name", "category", "カテゴリ日本語"],
       },
       {
         id: "pb-case-4",
-        question: "productsのname・categoryと、categoryが「パソコン」なら「10%」、「ディスプレイ」なら「5%」、それ以外なら「3%」とした「割引率」を取得してください",
-        hint: "CASE WHEN category = 'パソコン' THEN '10%' ...",
-        answer: "SELECT name, category, CASE WHEN category = 'パソコン' THEN '10%' WHEN category = 'ディスプレイ' THEN '5%' ELSE '3%' END AS 割引率 FROM products",
-        expectedColumns: ["name", "category", "割引率"],
+        question: "usersテーブルのnameとcityと、cityが'東京'なら「首都圏」、'大阪'または'名古屋'なら「主要都市」、NULLなら「不明」、それ以外は「その他」という「地域区分」列を取得してください",
+        hint: "CASE WHEN city = '東京' THEN '首都圏' WHEN city IN ('大阪','名古屋') THEN '主要都市' WHEN city IS NULL THEN '不明' ELSE 'その他' END AS 地域区分",
+        answer: "SELECT name, city, CASE WHEN city = '東京' THEN '首都圏' WHEN city IN ('大阪','名古屋') THEN '主要都市' WHEN city IS NULL THEN '不明' ELSE 'その他' END AS 地域区分 FROM users",
+        expectedColumns: ["name", "city", "地域区分"],
       },
       {
         id: "pb-case-5",
-        question: "CASE式とGROUP BYを組み合わせ、employeesの給与ランク（高/中/低）別の人数を「給与ランク」と「人数」として取得してください",
-        hint: "GROUP BY 給与ランク で集計します",
-        answer: "SELECT CASE WHEN salary >= 550000 THEN '高' WHEN salary >= 450000 THEN '中' ELSE '低' END AS 給与ランク, COUNT(*) AS 人数 FROM employees GROUP BY 給与ランク",
-        expectedColumns: ["給与ランク", "人数"],
+        question: "productsテーブルのnameとstockと、stockがNULLなら「在庫不明」、stock = 0なら「在庫なし」、stock < 50なら「在庫少」、それ以外は「在庫あり」という「在庫状況」列を取得してください",
+        hint: "CASE WHEN stock IS NULL THEN '在庫不明' WHEN stock = 0 THEN '在庫なし' WHEN stock < 50 THEN '在庫少' ELSE '在庫あり' END AS 在庫状況",
+        answer: "SELECT name, stock, CASE WHEN stock IS NULL THEN '在庫不明' WHEN stock = 0 THEN '在庫なし' WHEN stock < 50 THEN '在庫少' ELSE '在庫あり' END AS 在庫状況 FROM products",
+        expectedColumns: ["name", "stock", "在庫状況"],
       },
     ],
   },
@@ -341,132 +342,130 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "複合条件の応用",
     level: "beginner",
     order: 6,
-    description: "AND・OR・IN・BETWEEN・LIKEを組み合わせた高度な絞り込みを学びます",
+    description: "AND・OR・IN・BETWEEN・LIKEを組み合わせた複雑なWHERE条件を学びます",
     content: `
-<h2>複合条件の基本</h2>
-<pre><code><span class="sql-comment">-- AND: 両方の条件を満たす</span>
-<span class="sql-keyword">WHERE</span> salary >= <span class="sql-number">500000</span> <span class="sql-keyword">AND</span> department_id = <span class="sql-number">2</span>
+<h2>複合条件の演算子</h2>
+<table>
+  <tr><th>演算子</th><th>説明</th></tr>
+  <tr><td>AND</td><td>両方の条件を満たす</td></tr>
+  <tr><td>OR</td><td>どちらか一方を満たす</td></tr>
+  <tr><td>NOT</td><td>条件を否定</td></tr>
+  <tr><td>IN (...)</td><td>リストのいずれかに一致</td></tr>
+  <tr><td>BETWEEN a AND b</td><td>a以上b以下</td></tr>
+  <tr><td>LIKE</td><td>パターンマッチ（%は任意の文字列）</td></tr>
+</table>
 
-<span class="sql-comment">-- OR: どちらかの条件を満たす</span>
-<span class="sql-keyword">WHERE</span> department_id = <span class="sql-number">1</span> <span class="sql-keyword">OR</span> department_id = <span class="sql-number">3</span>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 東京または大阪のユーザーで、emailがNULLでない</span>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users
+<span class="sql-keyword">WHERE</span> city <span class="sql-keyword">IN</span> (<span class="sql-string">'東京'</span>, <span class="sql-string">'大阪'</span>)
+  <span class="sql-keyword">AND</span> email <span class="sql-keyword">IS NOT NULL</span>;
 
-<span class="sql-comment">-- NOT: 条件を反転</span>
-<span class="sql-keyword">WHERE NOT</span> (salary < <span class="sql-number">400000</span>)</code></pre>
-
-<h2>IN・BETWEEN・LIKEの組み合わせ</h2>
-<pre><code><span class="sql-comment">-- IN: 複数値の指定</span>
-<span class="sql-keyword">WHERE</span> department_id <span class="sql-keyword">IN</span> (<span class="sql-number">1</span>, <span class="sql-number">2</span>, <span class="sql-number">3</span>)
-
-<span class="sql-comment">-- BETWEEN: 範囲指定</span>
-<span class="sql-keyword">WHERE</span> salary <span class="sql-keyword">BETWEEN</span> <span class="sql-number">400000</span> <span class="sql-keyword">AND</span> <span class="sql-number">550000</span>
-
-<span class="sql-comment">-- LIKE: パターンマッチ（% = 任意文字列、_ = 任意1文字）</span>
-<span class="sql-keyword">WHERE</span> name <span class="sql-keyword">LIKE</span> <span class="sql-string">'田%'</span> <span class="sql-keyword">OR</span> name <span class="sql-keyword">LIKE</span> <span class="sql-string">'鈴%'</span></code></pre>
-
-<h2>括弧で優先順位を制御</h2>
-<pre><code><span class="sql-keyword">WHERE</span> (department_id = <span class="sql-number">1</span> <span class="sql-keyword">OR</span> department_id = <span class="sql-number">2</span>)
-  <span class="sql-keyword">AND</span> salary >= <span class="sql-number">500000</span></code></pre>
+<span class="sql-comment">-- 価格が5000円以上50000円以下のPC</span>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">WHERE</span> price <span class="sql-keyword">BETWEEN</span> <span class="sql-number">5000</span> <span class="sql-keyword">AND</span> <span class="sql-number">50000</span>
+  <span class="sql-keyword">AND</span> category = <span class="sql-string">'PC'</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pb-where-1",
-        question: "employeesからsalaryが500000以上かつdepartment_idが2の従業員のname・salary・department_idを取得してください",
-        hint: "WHERE salary >= 500000 AND department_id = 2",
-        answer: "SELECT name, salary, department_id FROM employees WHERE salary >= 500000 AND department_id = 2",
-        expectedColumns: ["name", "salary", "department_id"],
+        question: "productsテーブルからcategoryが'Accessory'でかつpriceが5000以上の商品のname・category・priceを取得してください",
+        hint: "WHERE category = 'Accessory' AND price >= 5000",
+        answer: "SELECT name, category, price FROM products WHERE category = 'Accessory' AND price >= 5000",
+        expectedColumns: ["name", "category", "price"],
       },
       {
         id: "pb-where-2",
-        question: "employeesからdepartment_idが1または3の従業員のname・department_id・salaryをsalary降順で取得してください",
-        hint: "WHERE department_id IN (1, 3) ORDER BY salary DESC",
-        answer: "SELECT name, department_id, salary FROM employees WHERE department_id IN (1, 3) ORDER BY salary DESC",
-        expectedColumns: ["name", "department_id", "salary"],
+        question: "usersテーブルからcityが'東京'または'大阪'で、かつemailがNULLでないユーザーのname・city・emailを取得してください",
+        hint: "WHERE city IN ('東京', '大阪') AND email IS NOT NULL",
+        answer: "SELECT name, city, email FROM users WHERE city IN ('東京', '大阪') AND email IS NOT NULL",
+        expectedColumns: ["name", "city", "email"],
       },
       {
         id: "pb-where-3",
-        question: "productsからpriceが10000以上かつstockが50以下の商品のname・price・stockを取得してください",
-        hint: "WHERE price >= 10000 AND stock <= 50",
-        answer: "SELECT name, price, stock FROM products WHERE price >= 10000 AND stock <= 50",
-        expectedColumns: ["name", "price", "stock"],
+        question: "productsテーブルからpriceが10000以上100000以下（BETWEEN）の商品のname・categoryとpriceを取得してください",
+        hint: "WHERE price BETWEEN 10000 AND 100000",
+        answer: "SELECT name, category, price FROM products WHERE price BETWEEN 10000 AND 100000",
+        expectedColumns: ["name", "category", "price"],
       },
       {
         id: "pb-where-4",
-        question: "employeesからnameが「田」または「鈴」で始まる従業員のname・salaryを取得してください",
-        hint: "WHERE name LIKE '田%' OR name LIKE '鈴%'",
-        answer: "SELECT name, salary FROM employees WHERE name LIKE '田%' OR name LIKE '鈴%'",
-        expectedColumns: ["name", "salary"],
+        question: "ordersテーブルからstatusが'pending'または'cancelled'の注文のid・user_id・order_date・statusを取得してください",
+        hint: "WHERE status IN ('pending', 'cancelled')",
+        answer: "SELECT id, user_id, order_date, status FROM orders WHERE status IN ('pending', 'cancelled')",
+        expectedColumns: ["id", "user_id", "order_date", "status"],
       },
       {
         id: "pb-where-5",
-        question: "ordersからquantityが3以上10以下かつorder_dateが2024-03-01以降のid・quantity・order_dateを取得してください",
-        hint: "WHERE quantity BETWEEN 3 AND 10 AND order_date >= '2024-03-01'",
-        answer: "SELECT id, quantity, order_date FROM orders WHERE quantity BETWEEN 3 AND 10 AND order_date >= '2024-03-01'",
-        expectedColumns: ["id", "quantity", "order_date"],
+        question: "usersテーブルからnameが「田」で始まるユーザーのname・city・emailを取得してください",
+        hint: "WHERE name LIKE '田%'",
+        answer: "SELECT name, city, email FROM users WHERE name LIKE '田%'",
+        expectedColumns: ["name", "city", "email"],
       },
     ],
   },
   {
     slug: "pb-calculations",
-    title: "SELECT計算式と集計の組み合わせ",
+    title: "SELECT計算式と集計",
     level: "beginner",
     order: 7,
-    description: "算術式・集計関数・JOINを組み合わせた実践的な集計を学びます",
+    description: "order_details.price * quantityなどの計算式とSUM・AVG・COUNT・GROUP BYを組み合わせた集計を学びます",
     content: `
-<h2>SELECT内の計算式</h2>
-<pre><code><span class="sql-comment">-- 在庫金額（price × stock）</span>
-<span class="sql-keyword">SELECT</span> name, price * stock <span class="sql-keyword">AS</span> 在庫金額 <span class="sql-keyword">FROM</span> products;
+<h2>SELECT内で計算する</h2>
+<p>SELECT句の中で直接計算式を書けます。</p>
+<pre><code><span class="sql-comment">-- 小計（単価 × 数量）</span>
+<span class="sql-keyword">SELECT</span> id, price * quantity <span class="sql-keyword">AS</span> 小計 <span class="sql-keyword">FROM</span> order_details;</code></pre>
 
-<span class="sql-comment">-- 月給 × 12ヶ月 + ボーナス</span>
-<span class="sql-keyword">SELECT</span> name, salary * <span class="sql-number">12</span> + <span class="sql-number">50000</span> <span class="sql-keyword">AS</span> 年収 <span class="sql-keyword">FROM</span> employees;</code></pre>
+<h2>集計関数 + GROUP BY</h2>
+<table>
+  <tr><th>関数</th><th>説明</th></tr>
+  <tr><td>SUM(col)</td><td>合計</td></tr>
+  <tr><td>AVG(col)</td><td>平均</td></tr>
+  <tr><td>COUNT(*)</td><td>件数</td></tr>
+  <tr><td>MAX(col)</td><td>最大値</td></tr>
+  <tr><td>MIN(col)</td><td>最小値</td></tr>
+</table>
 
-<h2>JOINと計算を組み合わせる</h2>
-<pre><code><span class="sql-comment">-- 注文金額（price × quantity）</span>
-<span class="sql-keyword">SELECT</span> o.id, p.name, o.quantity, p.price * o.quantity <span class="sql-keyword">AS</span> 注文金額
-<span class="sql-keyword">FROM</span> orders o
-<span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> o.product_id = p.id;</code></pre>
-
-<h2>集計と計算</h2>
-<pre><code><span class="sql-keyword">SELECT</span> category,
-  <span class="sql-function">SUM</span>(price * stock) <span class="sql-keyword">AS</span> 総在庫金額,
-  <span class="sql-function">AVG</span>(price) <span class="sql-keyword">AS</span> 平均価格
-<span class="sql-keyword">FROM</span> products
-<span class="sql-keyword">GROUP BY</span> category;</code></pre>
+<pre><code><span class="sql-comment">-- 注文ごとの合計金額</span>
+<span class="sql-keyword">SELECT</span> order_id, <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">AS</span> 合計金額
+<span class="sql-keyword">FROM</span> order_details
+<span class="sql-keyword">GROUP BY</span> order_id;</code></pre>
     `,
     exercises: [
       {
         id: "pb-calc-1",
-        question: "productsテーブルのnameと、price × stockの「在庫金額」を在庫金額の降順で取得してください",
-        hint: "price * stock AS 在庫金額 ORDER BY 在庫金額 DESC",
-        answer: "SELECT name, price * stock AS 在庫金額 FROM products ORDER BY 在庫金額 DESC",
-        expectedColumns: ["name", "在庫金額"],
+        question: "order_detailsテーブルのidとprice・quantityと、price×quantityを「小計」として取得してください",
+        hint: "price * quantity AS 小計",
+        answer: "SELECT id, price, quantity, price * quantity AS 小計 FROM order_details",
+        expectedColumns: ["id", "price", "quantity", "小計"],
       },
       {
         id: "pb-calc-2",
-        question: "employeesのnameとsalaryと、salary×12+50000の「ボーナス込年収」を取得してください",
-        hint: "salary * 12 + 50000 AS ボーナス込年収",
-        answer: "SELECT name, salary, salary * 12 + 50000 AS ボーナス込年収 FROM employees",
-        expectedColumns: ["name", "salary", "ボーナス込年収"],
+        question: "order_detailsテーブルをorder_idでグループ化し、各order_idごとのSUM(price * quantity)を「合計金額」として取得してください",
+        hint: "GROUP BY order_id, SUM(price * quantity) AS 合計金額",
+        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id",
+        expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pb-calc-3",
-        question: "ordersとproductsをJOINし、id・name（商品名）・quantity・price×quantityの「注文金額」を取得してください",
-        hint: "orders o JOIN products p ON o.product_id = p.id → p.price * o.quantity AS 注文金額",
-        answer: "SELECT o.id, p.name, o.quantity, p.price * o.quantity AS 注文金額 FROM orders o JOIN products p ON o.product_id = p.id",
-        expectedColumns: ["id", "name", "quantity", "注文金額"],
+        question: "productsテーブルをcategoryでグループ化し、各カテゴリのAVG(price)を小数点以下2桁に丸めた「平均価格」を取得してください",
+        hint: "GROUP BY category, ROUND(AVG(price), 2) AS 平均価格",
+        answer: "SELECT category, ROUND(AVG(price), 2) AS 平均価格 FROM products GROUP BY category",
+        expectedColumns: ["category", "平均価格"],
       },
       {
         id: "pb-calc-4",
-        question: "employeesのnameと、salary÷160.0をROUNDした「時給」を時給の降順で取得してください",
-        hint: "ROUND(salary / 160.0) AS 時給 ORDER BY 時給 DESC",
-        answer: "SELECT name, ROUND(salary / 160.0) AS 時給 FROM employees ORDER BY 時給 DESC",
-        expectedColumns: ["name", "時給"],
+        question: "ordersテーブルをstatusでグループ化し、各statusのCOUNT(*)を「件数」として取得してください",
+        hint: "GROUP BY status, COUNT(*) AS 件数",
+        answer: "SELECT status, COUNT(*) AS 件数 FROM orders GROUP BY status",
+        expectedColumns: ["status", "件数"],
       },
       {
         id: "pb-calc-5",
-        question: "productsのnameと定価（price AS 定価）と、price×0.8をCAST(AS INTEGER)した「割引価格」を取得してください",
-        hint: "price AS 定価, CAST(price * 0.8 AS INTEGER) AS 割引価格",
-        answer: "SELECT name, price AS 定価, CAST(price * 0.8 AS INTEGER) AS 割引価格 FROM products",
-        expectedColumns: ["name", "定価", "割引価格"],
+        question: "order_detailsテーブルをorder_idでグループ化し、合計金額が100000以上のorder_idと合計金額を取得してください",
+        hint: "HAVING SUM(price * quantity) >= 100000",
+        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id HAVING SUM(price * quantity) >= 100000",
+        expectedColumns: ["order_id", "合計金額"],
       },
     ],
   },
@@ -475,135 +474,126 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "CREATE TABLEとデータ操作",
     level: "beginner",
     order: 8,
-    description: "テーブルの作成・制約・削除など DDLの基礎を学びます",
+    description: "新しいテーブルの作成とINSERT・UPDATE・DELETEによるデータ操作を学びます",
     content: `
-<h2>CREATE TABLE の構文</h2>
-<pre><code><span class="sql-keyword">CREATE TABLE</span> customers (
-  id    INTEGER <span class="sql-keyword">PRIMARY KEY</span>,
-  name  TEXT    <span class="sql-keyword">NOT NULL</span>,
-  email TEXT    <span class="sql-keyword">UNIQUE</span>,
-  score INTEGER <span class="sql-keyword">DEFAULT</span> <span class="sql-number">0</span> <span class="sql-keyword">CHECK</span>(score >= <span class="sql-number">0</span>)
+<h2>CREATE TABLE</h2>
+<pre><code><span class="sql-keyword">CREATE TABLE</span> reviews (
+  id         <span class="sql-keyword">INTEGER PRIMARY KEY</span>,
+  user_id    <span class="sql-keyword">INTEGER</span>,
+  product_id <span class="sql-keyword">INTEGER</span>,
+  rating     <span class="sql-keyword">INTEGER</span>,
+  comment    <span class="sql-keyword">TEXT</span>
 );</code></pre>
 
-<h2>よく使う制約</h2>
-<table>
-  <tr><th>制約</th><th>意味</th></tr>
-  <tr><td>PRIMARY KEY</td><td>主キー（一意＋NOT NULL）</td></tr>
-  <tr><td>NOT NULL</td><td>NULL禁止</td></tr>
-  <tr><td>UNIQUE</td><td>重複禁止</td></tr>
-  <tr><td>DEFAULT 値</td><td>デフォルト値</td></tr>
-  <tr><td>CHECK(条件)</td><td>値の検証</td></tr>
-  <tr><td>FOREIGN KEY</td><td>外部キー参照</td></tr>
-</table>
+<h2>INSERT</h2>
+<pre><code><span class="sql-keyword">INSERT INTO</span> reviews (id, user_id, product_id, rating, comment)
+<span class="sql-keyword">VALUES</span> (<span class="sql-number">1</span>, <span class="sql-number">1</span>, <span class="sql-number">1</span>, <span class="sql-number">5</span>, <span class="sql-string">'最高です'</span>);</code></pre>
 
-<h2>DROP TABLE でテーブル削除</h2>
-<pre><code><span class="sql-keyword">DROP TABLE IF EXISTS</span> customers;</code></pre>
+<h2>UPDATE</h2>
+<pre><code><span class="sql-keyword">UPDATE</span> reviews <span class="sql-keyword">SET</span> rating = <span class="sql-number">4</span> <span class="sql-keyword">WHERE</span> id = <span class="sql-number">1</span>;</code></pre>
 
-<h2>CREATE TABLE AS SELECT</h2>
-<pre><code><span class="sql-comment">-- 既存テーブルからデータを使って新テーブル作成</span>
-<span class="sql-keyword">CREATE TABLE</span> high_salary <span class="sql-keyword">AS</span>
-<span class="sql-keyword">SELECT</span> name, salary <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> salary >= <span class="sql-number">500000</span>;</code></pre>
+<h2>DELETE</h2>
+<pre><code><span class="sql-keyword">DELETE FROM</span> reviews <span class="sql-keyword">WHERE</span> id = <span class="sql-number">1</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pb-ddl-1",
-        question: "customersテーブル（id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE）を作成し、sqlite_masterからname・sqlを確認してください",
-        hint: "CREATE TABLE customers (...); SELECT name, sql FROM sqlite_master WHERE type='table' AND name='customers';",
-        answer: "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE); SELECT name, sql FROM sqlite_master WHERE type='table' AND name='customers';",
-        expectedColumns: ["name", "sql"],
+        question: "reviewsテーブルを作成してください。カラムはid（INTEGER PRIMARY KEY）、user_id（INTEGER）、product_id（INTEGER）、rating（INTEGER）、comment（TEXT）です。作成後、(1, 1, 1, 5, '確認')を1件INSERTしてSELECT * FROM reviews;で確認してください",
+        hint: "CREATE TABLE reviews (...); INSERT INTO reviews VALUES (1, 1, 1, 5, '確認'); SELECT * FROM reviews",
+        answer: "CREATE TABLE reviews (id INTEGER PRIMARY KEY, user_id INTEGER, product_id INTEGER, rating INTEGER, comment TEXT); INSERT INTO reviews VALUES (1, 1, 1, 5, '確認'); SELECT * FROM reviews",
+        expectedColumns: ["id", "user_id", "product_id", "rating", "comment"],
       },
       {
         id: "pb-ddl-2",
-        question: "test_tableテーブル（id INTEGER PRIMARY KEY, label TEXT）を作成し、(1, 'テスト')を挿入して全データを取得してください",
-        hint: "CREATE TABLE IF NOT EXISTS test_table (...); INSERT INTO test_table VALUES (1, 'テスト'); SELECT * FROM test_table;",
-        answer: "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, label TEXT); INSERT INTO test_table VALUES (1, 'テスト'); SELECT * FROM test_table;",
-        expectedColumns: ["id", "label"],
+        question: "reviewsテーブルを作成し、(1, 1, 1, 5, '最高です')と(2, 2, 3, 4, '良かった')の2件をINSERTして全件取得してください",
+        hint: "CREATE TABLE → INSERT INTO → SELECT *",
+        answer: "CREATE TABLE reviews (id INTEGER PRIMARY KEY, user_id INTEGER, product_id INTEGER, rating INTEGER, comment TEXT); INSERT INTO reviews VALUES (1, 1, 1, 5, '最高です'); INSERT INTO reviews VALUES (2, 2, 3, 4, '良かった'); SELECT * FROM reviews",
+        expectedColumns: ["id", "user_id", "product_id", "rating", "comment"],
       },
       {
         id: "pb-ddl-3",
-        question: "products_v2テーブル（id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER CHECK(price > 0), stock INTEGER DEFAULT 0）を作成し、sqlite_masterのname・sqlを取得してください",
-        hint: "CREATE TABLE IF NOT EXISTS products_v2 (...); SELECT name, sql FROM sqlite_master WHERE name='products_v2';",
-        answer: "CREATE TABLE IF NOT EXISTS products_v2 (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER CHECK(price > 0), stock INTEGER DEFAULT 0); SELECT name, sql FROM sqlite_master WHERE name='products_v2';",
-        expectedColumns: ["name", "sql"],
+        question: "reviewsテーブルを作成し、3件データを挿入後、id=1のratingを3にUPDATEして全件取得してください",
+        hint: "UPDATE reviews SET rating = 3 WHERE id = 1",
+        answer: "CREATE TABLE reviews (id INTEGER PRIMARY KEY, user_id INTEGER, product_id INTEGER, rating INTEGER, comment TEXT); INSERT INTO reviews VALUES (1, 1, 1, 5, '最高'); INSERT INTO reviews VALUES (2, 2, 2, 4, '良い'); INSERT INTO reviews VALUES (3, 3, 3, 2, '普通'); UPDATE reviews SET rating = 3 WHERE id = 1; SELECT * FROM reviews",
+        expectedColumns: ["id", "user_id", "product_id", "rating", "comment"],
       },
       {
         id: "pb-ddl-4",
-        question: "temp_tableテーブル（id INTEGER）を作成後、DROP TABLEで削除し、sqlite_masterに残るテーブルのnameを取得してください",
-        hint: "CREATE TABLE IF NOT EXISTS temp_table (id INTEGER); DROP TABLE temp_table; SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
-        answer: "CREATE TABLE IF NOT EXISTS temp_table (id INTEGER); DROP TABLE temp_table; SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;",
-        expectedColumns: ["name"],
+        question: "reviewsテーブルを作成して2件挿入後、id=2のレコードをDELETEして全件取得してください",
+        hint: "DELETE FROM reviews WHERE id = 2",
+        answer: "CREATE TABLE reviews (id INTEGER PRIMARY KEY, user_id INTEGER, product_id INTEGER, rating INTEGER, comment TEXT); INSERT INTO reviews VALUES (1, 1, 1, 5, '最高'); INSERT INTO reviews VALUES (2, 2, 2, 3, '普通'); DELETE FROM reviews WHERE id = 2; SELECT * FROM reviews",
+        expectedColumns: ["id", "user_id", "product_id", "rating", "comment"],
       },
       {
         id: "pb-ddl-5",
-        question: "CREATE TABLE AS SELECTを使い、salary>=500000の従業員のname・salaryをhigh_salaryテーブルに作成して全データを取得してください",
-        hint: "CREATE TABLE high_salary AS SELECT name, salary FROM employees WHERE salary >= 500000; SELECT * FROM high_salary;",
-        answer: "CREATE TABLE high_salary AS SELECT name, salary FROM employees WHERE salary >= 500000; SELECT * FROM high_salary;",
-        expectedColumns: ["name", "salary"],
+        question: "tagsテーブル（id INTEGER PRIMARY KEY, name TEXT NOT NULL）を作成し、(1,'新着')と(2,'セール')と(3,'人気')の3件をINSERTして全件取得してください",
+        hint: "CREATE TABLE tags (id INTEGER PRIMARY KEY, name TEXT NOT NULL)",
+        answer: "CREATE TABLE tags (id INTEGER PRIMARY KEY, name TEXT NOT NULL); INSERT INTO tags VALUES (1, '新着'); INSERT INTO tags VALUES (2, 'セール'); INSERT INTO tags VALUES (3, '人気'); SELECT * FROM tags",
+        expectedColumns: ["id", "name"],
       },
     ],
   },
   {
-    slug: "pb-transactions",
-    title: "トランザクション",
+    slug: "pb-junction",
+    title: "中間テーブルの応用",
     level: "beginner",
     order: 9,
-    description: "BEGIN・COMMIT・ROLLBACKによるトランザクション管理を学びます",
+    description: "order_detailsを使った多対多の集計・絞り込みなど中間テーブルの活用方法を学びます",
     content: `
-<h2>トランザクションとは？</h2>
-<p>複数の操作をひとまとまりとして扱う仕組みです。<strong>ACID特性</strong>（原子性・一貫性・独立性・永続性）を保証します。</p>
+<h2>中間テーブルとは</h2>
+<p>多対多の関係を表現するために使うテーブルです。<code>order_details</code> は <code>orders</code> と <code>products</code> の中間テーブルです。</p>
 
-<h2>基本構文</h2>
-<pre><code><span class="sql-keyword">BEGIN</span>;                    <span class="sql-comment">-- トランザクション開始</span>
-<span class="sql-keyword">INSERT INTO</span> ...           <span class="sql-comment">-- 操作1</span>
-<span class="sql-keyword">UPDATE</span> ...                <span class="sql-comment">-- 操作2</span>
-<span class="sql-keyword">COMMIT</span>;                   <span class="sql-comment">-- 確定（全操作を保存）</span>
+<pre><code>orders (1) ─── (*) order_details (*) ─── (1) products</code></pre>
 
-<span class="sql-comment">-- または</span>
-<span class="sql-keyword">ROLLBACK</span>;                 <span class="sql-comment">-- 取消（全操作を元に戻す）</span></code></pre>
+<h2>中間テーブルを使ったJOIN</h2>
+<pre><code><span class="sql-comment">-- 注文と商品名を取得</span>
+<span class="sql-keyword">SELECT</span> o.id, p.name, od.quantity
+<span class="sql-keyword">FROM</span> orders o
+<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
 
-<h2>SAVEPOINTで部分的なロールバック</h2>
-<pre><code><span class="sql-keyword">BEGIN</span>;
-<span class="sql-keyword">INSERT INTO</span> departments (id, name, location) <span class="sql-keyword">VALUES</span> (<span class="sql-number">6</span>, <span class="sql-string">'法務部'</span>, <span class="sql-string">'東京'</span>);
-<span class="sql-keyword">SAVEPOINT</span> sp1;
-<span class="sql-keyword">INSERT INTO</span> departments (id, name, location) <span class="sql-keyword">VALUES</span> (<span class="sql-number">7</span>, <span class="sql-string">'広報部'</span>, <span class="sql-string">'大阪'</span>);
-<span class="sql-keyword">ROLLBACK TO</span> sp1;        <span class="sql-comment">-- id=7だけ取消</span>
-<span class="sql-keyword">COMMIT</span>;                 <span class="sql-comment">-- id=6は確定</span></code></pre>
+<h2>集計への応用</h2>
+<pre><code><span class="sql-comment">-- 商品ごとの総販売数</span>
+<span class="sql-keyword">SELECT</span> p.name, <span class="sql-function">SUM</span>(od.quantity) <span class="sql-keyword">AS</span> 総販売数
+<span class="sql-keyword">FROM</span> order_details od
+<span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id
+<span class="sql-keyword">GROUP BY</span> p.id, p.name;</code></pre>
     `,
     exercises: [
       {
-        id: "pb-txn-1",
-        question: "BEGIN〜COMMITでdepartmentsに(6,'法務部','東京')を追加し、departmentsの全データを取得してください",
-        hint: "BEGIN; INSERT INTO departments (id, name, location) VALUES (6, '法務部', '東京'); COMMIT; SELECT * FROM departments;",
-        answer: "BEGIN; INSERT INTO departments (id, name, location) VALUES (6, '法務部', '東京'); COMMIT; SELECT * FROM departments;",
-        expectedColumns: ["id", "name", "location"],
+        id: "pb-junc-1",
+        question: "order_detailsとproductsをJOINし、各明細のorder_id・商品name・quantity・priceを取得してください",
+        hint: "JOIN products p ON od.product_id = p.id",
+        answer: "SELECT od.order_id, p.name, od.quantity, od.price FROM order_details od JOIN products p ON od.product_id = p.id",
+        expectedColumns: ["order_id", "name", "quantity", "price"],
       },
       {
-        id: "pb-txn-2",
-        question: "BEGIN〜COMMITで2件INSERT（id=7「広報部/大阪」、id=8「IT部/東京」）し、id>=7のdepartmentsを取得してください",
-        hint: "BEGIN; INSERT ...(7,...); INSERT ...(8,...); COMMIT; SELECT * FROM departments WHERE id >= 7;",
-        answer: "BEGIN; INSERT INTO departments (id, name, location) VALUES (7, '広報部', '大阪'); INSERT INTO departments (id, name, location) VALUES (8, 'IT部', '東京'); COMMIT; SELECT * FROM departments WHERE id >= 7;",
-        expectedColumns: ["id", "name", "location"],
+        id: "pb-junc-2",
+        question: "orders・order_details・productsを3テーブルJOINし、order_id・ユーザーのuser_id・商品name・quantityを取得してください",
+        hint: "FROM orders JOIN order_details ... JOIN products ...",
+        answer: "SELECT o.id AS order_id, o.user_id, p.name, od.quantity FROM orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        expectedColumns: ["order_id", "user_id", "name", "quantity"],
       },
       {
-        id: "pb-txn-3",
-        question: "BEGIN〜COMMITで従業員id=7のsalaryを700000に更新し、そのname・salaryを取得してください",
-        hint: "BEGIN; UPDATE employees SET salary = 700000 WHERE id = 7; COMMIT; SELECT name, salary FROM employees WHERE id = 7;",
-        answer: "BEGIN; UPDATE employees SET salary = 700000 WHERE id = 7; COMMIT; SELECT name, salary FROM employees WHERE id = 7;",
-        expectedColumns: ["name", "salary"],
+        id: "pb-junc-3",
+        question: "productsとorder_detailsをJOINしてproduct_idでグループ化し、商品nameとSUM(quantity)を「総販売数」として取得してください",
+        hint: "GROUP BY p.id, p.name して SUM(od.quantity)",
+        answer: "SELECT p.name, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name",
+        expectedColumns: ["name", "総販売数"],
       },
       {
-        id: "pb-txn-4",
-        question: "ROLLBACKを使い、departmentsへのDELETEを取り消してから、「部署数」としてdepartmentsの件数を確認してください",
-        hint: "BEGIN; DELETE FROM departments WHERE id >= 6; ROLLBACK; SELECT COUNT(*) AS 部署数 FROM departments;",
-        answer: "BEGIN; DELETE FROM departments WHERE id >= 6; ROLLBACK; SELECT COUNT(*) AS 部署数 FROM departments;",
-        expectedColumns: ["部署数"],
+        id: "pb-junc-4",
+        question: "order_details・orders・usersを3テーブルJOINし、ユーザーname・order_id・SUM(od.price * od.quantity)を「注文合計」として取得しuser_idとorder_idでグループ化してください",
+        hint: "JOIN orders o ... JOIN users u ... GROUP BY u.id, u.name, o.id",
+        answer: "SELECT u.name, o.id AS order_id, SUM(od.price * od.quantity) AS 注文合計 FROM order_details od JOIN orders o ON od.order_id = o.id JOIN users u ON o.user_id = u.id GROUP BY u.id, u.name, o.id",
+        expectedColumns: ["name", "order_id", "注文合計"],
       },
       {
-        id: "pb-txn-5",
-        question: "SAVEPOINTを使い、id=6「法務部/東京」を挿入してからsp1を設定、id=9「研究部/京都」を挿入後ROLLBACK TO sp1でid=9を取消してCOMMITし、id>=6のdepartmentsを取得してください",
-        hint: "BEGIN; INSERT ...(6,...); SAVEPOINT sp1; INSERT ...(9,...); ROLLBACK TO sp1; COMMIT; SELECT * FROM departments WHERE id >= 6;",
-        answer: "BEGIN; INSERT INTO departments (id, name, location) VALUES (6, '法務部', '東京'); SAVEPOINT sp1; INSERT INTO departments (id, name, location) VALUES (9, '研究部', '京都'); ROLLBACK TO sp1; COMMIT; SELECT * FROM departments WHERE id >= 6;",
-        expectedColumns: ["id", "name", "location"],
+        id: "pb-junc-5",
+        question: "productsとorder_detailsをJOINし、totalがSUM(od.quantity * od.price)として計算し、totalが50000以上の商品nameとtotalをtotal降順で取得してください",
+        hint: "HAVING SUM(od.quantity * od.price) >= 50000 ORDER BY total DESC",
+        answer: "SELECT p.name, SUM(od.quantity * od.price) AS total FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name HAVING SUM(od.quantity * od.price) >= 50000 ORDER BY total DESC",
+        expectedColumns: ["name", "total"],
       },
     ],
   },
@@ -612,138 +602,139 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "総合演習（初級）",
     level: "beginner",
     order: 10,
-    description: "初級の全知識を組み合わせた実践的な問題に挑戦します",
+    description: "初級コースで学んだSQL全般を組み合わせた総合演習です",
     content: `
-<h2>総合演習について</h2>
-<p>ここまで学んだ内容（NULL・文字列関数・数値関数・日付・CASE・複合条件・計算・DDL・トランザクション）を組み合わせた実践的な問題です。</p>
+<h2>初級コースのまとめ</h2>
+<p>これまで学んだSQL技術を組み合わせて、より実践的なクエリを書いてみましょう。</p>
 
-<h2>SQL記述のコツ</h2>
 <ul>
-  <li>まずどのテーブルが必要かを考える</li>
-  <li>JOINが必要かを判断する</li>
-  <li>WHERE・GROUP BY・HAVING の順序を意識する</li>
-  <li>計算式とCASE式を組み合わせると表現力が上がる</li>
+  <li>NULL処理（IS NULL, COALESCE）</li>
+  <li>文字列関数（LENGTH, SUBSTR, REPLACE, ||）</li>
+  <li>数値関数（ROUND, ABS, CAST）</li>
+  <li>日付関数（strftime, date）</li>
+  <li>CASE式による条件分岐</li>
+  <li>複合WHERE条件（AND, OR, IN, BETWEEN, LIKE）</li>
+  <li>集計（SUM, AVG, COUNT, GROUP BY, HAVING）</li>
+  <li>中間テーブルを使ったJOIN</li>
 </ul>
 
-<pre><code><span class="sql-comment">-- 部署名・人数・平均給与をCASEでランク付け</span>
-<span class="sql-keyword">SELECT</span>
-  d.name <span class="sql-keyword">AS</span> 部署名,
-  <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数,
-  <span class="sql-function">ROUND</span>(<span class="sql-function">AVG</span>(e.salary)) <span class="sql-keyword">AS</span> 平均給与,
-  <span class="sql-keyword">CASE</span>
-    <span class="sql-keyword">WHEN</span> <span class="sql-function">AVG</span>(e.salary) >= <span class="sql-number">500000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'A'</span>
-    <span class="sql-keyword">ELSE</span> <span class="sql-string">'B'</span>
-  <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> ランク
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id
-<span class="sql-keyword">GROUP BY</span> d.name
-<span class="sql-keyword">ORDER BY</span> 平均給与 <span class="sql-keyword">DESC</span>;</code></pre>
+<h2>複数の技術を組み合わせる</h2>
+<pre><code><span class="sql-comment">-- 東京ユーザーの注文合計金額（CASEと集計の組み合わせ）</span>
+<span class="sql-keyword">SELECT</span> u.name,
+  <span class="sql-function">SUM</span>(od.price * od.quantity) <span class="sql-keyword">AS</span> 合計金額,
+  <span class="sql-keyword">CASE</span> <span class="sql-keyword">WHEN</span> <span class="sql-function">SUM</span>(od.price * od.quantity) >= <span class="sql-number">200000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'優良顧客'</span> <span class="sql-keyword">ELSE</span> <span class="sql-string">'一般'</span> <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> ランク
+<span class="sql-keyword">FROM</span> users u
+<span class="sql-keyword">JOIN</span> orders o <span class="sql-keyword">ON</span> u.id = o.user_id
+<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">WHERE</span> u.city = <span class="sql-string">'東京'</span>
+<span class="sql-keyword">GROUP BY</span> u.id, u.name;</code></pre>
     `,
     exercises: [
       {
         id: "pb-comp-1",
-        question: "employeesとdepartmentsをJOINし、name・部署名・salary・給与ランク（高/中/低）をsalary降順で取得してください",
-        hint: "JOIN departments d ON ... CASE WHEN salary >= 550000 THEN '高' ...",
-        answer: "SELECT e.name, d.name AS 部署名, e.salary, CASE WHEN e.salary >= 550000 THEN '高' WHEN e.salary >= 450000 THEN '中' ELSE '低' END AS 給与ランク FROM employees e JOIN departments d ON e.department_id = d.id ORDER BY e.salary DESC",
-        expectedColumns: ["name", "部署名", "salary", "給与ランク"],
+        question: "usersテーブルのnameとcityを取得し、cityがNULLなら「不明」に置換して「居住地」として、nameの文字数を「名前の長さ」として表示してください",
+        hint: "COALESCE(city, '不明') AS 居住地, LENGTH(name) AS 名前の長さ",
+        answer: "SELECT name, COALESCE(city, '不明') AS 居住地, LENGTH(name) AS 名前の長さ FROM users",
+        expectedColumns: ["name", "居住地", "名前の長さ"],
       },
       {
         id: "pb-comp-2",
-        question: "productsのname・price・stock・在庫金額（price×stock）を在庫金額降順でTOP3取得してください",
-        hint: "SELECT name, price, stock, price * stock AS 在庫金額 FROM products ORDER BY 在庫金額 DESC LIMIT 3",
-        answer: "SELECT name, price, stock, price * stock AS 在庫金額 FROM products ORDER BY 在庫金額 DESC LIMIT 3",
-        expectedColumns: ["name", "price", "stock", "在庫金額"],
+        question: "productsテーブルのnameとpriceと税込価格（price*1.1をROUNDして整数）と価格帯（100000以上「高額」10000以上「中額」それ以外「低額」）を取得してください",
+        hint: "ROUND(price * 1.1) AS 税込価格, CASE WHEN ... END AS 価格帯",
+        answer: "SELECT name, price, ROUND(price * 1.1) AS 税込価格, CASE WHEN price >= 100000 THEN '高額' WHEN price >= 10000 THEN '中額' ELSE '低額' END AS 価格帯 FROM products",
+        expectedColumns: ["name", "price", "税込価格", "価格帯"],
       },
       {
         id: "pb-comp-3",
-        question: "ordersとproductsをJOINし、月（strftime('%m',order_date)）ごとの注文金額合計（price×quantity）を「月」と「注文金額合計」で月順に取得してください",
-        hint: "GROUP BY strftime('%m', o.order_date) ORDER BY 月",
-        answer: "SELECT strftime('%m', o.order_date) AS 月, SUM(p.price * o.quantity) AS 注文金額合計 FROM orders o JOIN products p ON o.product_id = p.id GROUP BY strftime('%m', o.order_date) ORDER BY 月",
-        expectedColumns: ["月", "注文金額合計"],
+        question: "ordersテーブルから2024年3月以降（order_date >= '2024-03-01'）のstatusが'completed'な注文のid・user_id・order_dateを取得してください",
+        hint: "WHERE order_date >= '2024-03-01' AND status = 'completed'",
+        answer: "SELECT id, user_id, order_date FROM orders WHERE order_date >= '2024-03-01' AND status = 'completed'",
+        expectedColumns: ["id", "user_id", "order_date"],
       },
       {
         id: "pb-comp-4",
-        question: "departmentsとemployeesをJOINして部署名・人数・平均給与をROUNDして平均給与降順で取得してください",
-        hint: "JOIN, GROUP BY d.name, ROUND(AVG(e.salary)) AS 平均給与",
-        answer: "SELECT d.name AS 部署名, COUNT(*) AS 人数, ROUND(AVG(e.salary)) AS 平均給与 FROM employees e JOIN departments d ON e.department_id = d.id GROUP BY d.name ORDER BY 平均給与 DESC",
-        expectedColumns: ["部署名", "人数", "平均給与"],
+        question: "users・orders・order_detailsを3テーブルJOINし、都市別のSUM(od.price * od.quantity)を「売上合計」として都市ごとに集計し、売上合計の降順で取得してください（cityがNULLのユーザーは除く）",
+        hint: "WHERE u.city IS NOT NULL GROUP BY u.city ORDER BY 売上合計 DESC",
+        answer: "SELECT u.city, SUM(od.price * od.quantity) AS 売上合計 FROM users u JOIN orders o ON u.id = o.user_id JOIN order_details od ON o.id = od.order_id WHERE u.city IS NOT NULL GROUP BY u.city ORDER BY 売上合計 DESC",
+        expectedColumns: ["city", "売上合計"],
       },
       {
         id: "pb-comp-5",
-        question: "サブクエリを使い、全従業員の平均給与との比較で「平均以上」「平均未満」の区分と人数をCASEで集計してください",
-        hint: "CASE WHEN salary >= (SELECT AVG(salary) FROM employees) THEN '平均以上' ELSE '平均未満' END AS 区分, COUNT(*)",
-        answer: "SELECT CASE WHEN salary >= (SELECT AVG(salary) FROM employees) THEN '平均以上' ELSE '平均未満' END AS 区分, COUNT(*) AS 人数 FROM employees GROUP BY 区分",
-        expectedColumns: ["区分", "人数"],
+        question: "productsテーブルとorder_detailsをJOINし、カテゴリ別に平均販売単価（AVG(od.price)）をROUND小数点以下0桁にした「平均販売単価」と、総販売数（SUM(od.quantity)）を取得してカテゴリ名のアルファベット順で表示してください",
+        hint: "GROUP BY p.category ORDER BY p.category",
+        answer: "SELECT p.category, ROUND(AVG(od.price), 0) AS 平均販売単価, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.category ORDER BY p.category",
+        expectedColumns: ["category", "平均販売単価", "総販売数"],
       },
     ],
   },
-
   // ========= プレミアム中級コース =========
   {
     slug: "pi-window-rank",
     title: "ウィンドウ関数 ROW_NUMBER・RANK・DENSE_RANK",
     level: "intermediate",
     order: 11,
-    description: "ウィンドウ関数の基本であるROW_NUMBER・RANK・DENSE_RANKを学びます",
+    description: "OVER句を使ったROW_NUMBER・RANK・DENSE_RANKのランキング付けを学びます",
     content: `
-<h2>ウィンドウ関数とは？</h2>
-<p>GROUP BYのようにデータをグループ化しつつ、<strong>行を消さずに</strong>集計値を計算できる強力な機能です。</p>
+<h2>ウィンドウ関数とは</h2>
+<p>グループ化せずに行ごとに集計や順位付けができる強力な機能です。<code>OVER()</code> 句を使います。</p>
 
-<h2>基本構文</h2>
-<pre><code>関数名() <span class="sql-keyword">OVER</span> (
-  [<span class="sql-keyword">PARTITION BY</span> 列名]   <span class="sql-comment">-- グループ化（省略可）</span>
-  [<span class="sql-keyword">ORDER BY</span> 列名]       <span class="sql-comment">-- 並び順</span>
-)</code></pre>
-
-<h2>3つの順位関数</h2>
+<h2>ランキング関数の違い</h2>
 <table>
-  <tr><th>関数</th><th>同順位の扱い</th><th>例（値: 3,3,5）</th></tr>
-  <tr><td>ROW_NUMBER()</td><td>連番（重複なし）</td><td>1, 2, 3</td></tr>
-  <tr><td>RANK()</td><td>同順位後スキップ</td><td>1, 1, 3</td></tr>
-  <tr><td>DENSE_RANK()</td><td>同順位後スキップなし</td><td>1, 1, 2</td></tr>
+  <tr><th>関数</th><th>同順位の扱い</th><th>例（同率2位が2件）</th></tr>
+  <tr><td>ROW_NUMBER()</td><td>連番（重複なし）</td><td>1, 2, 3, 4</td></tr>
+  <tr><td>RANK()</td><td>同順位→次は飛ばす</td><td>1, 2, 2, 4</td></tr>
+  <tr><td>DENSE_RANK()</td><td>同順位→次は連続</td><td>1, 2, 2, 3</td></tr>
 </table>
 
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
-  <span class="sql-function">ROW_NUMBER</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 行番号,
-  <span class="sql-function">RANK</span>()       <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 順位,
-  <span class="sql-function">DENSE_RANK</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 密度順位
-<span class="sql-keyword">FROM</span> employees;</code></pre>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 価格ランキング</span>
+<span class="sql-keyword">SELECT</span> name, price,
+  <span class="sql-function">ROW_NUMBER</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 行番号,
+  <span class="sql-function">RANK</span>()       <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 順位,
+  <span class="sql-function">DENSE_RANK</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> 密集順位
+<span class="sql-keyword">FROM</span> products;</code></pre>
+
+<h2>PARTITION BY（グループ内ランキング）</h2>
+<pre><code><span class="sql-comment">-- カテゴリ内での価格ランキング</span>
+<span class="sql-keyword">SELECT</span> name, category, price,
+  <span class="sql-function">RANK</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">PARTITION BY</span> category <span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> カテゴリ内順位
+<span class="sql-keyword">FROM</span> products;</code></pre>
     `,
     exercises: [
       {
         id: "pi-rank-1",
-        question: "employeesのname・salaryと、salary降順のROW_NUMBER()を「順位」として取得してください",
-        hint: "ROW_NUMBER() OVER (ORDER BY salary DESC) AS 順位",
-        answer: "SELECT name, salary, ROW_NUMBER() OVER (ORDER BY salary DESC) AS 順位 FROM employees",
-        expectedColumns: ["name", "salary", "順位"],
+        question: "productsテーブルのname・priceと、price降順のROW_NUMBER()を「行番号」として取得してください",
+        hint: "ROW_NUMBER() OVER (ORDER BY price DESC) AS 行番号",
+        answer: "SELECT name, price, ROW_NUMBER() OVER (ORDER BY price DESC) AS 行番号 FROM products",
+        expectedColumns: ["name", "price", "行番号"],
       },
       {
         id: "pi-rank-2",
-        question: "employeesのname・department_id・salaryと、department_id内でのsalary降順のRANK()を「部署内順位」として取得してください",
-        hint: "RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署内順位",
-        answer: "SELECT name, department_id, salary, RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署内順位 FROM employees",
-        expectedColumns: ["name", "department_id", "salary", "部署内順位"],
+        question: "productsテーブルのname・priceと、price降順のRANK()を「順位」として取得してください",
+        hint: "RANK() OVER (ORDER BY price DESC) AS 順位",
+        answer: "SELECT name, price, RANK() OVER (ORDER BY price DESC) AS 順位 FROM products",
+        expectedColumns: ["name", "price", "順位"],
       },
       {
         id: "pi-rank-3",
-        question: "employeesのname・salaryと、salary降順のDENSE_RANK()を「密度順位」として取得してください",
-        hint: "DENSE_RANK() OVER (ORDER BY salary DESC) AS 密度順位",
-        answer: "SELECT name, salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS 密度順位 FROM employees",
-        expectedColumns: ["name", "salary", "密度順位"],
+        question: "productsテーブルのname・category・priceと、price降順のRANK()を「全体順位」、PARTITION BY categoryのprice降順RANK()を「カテゴリ内順位」として取得してください",
+        hint: "RANK() OVER (ORDER BY price DESC), RANK() OVER (PARTITION BY category ORDER BY price DESC)",
+        answer: "SELECT name, category, price, RANK() OVER (ORDER BY price DESC) AS 全体順位, RANK() OVER (PARTITION BY category ORDER BY price DESC) AS カテゴリ内順位 FROM products",
+        expectedColumns: ["name", "category", "price", "全体順位", "カテゴリ内順位"],
       },
       {
         id: "pi-rank-4",
-        question: "サブクエリとROW_NUMBER()を使い、各department_id内でsalary最高の従業員（部署内順位=1）のname・department_id・salary・部署内順位を取得してください",
-        hint: "SELECT ... FROM (SELECT ..., ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署内順位 FROM employees) WHERE 部署内順位 = 1",
-        answer: "SELECT name, department_id, salary, 部署内順位 FROM (SELECT name, department_id, salary, ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署内順位 FROM employees) WHERE 部署内順位 = 1",
-        expectedColumns: ["name", "department_id", "salary", "部署内順位"],
+        question: "order_detailsテーブルのidとprice*quantityを「小計」として計算し、小計降順のDENSE_RANK()を「小計順位」として取得してください",
+        hint: "DENSE_RANK() OVER (ORDER BY price*quantity DESC) AS 小計順位",
+        answer: "SELECT id, price * quantity AS 小計, DENSE_RANK() OVER (ORDER BY price * quantity DESC) AS 小計順位 FROM order_details",
+        expectedColumns: ["id", "小計", "小計順位"],
       },
       {
         id: "pi-rank-5",
-        question: "productsのname・category・priceと、category内でのprice降順ROW_NUMBER()「行番号」・RANK()「順位」を取得してください",
-        hint: "ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC) AS 行番号, RANK() OVER (...) AS 順位",
-        answer: "SELECT name, category, price, ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC) AS 行番号, RANK() OVER (PARTITION BY category ORDER BY price DESC) AS 順位 FROM products",
-        expectedColumns: ["name", "category", "price", "行番号", "順位"],
+        question: "productsテーブルのname・category・priceを取得し、カテゴリ内でprice昇順のROW_NUMBER()が1（各カテゴリで最安値）の行だけ表示してください（サブクエリを使用）",
+        hint: "WHERE rn = 1 ... ROW_NUMBER() OVER (PARTITION BY category ORDER BY price ASC) AS rn",
+        answer: "SELECT name, category, price FROM (SELECT name, category, price, ROW_NUMBER() OVER (PARTITION BY category ORDER BY price ASC) AS rn FROM products) WHERE rn = 1",
+        expectedColumns: ["name", "category", "price"],
       },
     ],
   },
@@ -752,63 +743,59 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "ウィンドウ関数 LAG・LEAD・移動集計",
     level: "intermediate",
     order: 12,
-    description: "LAG・LEADで前後の行を参照し、SUM OVERで累計・移動平均を学びます",
+    description: "LAG・LEADで前後行を参照し、SUM/AVGの移動集計をorders.order_dateで学びます",
     content: `
 <h2>LAG / LEAD — 前後の行を参照</h2>
-<pre><code><span class="sql-comment">-- 前の行の値</span>
-<span class="sql-function">LAG</span>(列名, オフセット, デフォルト値) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> 列名)
+<pre><code><span class="sql-comment">-- 前の注文日を取得</span>
+<span class="sql-keyword">SELECT</span> id, order_date,
+  <span class="sql-function">LAG</span>(order_date) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> order_date) <span class="sql-keyword">AS</span> 前回注文日,
+  <span class="sql-function">LEAD</span>(order_date) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> order_date) <span class="sql-keyword">AS</span> 次回注文日
+<span class="sql-keyword">FROM</span> orders;</code></pre>
 
-<span class="sql-comment">-- 後の行の値</span>
-<span class="sql-function">LEAD</span>(列名, オフセット, デフォルト値) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> 列名)</code></pre>
-
-<h2>累計と移動平均</h2>
-<pre><code><span class="sql-comment">-- 累計（ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW）</span>
-<span class="sql-function">SUM</span>(quantity) <span class="sql-keyword">OVER</span> (
-  <span class="sql-keyword">ORDER BY</span> order_date
-  <span class="sql-keyword">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
-) <span class="sql-keyword">AS</span> 累計数量
-
-<span class="sql-comment">-- 直近3行の移動平均</span>
-<span class="sql-function">AVG</span>(quantity) <span class="sql-keyword">OVER</span> (
-  <span class="sql-keyword">ORDER BY</span> order_date
-  <span class="sql-keyword">ROWS BETWEEN</span> <span class="sql-number">2</span> <span class="sql-keyword">PRECEDING AND CURRENT ROW</span>
-) <span class="sql-keyword">AS</span> 移動平均</code></pre>
+<h2>移動集計（ROWS BETWEEN）</h2>
+<pre><code><span class="sql-comment">-- order_detailsで累積小計</span>
+<span class="sql-keyword">SELECT</span> id, price * quantity <span class="sql-keyword">AS</span> 小計,
+  <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">OVER</span> (
+    <span class="sql-keyword">ORDER BY</span> id
+    <span class="sql-keyword">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+  ) <span class="sql-keyword">AS</span> 累積合計
+<span class="sql-keyword">FROM</span> order_details;</code></pre>
     `,
     exercises: [
       {
         id: "pi-lag-1",
-        question: "ordersのid・order_date・quantityと、order_date順での前の行のquantityを「前回数量」として取得してください",
-        hint: "LAG(quantity) OVER (ORDER BY order_date) AS 前回数量",
-        answer: "SELECT id, order_date, quantity, LAG(quantity) OVER (ORDER BY order_date) AS 前回数量 FROM orders",
-        expectedColumns: ["id", "order_date", "quantity", "前回数量"],
+        question: "ordersテーブルのid・order_dateと、order_date昇順でのLAG(order_date)を「前回注文日」として取得してください",
+        hint: "LAG(order_date) OVER (ORDER BY order_date) AS 前回注文日",
+        answer: "SELECT id, order_date, LAG(order_date) OVER (ORDER BY order_date) AS 前回注文日 FROM orders",
+        expectedColumns: ["id", "order_date", "前回注文日"],
       },
       {
         id: "pi-lag-2",
-        question: "ordersのid・order_date・quantityと、order_date順での次の行のquantityを「次回数量」として取得してください",
-        hint: "LEAD(quantity) OVER (ORDER BY order_date) AS 次回数量",
-        answer: "SELECT id, order_date, quantity, LEAD(quantity) OVER (ORDER BY order_date) AS 次回数量 FROM orders",
-        expectedColumns: ["id", "order_date", "quantity", "次回数量"],
+        question: "ordersテーブルのid・order_dateと、order_date昇順でのLEAD(order_date)を「次回注文日」として取得してください",
+        hint: "LEAD(order_date) OVER (ORDER BY order_date) AS 次回注文日",
+        answer: "SELECT id, order_date, LEAD(order_date) OVER (ORDER BY order_date) AS 次回注文日 FROM orders",
+        expectedColumns: ["id", "order_date", "次回注文日"],
       },
       {
         id: "pi-lag-3",
-        question: "employeesのname・salaryと、salary順での前行との差（salary - LAG(salary)）を「前との差」として取得してください（salary降順）",
-        hint: "salary - LAG(salary, 1, salary) OVER (ORDER BY salary DESC) AS 前との差",
-        answer: "SELECT name, salary, salary - LAG(salary, 1, salary) OVER (ORDER BY salary DESC) AS 前との差 FROM employees",
-        expectedColumns: ["name", "salary", "前との差"],
+        question: "order_detailsテーブルのidとprice*quantityを「小計」として、id昇順の累積合計（ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW）を「累積合計」として取得してください",
+        hint: "SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)",
+        answer: "SELECT id, price * quantity AS 小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_details",
+        expectedColumns: ["id", "小計", "累積合計"],
       },
       {
         id: "pi-lag-4",
-        question: "ordersのid・order_date・quantityと、order_date順の累計数量を「累計数量」として取得してください",
-        hint: "SUM(quantity) OVER (ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計数量",
-        answer: "SELECT id, order_date, quantity, SUM(quantity) OVER (ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計数量 FROM orders",
-        expectedColumns: ["id", "order_date", "quantity", "累計数量"],
+        question: "order_detailsテーブルのidとprice*quantityを「小計」として、直前2行を含む3行の移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下2桁で「移動平均」として取得してください",
+        hint: "ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS 移動平均",
+        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS 移動平均 FROM order_details",
+        expectedColumns: ["id", "小計", "移動平均"],
       },
       {
         id: "pi-lag-5",
-        question: "ordersのid・order_date・quantityと、直近3行の移動平均をROUND(1桁)した「移動平均」を取得してください",
-        hint: "ROUND(AVG(quantity) OVER (ORDER BY order_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均",
-        answer: "SELECT id, order_date, quantity, ROUND(AVG(quantity) OVER (ORDER BY order_date ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均 FROM orders",
-        expectedColumns: ["id", "order_date", "quantity", "移動平均"],
+        question: "ordersテーブルのid・order_dateと、LAG(id)を「前の注文ID」として取得し、前の注文IDがNULLでない行（最初の行以外）だけを表示してください（サブクエリを使用）",
+        hint: "WHERE prev_id IS NOT NULL ... LAG(id) OVER (ORDER BY order_date)",
+        answer: "SELECT id, order_date, 前の注文ID FROM (SELECT id, order_date, LAG(id) OVER (ORDER BY order_date) AS 前の注文ID FROM orders) WHERE 前の注文ID IS NOT NULL",
+        expectedColumns: ["id", "order_date", "前の注文ID"],
       },
     ],
   },
@@ -817,10 +804,10 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "CTE（WITH句）",
     level: "intermediate",
     order: 13,
-    description: "WITH句で一時的な名前付きクエリを定義してSQLを整理する方法を学びます",
+    description: "WITH句を使ってクエリを読みやすく分割する方法を学びます",
     content: `
-<h2>CTEとは？</h2>
-<p><strong>CTE（Common Table Expression）</strong>は <code>WITH</code> 句で一時的な名前付きクエリを定義する機能です。複雑なサブクエリを整理・再利用できます。</p>
+<h2>CTEとは</h2>
+<p>CTE（Common Table Expression）は <code>WITH</code> 句を使って、クエリの中で一時的な名前付き結果セットを定義する機能です。複雑なサブクエリをわかりやすく整理できます。</p>
 
 <h2>基本構文</h2>
 <pre><code><span class="sql-keyword">WITH</span> cte名 <span class="sql-keyword">AS</span> (
@@ -828,190 +815,176 @@ export const PREMIUM_LESSONS: Lesson[] = [
 )
 <span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> cte名;</code></pre>
 
-<h2>複数CTEの定義</h2>
-<pre><code><span class="sql-keyword">WITH</span>
-  cte1 <span class="sql-keyword">AS</span> (<span class="sql-keyword">SELECT</span> ...),
-  cte2 <span class="sql-keyword">AS</span> (<span class="sql-keyword">SELECT</span> ... <span class="sql-keyword">FROM</span> cte1)
-<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> cte2;</code></pre>
-
-<h2>再帰CTE</h2>
-<pre><code><span class="sql-keyword">WITH RECURSIVE</span> counter(n) <span class="sql-keyword">AS</span> (
-  <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span>
-  <span class="sql-keyword">UNION ALL</span>
-  <span class="sql-keyword">SELECT</span> n + <span class="sql-number">1</span> <span class="sql-keyword">FROM</span> counter <span class="sql-keyword">WHERE</span> n < <span class="sql-number">5</span>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 注文合計をCTEで計算して絞り込む</span>
+<span class="sql-keyword">WITH</span> order_totals <span class="sql-keyword">AS</span> (
+  <span class="sql-keyword">SELECT</span> order_id, <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">AS</span> 合計金額
+  <span class="sql-keyword">FROM</span> order_details
+  <span class="sql-keyword">GROUP BY</span> order_id
 )
-<span class="sql-keyword">SELECT</span> n <span class="sql-keyword">FROM</span> counter;</code></pre>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> order_totals
+<span class="sql-keyword">WHERE</span> 合計金額 >= <span class="sql-number">100000</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pi-cte-1",
-        question: "CTEを使い、全従業員の平均給与を avg_salary として定義し、平均給与より高い従業員のname・salaryを取得してください",
-        hint: "WITH avg_salary AS (SELECT AVG(salary) AS avg FROM employees) SELECT name, salary FROM employees, avg_salary WHERE salary > avg_salary.avg",
-        answer: "WITH avg_salary AS (SELECT AVG(salary) AS avg FROM employees) SELECT name, salary FROM employees, avg_salary WHERE salary > avg_salary.avg",
-        expectedColumns: ["name", "salary"],
+        question: "WITH句を使ってorder_detailsからorder_idごとのSUM(price*quantity)を「合計金額」とするCTE「order_totals」を作り、全件取得してください",
+        hint: "WITH order_totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals",
+        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals",
+        expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pi-cte-2",
-        question: "dept_statsというCTEで部署ごとの人数と平均給与を集計し、departmentsとJOINして部署名・人数・平均給与（ROUND）を平均給与降順で取得してください",
-        hint: "WITH dept_stats AS (SELECT department_id, COUNT(*) AS 人数, AVG(salary) AS 平均給与 FROM employees GROUP BY department_id) SELECT d.name AS 部署名, ds.人数, ROUND(ds.平均給与) AS 平均給与 FROM dept_stats ds JOIN departments d ON ...",
-        answer: "WITH dept_stats AS (SELECT department_id, COUNT(*) AS 人数, AVG(salary) AS 平均給与 FROM employees GROUP BY department_id) SELECT d.name AS 部署名, ds.人数, ROUND(ds.平均給与) AS 平均給与 FROM dept_stats ds JOIN departments d ON ds.department_id = d.id ORDER BY ds.平均給与 DESC",
-        expectedColumns: ["部署名", "人数", "平均給与"],
+        question: "WITH句でorder_detailsからorder_idごとの合計金額CTEを作り、合計金額が100000以上のorder_idと合計金額を取得してください",
+        hint: "WHERE 合計金額 >= 100000",
+        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals WHERE 合計金額 >= 100000",
+        expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pi-cte-3",
-        question: "top_productsとproduct_infoの2つのCTEを使い、注文数量合計TOP3の商品名・price・総注文数を取得してください",
-        hint: "WITH top_products AS (SELECT product_id, SUM(quantity) AS 総注文数 FROM orders GROUP BY product_id ORDER BY 総注文数 DESC LIMIT 3), product_info AS (SELECT id, name, price FROM products) SELECT ...",
-        answer: "WITH top_products AS (SELECT product_id, SUM(quantity) AS 総注文数 FROM orders GROUP BY product_id ORDER BY 総注文数 DESC LIMIT 3), product_info AS (SELECT id, name, price FROM products) SELECT p.name, p.price, tp.総注文数 FROM top_products tp JOIN product_info p ON tp.product_id = p.id",
-        expectedColumns: ["name", "price", "総注文数"],
+        question: "WITH句でusersから東京のユーザーのみ取得するCTE「tokyo_users」を作り、ordersとJOINして東京ユーザーの注文のid・user_id・order_dateを取得してください",
+        hint: "WITH tokyo_users AS (SELECT id FROM users WHERE city = '東京') ... JOIN tokyo_users ...",
+        answer: "WITH tokyo_users AS (SELECT id FROM users WHERE city = '東京') SELECT o.id, o.user_id, o.order_date FROM orders o JOIN tokyo_users t ON o.user_id = t.id",
+        expectedColumns: ["id", "user_id", "order_date"],
       },
       {
         id: "pi-cte-4",
-        question: "WITH RECURSIVE を使い、1から5までの連番を「n」という列で生成してください",
-        hint: "WITH RECURSIVE counter(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM counter WHERE n < 5) SELECT n FROM counter",
-        answer: "WITH RECURSIVE counter(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM counter WHERE n < 5) SELECT n FROM counter",
-        expectedColumns: ["n"],
+        question: "WITH句で各productsの平均priceを計算するCTE「avg_price」を作り（AVG(price)を「平均価格」）、productsとJOINして各商品name・price・平均価格と、price > 平均価格かどうかを「平均以上」（1 or 0）として取得してください",
+        hint: "WITH avg_price AS (SELECT AVG(price) AS 平均価格 FROM products) SELECT p.name, p.price, a.平均価格, CASE WHEN p.price > a.平均価格 THEN 1 ELSE 0 END AS 平均以上",
+        answer: "WITH avg_price AS (SELECT AVG(price) AS 平均価格 FROM products) SELECT p.name, p.price, a.平均価格, CASE WHEN p.price > a.平均価格 THEN 1 ELSE 0 END AS 平均以上 FROM products p, avg_price a",
+        expectedColumns: ["name", "price", "平均価格", "平均以上"],
       },
       {
         id: "pi-cte-5",
-        question: "CTEとウィンドウ関数を組み合わせ、部署内salary降順1位の従業員のname・salary・department_idを取得してください",
-        hint: "WITH ranked AS (SELECT name, salary, department_id, RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rank FROM employees) SELECT name, salary, department_id FROM ranked WHERE rank = 1",
-        answer: "WITH ranked AS (SELECT name, salary, department_id, RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rank FROM employees) SELECT name, salary, department_id FROM ranked WHERE rank = 1",
-        expectedColumns: ["name", "salary", "department_id"],
+        question: "2つのCTEを使ってください。CTE1: order_detailsからorder_idごとの合計金額。CTE2: ordersとusersをJOINしてorder_id・ユーザーnameを取得。最終的にCTE1とCTE2をorder_idで結合し、ユーザー名・order_id・合計金額を取得してください",
+        hint: "WITH totals AS (...), order_users AS (...) SELECT ou.name, ou.order_id, t.合計金額 FROM totals t JOIN order_users ou ON ...",
+        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id), order_users AS (SELECT o.id AS order_id, u.name FROM orders o JOIN users u ON o.user_id = u.id) SELECT ou.name, ou.order_id, t.合計金額 FROM totals t JOIN order_users ou ON t.order_id = ou.order_id",
+        expectedColumns: ["name", "order_id", "合計金額"],
       },
     ],
   },
   {
     slug: "pi-exists",
-    title: "EXISTS・NOT EXISTS・サブクエリ比較",
+    title: "EXISTS・NOT EXISTS",
     level: "intermediate",
     order: 14,
-    description: "相関サブクエリを使ったEXISTS・NOT EXISTSとMAX/MIN・INを使ったサブクエリ比較を学びます",
+    description: "EXISTS・NOT EXISTSを使った相関サブクエリによる存在チェックを学びます",
     content: `
-<h2>EXISTS — 存在チェック</h2>
-<p>サブクエリが1行でも返すなら真を返します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> products
+<h2>EXISTS / NOT EXISTS</h2>
+<p>サブクエリが1件以上の結果を返すかどうかをチェックします。<code>IN</code> よりも大量データに対して効率的な場合があります。</p>
+
+<h2>基本構文</h2>
+<pre><code><span class="sql-comment">-- 注文があるユーザーだけを取得</span>
+<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> users u
 <span class="sql-keyword">WHERE EXISTS</span> (
-  <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span> <span class="sql-keyword">FROM</span> orders
-  <span class="sql-keyword">WHERE</span> orders.product_id = products.id
+  <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span> <span class="sql-keyword">FROM</span> orders o
+  <span class="sql-keyword">WHERE</span> o.user_id = u.id
 );</code></pre>
 
-<h2>NOT EXISTS — 非存在チェック</h2>
-<pre><code><span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> departments
+<pre><code><span class="sql-comment">-- 一度も注文していないユーザーを取得</span>
+<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> users u
 <span class="sql-keyword">WHERE NOT EXISTS</span> (
-  <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span> <span class="sql-keyword">FROM</span> employees
-  <span class="sql-keyword">WHERE</span> employees.department_id = departments.id
-  <span class="sql-keyword">AND</span> salary > <span class="sql-number">550000</span>
+  <span class="sql-keyword">SELECT</span> <span class="sql-number">1</span> <span class="sql-keyword">FROM</span> orders o
+  <span class="sql-keyword">WHERE</span> o.user_id = u.id
 );</code></pre>
-
-<h2>サブクエリによる比較（MAX/MIN）</h2>
-<p>「全員より高い」は MAX、「誰かより高い」は MIN を使って実現できます。</p>
-<pre><code><span class="sql-comment">-- 全員より高い（ALLの代替）</span>
-<span class="sql-keyword">WHERE</span> salary > (<span class="sql-keyword">SELECT</span> <span class="sql-function">MAX</span>(salary) <span class="sql-keyword">FROM</span> ...)
-
-<span class="sql-comment">-- 誰かより高い（ANYの代替）</span>
-<span class="sql-keyword">WHERE</span> salary > (<span class="sql-keyword">SELECT</span> <span class="sql-function">MIN</span>(salary) <span class="sql-keyword">FROM</span> ...)</code></pre>
     `,
     exercises: [
       {
         id: "pi-exists-1",
-        question: "EXISTSを使い、ordersに注文がある商品のnameを取得してください",
-        hint: "WHERE EXISTS (SELECT 1 FROM orders WHERE orders.product_id = products.id)",
-        answer: "SELECT name FROM products WHERE EXISTS (SELECT 1 FROM orders WHERE orders.product_id = products.id)",
-        expectedColumns: ["name"],
+        question: "EXISTSを使って、ordersテーブルに注文が存在するユーザーのname・city・emailを取得してください",
+        hint: "WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        answer: "SELECT name, city, email FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        expectedColumns: ["name", "city", "email"],
       },
       {
         id: "pi-exists-2",
-        question: "NOT EXISTSを使い、salary>550000の従業員が存在しない部署のname・locationを取得してください",
-        hint: "WHERE NOT EXISTS (SELECT 1 FROM employees WHERE employees.department_id = departments.id AND salary > 550000)",
-        answer: "SELECT name, location FROM departments WHERE NOT EXISTS (SELECT 1 FROM employees WHERE employees.department_id = departments.id AND salary > 550000)",
-        expectedColumns: ["name", "location"],
+        question: "NOT EXISTSを使って、一度も注文していないユーザーのname・city・emailを取得してください",
+        hint: "WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        answer: "SELECT name, city, email FROM users u WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        expectedColumns: ["name", "city", "email"],
       },
       {
         id: "pi-exists-3",
-        question: "EXISTSと相関サブクエリを使い、東京の部署に所属する従業員のname・salaryを取得してください",
-        hint: "WHERE EXISTS (SELECT 1 FROM departments d WHERE d.id = e.department_id AND d.location = '東京')",
-        answer: "SELECT name, salary FROM employees e WHERE EXISTS (SELECT 1 FROM departments d WHERE d.id = e.department_id AND d.location = '東京')",
-        expectedColumns: ["name", "salary"],
+        question: "EXISTSを使って、order_detailsに明細が存在する注文のid・user_id・order_date・statusを取得してください",
+        hint: "WHERE EXISTS (SELECT 1 FROM order_details od WHERE od.order_id = o.id)",
+        answer: "SELECT id, user_id, order_date, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_details od WHERE od.order_id = o.id)",
+        expectedColumns: ["id", "user_id", "order_date", "status"],
       },
       {
         id: "pi-exists-4",
-        question: "サブクエリを使い、department_id=3の全従業員の最高給与より高い給与を持つ従業員のname・salaryを取得してください",
-        hint: "WHERE salary > (SELECT MAX(salary) FROM employees WHERE department_id = 3)",
-        answer: "SELECT name, salary FROM employees WHERE salary > (SELECT MAX(salary) FROM employees WHERE department_id = 3)",
-        expectedColumns: ["name", "salary"],
+        question: "EXISTSを使って、カテゴリが'PC'の商品が含まれる注文明細が存在するorder_idを持つ注文のid・user_id・statusを取得してください",
+        hint: "WHERE EXISTS (SELECT 1 FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
+        answer: "SELECT id, user_id, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
+        expectedColumns: ["id", "user_id", "status"],
       },
       {
         id: "pi-exists-5",
-        question: "サブクエリを使い、パソコンカテゴリの最安値より高いpriceを持つ商品のname・priceを取得してください",
-        hint: "WHERE price > (SELECT MIN(price) FROM products WHERE category = 'パソコン')",
-        answer: "SELECT name, price FROM products WHERE price > (SELECT MIN(price) FROM products WHERE category = 'パソコン')",
-        expectedColumns: ["name", "price"],
+        question: "NOT EXISTSを使って、stockがNULLでない（stock IS NOT NULL）商品の中で、order_detailsに存在するproduct_idを持たないものを取得するのではなく、usersの中でcityが'福岡'でかつ注文が存在しないユーザーのname・emailを取得してください",
+        hint: "WHERE city = '福岡' AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        answer: "SELECT name, email FROM users u WHERE city = '福岡' AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
+        expectedColumns: ["name", "email"],
       },
     ],
   },
   {
     slug: "pi-set-operations",
-    title: "集合演算 UNION・INTERSECT・EXCEPT",
+    title: "UNION・INTERSECT・EXCEPT",
     level: "intermediate",
     order: 15,
-    description: "UNION・UNION ALL・INTERSECT・EXCEPTによる集合演算を学びます",
+    description: "集合演算（UNION・INTERSECT・EXCEPT）を使った複数クエリの結合を学びます",
     content: `
-<h2>集合演算の種類</h2>
+<h2>集合演算とは</h2>
+<p>2つのSELECT結果を集合として組み合わせる演算です。カラム数と型が一致している必要があります。</p>
+
 <table>
-  <tr><th>演算子</th><th>意味</th></tr>
-  <tr><td>UNION</td><td>和集合（重複除く）</td></tr>
+  <tr><th>演算子</th><th>説明</th></tr>
+  <tr><td>UNION</td><td>和集合（重複除去）</td></tr>
   <tr><td>UNION ALL</td><td>和集合（重複含む）</td></tr>
   <tr><td>INTERSECT</td><td>積集合（両方に存在）</td></tr>
-  <tr><td>EXCEPT</td><td>差集合（左側のみ）</td></tr>
+  <tr><td>EXCEPT</td><td>差集合（左にあって右にない）</td></tr>
 </table>
 
-<h2>注意事項</h2>
-<ul>
-  <li>各SELECTの列数・型が一致している必要がある</li>
-  <li>列名は最初のSELECTのものが使われる</li>
-  <li>ORDER BYは最後に一度だけ記述</li>
-</ul>
-
-<pre><code><span class="sql-keyword">SELECT</span> name, <span class="sql-string">'従業員'</span> <span class="sql-keyword">AS</span> 種別 <span class="sql-keyword">FROM</span> employees
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 東京ユーザーと大阪ユーザーのname一覧（重複除去）</span>
+<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> city = <span class="sql-string">'東京'</span>
 <span class="sql-keyword">UNION</span>
-<span class="sql-keyword">SELECT</span> name, <span class="sql-string">'部署'</span> <span class="sql-keyword">AS</span> 種別 <span class="sql-keyword">FROM</span> departments
-<span class="sql-keyword">ORDER BY</span> 種別, name;</code></pre>
+<span class="sql-keyword">SELECT</span> name <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> city = <span class="sql-string">'大阪'</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pi-set-1",
-        question: "UNIONを使い、employeesのname・「従業員」とdepartmentsのname・「部署」を合わせ、種別・name順で取得してください",
-        hint: "SELECT name, '従業員' AS 種別 FROM employees UNION SELECT name, '部署' AS 種別 FROM departments ORDER BY 種別, name",
-        answer: "SELECT name, '従業員' AS 種別 FROM employees UNION SELECT name, '部署' AS 種別 FROM departments ORDER BY 種別, name",
-        expectedColumns: ["name", "種別"],
+        question: "UNIONを使って、cityが'東京'のユーザーのnameと、cityが'大阪'のユーザーのnameを結合して取得してください（重複除去）",
+        hint: "SELECT name FROM users WHERE city = '東京' UNION SELECT name FROM users WHERE city = '大阪'",
+        answer: "SELECT name FROM users WHERE city = '東京' UNION SELECT name FROM users WHERE city = '大阪'",
+        expectedColumns: ["name"],
       },
       {
         id: "pi-set-2",
-        question: "UNION ALLを使い、salary>500000の従業員のdepartment_idと、hire_date>='2021-01-01'の従業員のdepartment_idを重複込みで取得してください（department_id昇順）",
-        hint: "UNION ALL (重複を除かない)",
-        answer: "SELECT department_id FROM employees WHERE salary > 500000 UNION ALL SELECT department_id FROM employees WHERE hire_date >= '2021-01-01' ORDER BY department_id",
-        expectedColumns: ["department_id"],
+        question: "UNION ALLを使って、productsのcategoryが'PC'の商品nameと、categoryが'Display'の商品nameを結合してください（重複含む）",
+        hint: "SELECT name FROM products WHERE category = 'PC' UNION ALL SELECT name FROM products WHERE category = 'Display'",
+        answer: "SELECT name FROM products WHERE category = 'PC' UNION ALL SELECT name FROM products WHERE category = 'Display'",
+        expectedColumns: ["name"],
       },
       {
         id: "pi-set-3",
-        question: "INTERSECTを使い、department_id=2の従業員かつsalary>=500000の従業員のnameを取得してください",
-        hint: "SELECT name FROM employees WHERE department_id = 2 INTERSECT SELECT name FROM employees WHERE salary >= 500000",
-        answer: "SELECT name FROM employees WHERE department_id = 2 INTERSECT SELECT name FROM employees WHERE salary >= 500000",
-        expectedColumns: ["name"],
+        question: "INTERSECTを使って、ordersにuser_idとして存在するuser idと、usersでcityが'東京'のidの共通集合（東京ユーザーのうち注文があるid）を取得してください",
+        hint: "SELECT user_id FROM orders INTERSECT SELECT id FROM users WHERE city = '東京'",
+        answer: "SELECT user_id FROM orders INTERSECT SELECT id FROM users WHERE city = '東京'",
+        expectedColumns: ["user_id"],
       },
       {
         id: "pi-set-4",
-        question: "EXCEPTを使い、department_idが1・2・3の従業員のうち、salary<450000を除いたnameを取得してください",
-        hint: "SELECT name FROM employees WHERE department_id IN (1,2,3) EXCEPT SELECT name FROM employees WHERE salary < 450000",
-        answer: "SELECT name FROM employees WHERE department_id IN (1,2,3) EXCEPT SELECT name FROM employees WHERE salary < 450000",
-        expectedColumns: ["name"],
+        question: "EXCEPTを使って、usersの全idのうち、ordersに存在しないuser_idを持つユーザーのidを取得してください",
+        hint: "SELECT id FROM users EXCEPT SELECT user_id FROM orders",
+        answer: "SELECT id FROM users EXCEPT SELECT user_id FROM orders",
+        expectedColumns: ["id"],
       },
       {
         id: "pi-set-5",
-        question: "UNIONを使い、「パソコン」カテゴリの商品数と合計金額、「その他」カテゴリの商品数と合計金額をカテゴリ・商品数・合計金額として取得してください",
-        hint: "UNION で SELECT 'パソコン'... と SELECT 'その他'...",
-        answer: "SELECT 'パソコン' AS カテゴリ, COUNT(*) AS 商品数, SUM(price) AS 合計金額 FROM products WHERE category = 'パソコン' UNION SELECT 'その他' AS カテゴリ, COUNT(*) AS 商品数, SUM(price) AS 合計金額 FROM products WHERE category != 'パソコン'",
-        expectedColumns: ["カテゴリ", "商品数", "合計金額"],
+        question: "UNION ALLを使って、productsからcategory・nameと「商品」というtype列、usersからcity・nameと「ユーザー」というtype列を結合して取得してください（商品のcategoryとユーザーのcityを同じ「分類」列に）",
+        hint: "SELECT category AS 分類, name, '商品' AS type FROM products UNION ALL SELECT city, name, 'ユーザー' FROM users",
+        answer: "SELECT category AS 分類, name, '商品' AS type FROM products UNION ALL SELECT city, name, 'ユーザー' AS type FROM users",
+        expectedColumns: ["分類", "name", "type"],
       },
     ],
   },
@@ -1020,194 +993,189 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "SELF JOIN・CROSS JOIN",
     level: "intermediate",
     order: 16,
-    description: "自己結合とクロス結合の使い方と応用を学びます",
+    description: "自己結合（SELF JOIN）と直積（CROSS JOIN）の使い方をproductsなどで学びます",
     content: `
-<h2>SELF JOIN — 自己結合</h2>
-<p>同じテーブルを2回使って結合します。テーブルエイリアスが必須です。</p>
-<pre><code><span class="sql-comment">-- 同じ部署の従業員ペア</span>
-<span class="sql-keyword">SELECT</span> a.name <span class="sql-keyword">AS</span> 従業員1, b.name <span class="sql-keyword">AS</span> 従業員2
-<span class="sql-keyword">FROM</span> employees a
-<span class="sql-keyword">JOIN</span> employees b
-  <span class="sql-keyword">ON</span> a.department_id = b.department_id
-  <span class="sql-keyword">AND</span> a.id < b.id;</code></pre>
+<h2>SELF JOIN（自己結合）</h2>
+<p>同じテーブルを別名で2回JOINすることで、行同士を比較できます。</p>
+<pre><code><span class="sql-comment">-- 同じカテゴリの別の商品ペアを探す</span>
+<span class="sql-keyword">SELECT</span> a.name <span class="sql-keyword">AS</span> 商品A, b.name <span class="sql-keyword">AS</span> 商品B, a.category
+<span class="sql-keyword">FROM</span> products a
+<span class="sql-keyword">JOIN</span> products b <span class="sql-keyword">ON</span> a.category = b.category <span class="sql-keyword">AND</span> a.id < b.id;</code></pre>
 
-<h2>CROSS JOIN — クロス結合（直積）</h2>
-<p>両テーブルの全組み合わせを生成します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> a.name, b.name
-<span class="sql-keyword">FROM</span> table_a a
-<span class="sql-keyword">CROSS JOIN</span> table_b b;</code></pre>
-
-<h2>SELF JOINの応用: 自分より上位の人数</h2>
-<pre><code><span class="sql-keyword">SELECT</span> a.name, a.salary,
-  <span class="sql-function">COUNT</span>(b.id) <span class="sql-keyword">AS</span> 上位人数
-<span class="sql-keyword">FROM</span> employees a
-<span class="sql-keyword">LEFT JOIN</span> employees b <span class="sql-keyword">ON</span> b.salary > a.salary
-<span class="sql-keyword">GROUP BY</span> a.id, a.name, a.salary;</code></pre>
+<h2>CROSS JOIN（直積）</h2>
+<p>2つのテーブルのすべての組み合わせを生成します。</p>
+<pre><code><span class="sql-comment">-- 商品とユーザーの全組み合わせ</span>
+<span class="sql-keyword">SELECT</span> u.name <span class="sql-keyword">AS</span> ユーザー, p.name <span class="sql-keyword">AS</span> 商品
+<span class="sql-keyword">FROM</span> users u
+<span class="sql-keyword">CROSS JOIN</span> products p
+<span class="sql-keyword">LIMIT</span> <span class="sql-number">10</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pi-self-1",
-        question: "SELF JOINを使い、同じdepartment_idを持つ従業員ペア（従業員1・従業員2・department_id）をdepartment_id昇順で上位10件取得してください",
-        hint: "FROM employees a JOIN employees b ON a.department_id = b.department_id AND a.id < b.id LIMIT 10",
-        answer: "SELECT a.name AS 従業員1, b.name AS 従業員2, a.department_id FROM employees a JOIN employees b ON a.department_id = b.department_id AND a.id < b.id ORDER BY a.department_id LIMIT 10",
-        expectedColumns: ["従業員1", "従業員2", "department_id"],
+        question: "productsテーブルをSELF JOINして、同じcategoryを持つ異なる商品ペア（a.id < b.id）のname（商品A・商品B）とcategoryを取得してください",
+        hint: "FROM products a JOIN products b ON a.category = b.category AND a.id < b.id",
+        answer: "SELECT a.name AS 商品A, b.name AS 商品B, a.category FROM products a JOIN products b ON a.category = b.category AND a.id < b.id",
+        expectedColumns: ["商品A", "商品B", "category"],
       },
       {
         id: "pi-self-2",
-        question: "SELF JOINを使い、各従業員のname・salaryと、自分より高い給与の人の人数「上位人数」をsalary降順で取得してください",
-        hint: "LEFT JOIN employees b ON b.salary > a.salary GROUP BY a.id, a.name, a.salary",
-        answer: "SELECT a.name, a.salary, COUNT(b.id) AS 上位人数 FROM employees a LEFT JOIN employees b ON b.salary > a.salary GROUP BY a.id, a.name, a.salary ORDER BY a.salary DESC",
-        expectedColumns: ["name", "salary", "上位人数"],
+        question: "productsテーブルをSELF JOINして、商品Aの価格が商品Bの価格より高い（a.price > b.price）ペアの商品Aのname・価格と商品Bのname・価格を取得してください",
+        hint: "FROM products a JOIN products b ON a.price > b.price",
+        answer: "SELECT a.name AS 商品A, a.price AS 価格A, b.name AS 商品B, b.price AS 価格B FROM products a JOIN products b ON a.price > b.price",
+        expectedColumns: ["商品A", "価格A", "商品B", "価格B"],
       },
       {
         id: "pi-self-3",
-        question: "CROSS JOINを使い、departmentsと（productsのDISTINCT category）の全組み合わせを部署名・カテゴリとして上位10件取得してください",
-        hint: "departments d CROSS JOIN (SELECT DISTINCT category FROM products) p",
-        answer: "SELECT d.name AS 部署名, p.category AS カテゴリ FROM departments d CROSS JOIN (SELECT DISTINCT category FROM products) p ORDER BY d.name, p.category LIMIT 10",
-        expectedColumns: ["部署名", "カテゴリ"],
+        question: "usersテーブルをSELF JOINして、同じcityに住む異なるユーザーペア（a.id < b.id）のnameA・nameB・cityを取得してください（cityがNULLの行は除く）",
+        hint: "FROM users a JOIN users b ON a.city = b.city AND a.id < b.id WHERE a.city IS NOT NULL",
+        answer: "SELECT a.name AS nameA, b.name AS nameB, a.city FROM users a JOIN users b ON a.city = b.city AND a.id < b.id WHERE a.city IS NOT NULL",
+        expectedColumns: ["nameA", "nameB", "city"],
       },
       {
         id: "pi-self-4",
-        question: "SELF JOINを使い、同じ入社年（strftime('%Y',hire_date)）の従業員ペア（従業員1・従業員2・入社年）を入社年昇順で上位10件取得してください",
-        hint: "ON strftime('%Y', a.hire_date) = strftime('%Y', b.hire_date) AND a.id < b.id",
-        answer: "SELECT a.name AS 従業員1, b.name AS 従業員2, strftime('%Y', a.hire_date) AS 入社年 FROM employees a JOIN employees b ON strftime('%Y', a.hire_date) = strftime('%Y', b.hire_date) AND a.id < b.id ORDER BY 入社年 LIMIT 10",
-        expectedColumns: ["従業員1", "従業員2", "入社年"],
+        question: "products（aliasをp）をCROSS JOINしてusers（aliasをu）と組み合わせ、u.nameとp.nameを「ユーザー」「商品」として取得し、最初の10件に限定してください",
+        hint: "FROM users u CROSS JOIN products p LIMIT 10",
+        answer: "SELECT u.name AS ユーザー, p.name AS 商品 FROM users u CROSS JOIN products p LIMIT 10",
+        expectedColumns: ["ユーザー", "商品"],
       },
       {
         id: "pi-self-5",
-        question: "CROSS JOINを使い、employeesとdepartmentsの全組み合わせの件数を「組み合わせ数」として取得してください",
-        hint: "SELECT COUNT(*) AS 組み合わせ数 FROM employees CROSS JOIN departments",
-        answer: "SELECT COUNT(*) AS 組み合わせ数 FROM employees CROSS JOIN departments",
-        expectedColumns: ["組み合わせ数"],
+        question: "productsをSELF JOINして、stockの差が100以上ある（ABS(a.stock - b.stock) >= 100）異なる商品ペア（a.id < b.id）のname（商品A・商品B）とstock（在庫A・在庫B）を取得してください（stockがNULLの商品は除く）",
+        hint: "ON ABS(a.stock - b.stock) >= 100 AND a.id < b.id WHERE a.stock IS NOT NULL AND b.stock IS NOT NULL",
+        answer: "SELECT a.name AS 商品A, a.stock AS 在庫A, b.name AS 商品B, b.stock AS 在庫B FROM products a JOIN products b ON ABS(a.stock - b.stock) >= 100 AND a.id < b.id WHERE a.stock IS NOT NULL AND b.stock IS NOT NULL",
+        expectedColumns: ["商品A", "在庫A", "商品B", "在庫B"],
       },
     ],
   },
   {
     slug: "pi-views",
-    title: "ビュー（VIEW）",
+    title: "ビュー",
     level: "intermediate",
     order: 17,
-    description: "CREATE VIEW・DROP VIEWでビューを作成・管理する方法を学びます",
+    description: "CREATE VIEWを使って複雑なクエリを再利用可能なビューとして定義する方法を学びます",
     content: `
-<h2>ビューとは？</h2>
-<p>ビューは<strong>名前付きのSELECT文</strong>です。複雑なJOINや集計を隠蔽し、シンプルなテーブルのように使えます。</p>
+<h2>ビューとは</h2>
+<p>ビューは保存されたSELECT文です。テーブルのように扱えますが、データは実際のテーブルに格納されます。複雑なクエリを単純な名前で再利用できます。</p>
 
 <h2>CREATE VIEW</h2>
-<pre><code><span class="sql-keyword">CREATE VIEW IF NOT EXISTS</span> v_employee_dept <span class="sql-keyword">AS</span>
-<span class="sql-keyword">SELECT</span> e.name, e.salary, d.name <span class="sql-keyword">AS</span> 部署名, d.location
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id;</code></pre>
+<pre><code><span class="sql-keyword">CREATE VIEW</span> ビュー名 <span class="sql-keyword">AS</span>
+<span class="sql-keyword">SELECT</span> ...;</code></pre>
 
-<h2>ビューの使用</h2>
-<pre><code><span class="sql-comment">-- テーブルと同じように SELECT できる</span>
-<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> v_employee_dept <span class="sql-keyword">WHERE</span> location = <span class="sql-string">'東京'</span>;</code></pre>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 注文合計ビューを作成</span>
+<span class="sql-keyword">CREATE VIEW</span> order_summary <span class="sql-keyword">AS</span>
+<span class="sql-keyword">SELECT</span> od.order_id, <span class="sql-function">SUM</span>(od.price * od.quantity) <span class="sql-keyword">AS</span> 合計金額
+<span class="sql-keyword">FROM</span> order_details od
+<span class="sql-keyword">GROUP BY</span> od.order_id;
+
+<span class="sql-comment">-- ビューを使う</span>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> order_summary <span class="sql-keyword">WHERE</span> 合計金額 >= <span class="sql-number">100000</span>;</code></pre>
 
 <h2>DROP VIEW</h2>
-<pre><code><span class="sql-keyword">DROP VIEW IF EXISTS</span> v_employee_dept;</code></pre>
+<pre><code><span class="sql-keyword">DROP VIEW IF EXISTS</span> order_summary;</code></pre>
     `,
     exercises: [
       {
         id: "pi-view-1",
-        question: "v_employee_deptビューをCREATE VIEW（employees×departmentsのname・salary・部署名・location）で作成し、上位5件を取得してください",
-        hint: "CREATE VIEW IF NOT EXISTS v_employee_dept AS SELECT e.name, e.salary, d.name AS 部署名, d.location FROM employees e JOIN departments d ON e.department_id = d.id; SELECT * FROM v_employee_dept LIMIT 5;",
-        answer: "CREATE VIEW IF NOT EXISTS v_employee_dept AS SELECT e.name, e.salary, d.name AS 部署名, d.location FROM employees e JOIN departments d ON e.department_id = d.id; SELECT * FROM v_employee_dept LIMIT 5;",
-        expectedColumns: ["name", "salary", "部署名", "location"],
+        question: "order_detailsからorder_idごとのSUM(price*quantity)を「合計金額」とするビュー「order_summary」を作成し、SELECT * FROM order_summary; で全件取得してください",
+        hint: "CREATE VIEW order_summary AS SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id",
+        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id; SELECT * FROM order_summary",
+        expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pi-view-2",
-        question: "v_high_salaryビューをsalary>=500000の従業員（name・salary・department_id）で作成し、salary降順で全件取得してください",
-        hint: "CREATE VIEW IF NOT EXISTS v_high_salary AS SELECT name, salary, department_id FROM employees WHERE salary >= 500000; SELECT * FROM v_high_salary ORDER BY salary DESC;",
-        answer: "CREATE VIEW IF NOT EXISTS v_high_salary AS SELECT name, salary, department_id FROM employees WHERE salary >= 500000; SELECT * FROM v_high_salary ORDER BY salary DESC;",
-        expectedColumns: ["name", "salary", "department_id"],
+        question: "usersとordersをJOINして、order_id・ユーザーname・order_date・statusを取得するビュー「user_orders」を作成し、SELECT * FROM user_orders; で全件取得してください",
+        hint: "CREATE VIEW user_orders AS SELECT o.id AS order_id, u.name, o.order_date, o.status FROM orders o JOIN users u ON o.user_id = u.id",
+        answer: "CREATE VIEW user_orders AS SELECT o.id AS order_id, u.name, o.order_date, o.status FROM orders o JOIN users u ON o.user_id = u.id; SELECT * FROM user_orders",
+        expectedColumns: ["order_id", "name", "order_date", "status"],
       },
       {
         id: "pi-view-3",
-        question: "v_dept_statsビュー（department_id・人数・平均給与）を作成し、人数>=3の部署だけ取得してください",
-        hint: "CREATE VIEW ... GROUP BY department_id; SELECT * FROM v_dept_stats WHERE 人数 >= 3;",
-        answer: "CREATE VIEW IF NOT EXISTS v_dept_stats AS SELECT department_id, COUNT(*) AS 人数, AVG(salary) AS 平均給与 FROM employees GROUP BY department_id; SELECT * FROM v_dept_stats WHERE 人数 >= 3;",
-        expectedColumns: ["department_id", "人数", "平均給与"],
+        question: "productsとorder_detailsをJOINして、商品ごとのname・category・SUM(od.quantity)を「総販売数」とするビュー「product_sales」を作成し、SELECT * FROM product_sales; で取得してください",
+        hint: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category",
+        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales",
+        expectedColumns: ["name", "category", "総販売数"],
       },
       {
         id: "pi-view-4",
-        question: "v_baseビュー（employeesのname）とv_tempビュー（employeesのname）を作成後、v_tempをDROP VIEWで削除し、sqlite_masterに残るビューのnameを取得してください",
-        hint: "CREATE VIEW IF NOT EXISTS v_base AS SELECT name FROM employees; CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
-        answer: "CREATE VIEW IF NOT EXISTS v_base AS SELECT name FROM employees; CREATE VIEW IF NOT EXISTS v_temp AS SELECT name FROM employees; DROP VIEW v_temp; SELECT name FROM sqlite_master WHERE type='view';",
-        expectedColumns: ["name"],
+        question: "product_salesビューを作成後、SELECT * FROM product_sales WHERE 総販売数 >= 3; でビューに対してWHEREフィルタをかけて取得してください",
+        hint: "CREATE VIEW ... として WHERE 総販売数 >= 3",
+        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales WHERE 総販売数 >= 3",
+        expectedColumns: ["name", "category", "総販売数"],
       },
       {
         id: "pi-view-5",
-        question: "v_order_summaryビュー（orders×productsのid・商品名・quantity・金額・customer_name）を作成し、商品名ごとの総売上TOP5を取得してください",
-        hint: "CREATE VIEW ... JOIN ...; SELECT 商品名, SUM(金額) AS 総売上 FROM v_order_summary GROUP BY 商品名 ORDER BY 総売上 DESC LIMIT 5;",
-        answer: "CREATE VIEW IF NOT EXISTS v_order_summary AS SELECT o.id, p.name AS 商品名, o.quantity, p.price * o.quantity AS 金額, o.customer_name FROM orders o JOIN products p ON o.product_id = p.id; SELECT 商品名, SUM(金額) AS 総売上 FROM v_order_summary GROUP BY 商品名 ORDER BY 総売上 DESC LIMIT 5;",
-        expectedColumns: ["商品名", "総売上"],
+        question: "order_summaryビューを作成後、ordersテーブルとJOINして、order_id・status・合計金額を取得してください",
+        hint: "CREATE VIEW order_summary AS ... ; SELECT os.order_id, o.status, os.合計金額 FROM order_summary os JOIN orders o ON os.order_id = o.id",
+        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id; SELECT os.order_id, o.status, os.合計金額 FROM order_summary os JOIN orders o ON os.order_id = o.id",
+        expectedColumns: ["order_id", "status", "合計金額"],
       },
     ],
   },
   {
     slug: "pi-advanced-subquery",
-    title: "高度なサブクエリと集計",
+    title: "高度なサブクエリ",
     level: "intermediate",
     order: 18,
-    description: "相関サブクエリ・FROM句サブクエリ・HAVINGサブクエリを学びます",
+    description: "相関サブクエリ・スカラーサブクエリ・FROM句のサブクエリなど高度なサブクエリ技法を学びます",
     content: `
-<h2>相関サブクエリ（SELECT句）</h2>
-<p>外側のクエリの各行ごとにサブクエリを実行します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
-  (<span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">FROM</span> employees e2
-   <span class="sql-keyword">WHERE</span> e2.department_id = e1.department_id) <span class="sql-keyword">AS</span> 部署平均給与
-<span class="sql-keyword">FROM</span> employees e1;</code></pre>
+<h2>サブクエリの種類</h2>
+<table>
+  <tr><th>種類</th><th>場所</th><th>説明</th></tr>
+  <tr><td>スカラーサブクエリ</td><td>SELECT句</td><td>1行1列を返す</td></tr>
+  <tr><td>相関サブクエリ</td><td>WHERE句</td><td>外側クエリの値を参照</td></tr>
+  <tr><td>インラインビュー</td><td>FROM句</td><td>一時テーブルとして扱う</td></tr>
+</table>
 
-<h2>FROM句のサブクエリ（派生テーブル）</h2>
-<pre><code><span class="sql-keyword">SELECT</span> d.name <span class="sql-keyword">AS</span> 部署名, sub.最高給与
-<span class="sql-keyword">FROM</span> departments d
-<span class="sql-keyword">JOIN</span> (
-  <span class="sql-keyword">SELECT</span> department_id, <span class="sql-function">MAX</span>(salary) <span class="sql-keyword">AS</span> 最高給与
-  <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">GROUP BY</span> department_id
-) sub <span class="sql-keyword">ON</span> d.id = sub.department_id;</code></pre>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- スカラーサブクエリ（SELECT句）</span>
+<span class="sql-keyword">SELECT</span> name, price,
+  (<span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(price) <span class="sql-keyword">FROM</span> products) <span class="sql-keyword">AS</span> 平均価格
+<span class="sql-keyword">FROM</span> products;
 
-<h2>HAVING句のサブクエリ</h2>
-<pre><code><span class="sql-keyword">SELECT</span> department_id, <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">AS</span> 平均給与
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">GROUP BY</span> department_id
-<span class="sql-keyword">HAVING</span> <span class="sql-function">AVG</span>(salary) > (
-  <span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">FROM</span> employees
+<span class="sql-comment">-- 相関サブクエリ（WHERE句）</span>
+<span class="sql-keyword">SELECT</span> name, price <span class="sql-keyword">FROM</span> products p
+<span class="sql-keyword">WHERE</span> price > (
+  <span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(price) <span class="sql-keyword">FROM</span> products
+    <span class="sql-keyword">WHERE</span> category = p.category
 );</code></pre>
     `,
     exercises: [
       {
-        id: "pi-sub-1",
-        question: "相関サブクエリを使い、employeesのname・salaryと、同じdepartment_idの平均給与「部署平均給与」を取得してください",
-        hint: "(SELECT AVG(salary) FROM employees e2 WHERE e2.department_id = e1.department_id) AS 部署平均給与",
-        answer: "SELECT name, salary, (SELECT AVG(salary) FROM employees e2 WHERE e2.department_id = e1.department_id) AS 部署平均給与 FROM employees e1",
-        expectedColumns: ["name", "salary", "部署平均給与"],
+        id: "pi-subq-1",
+        question: "スカラーサブクエリを使って、productsのname・priceと、products全体の平均価格（AVG(price)）を「全体平均」として各行に表示してください",
+        hint: "(SELECT AVG(price) FROM products) AS 全体平均",
+        answer: "SELECT name, price, (SELECT AVG(price) FROM products) AS 全体平均 FROM products",
+        expectedColumns: ["name", "price", "全体平均"],
       },
       {
-        id: "pi-sub-2",
-        question: "FROM句のサブクエリを使い、departmentsと各部署の最高給与（dept_max）をJOINして部署名・最高給与を最高給与降順で取得してください",
-        hint: "JOIN (SELECT department_id, MAX(salary) AS 最高給与 FROM employees GROUP BY department_id) dept_max ON d.id = dept_max.department_id",
-        answer: "SELECT d.name AS 部署名, dept_max.最高給与 FROM departments d JOIN (SELECT department_id, MAX(salary) AS 最高給与 FROM employees GROUP BY department_id) dept_max ON d.id = dept_max.department_id ORDER BY dept_max.最高給与 DESC",
-        expectedColumns: ["部署名", "最高給与"],
+        id: "pi-subq-2",
+        question: "相関サブクエリを使って、productsのname・category・priceを取得し、同じカテゴリ内の平均価格より高い商品のみ表示してください",
+        hint: "WHERE price > (SELECT AVG(price) FROM products WHERE category = p.category)",
+        answer: "SELECT name, category, price FROM products p WHERE price > (SELECT AVG(price) FROM products WHERE category = p.category)",
+        expectedColumns: ["name", "category", "price"],
       },
       {
-        id: "pi-sub-3",
-        question: "HAVING句のサブクエリを使い、部署の平均給与が全体平均より高いdepartment_id・平均給与を取得してください",
-        hint: "HAVING AVG(salary) > (SELECT AVG(salary) FROM employees)",
-        answer: "SELECT department_id, AVG(salary) AS 平均給与 FROM employees GROUP BY department_id HAVING AVG(salary) > (SELECT AVG(salary) FROM employees)",
-        expectedColumns: ["department_id", "平均給与"],
+        id: "pi-subq-3",
+        question: "FROM句のサブクエリ（インラインビュー）を使って、order_detailsからorder_idごとの合計金額を求め、その結果から合計金額が最大のorder_idと合計金額を取得してください",
+        hint: "SELECT * FROM (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
+        answer: "SELECT * FROM (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
+        expectedColumns: ["order_id", "合計金額"],
       },
       {
-        id: "pi-sub-4",
-        question: "ネストしたサブクエリを使い、東京以外の都市にある部署に所属する従業員のname・salaryを取得してください",
-        hint: "WHERE department_id IN (SELECT id FROM departments WHERE location IN (SELECT DISTINCT location FROM departments WHERE location != '東京'))",
-        answer: "SELECT name, salary FROM employees WHERE department_id IN (SELECT id FROM departments WHERE location IN (SELECT DISTINCT location FROM departments WHERE location != '東京'))",
-        expectedColumns: ["name", "salary"],
+        id: "pi-subq-4",
+        question: "IN句のサブクエリを使って、statusが'completed'の注文に含まれるproduct_idを持つ商品のname・category・priceを取得してください",
+        hint: "WHERE id IN (SELECT product_id FROM order_details WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
+        answer: "SELECT name, category, price FROM products WHERE id IN (SELECT product_id FROM order_details WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
+        expectedColumns: ["name", "category", "price"],
       },
       {
-        id: "pi-sub-5",
-        question: "相関サブクエリを使い、productsのname・priceと、同一カテゴリ最安値との差「カテゴリ最安値との差」をcategory・price昇順で取得してください",
-        hint: "price - (SELECT MIN(price) FROM products WHERE category = p.category) AS カテゴリ最安値との差",
-        answer: "SELECT name, price, price - (SELECT MIN(price) FROM products WHERE category = p.category) AS カテゴリ最安値との差 FROM products p ORDER BY category, price",
-        expectedColumns: ["name", "price", "カテゴリ最安値との差"],
+        id: "pi-subq-5",
+        question: "スカラーサブクエリを使って、usersのname・cityと、そのユーザーの注文数（ordersテーブルのCOUNT(*)）を「注文数」として各行に表示してください（相関サブクエリ）",
+        hint: "(SELECT COUNT(*) FROM orders WHERE user_id = u.id) AS 注文数",
+        answer: "SELECT name, city, (SELECT COUNT(*) FROM orders WHERE user_id = u.id) AS 注文数 FROM users u",
+        expectedColumns: ["name", "city", "注文数"],
       },
     ],
   },
@@ -1216,145 +1184,133 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "総合演習（中級）",
     level: "intermediate",
     order: 19,
-    description: "中級の全知識を組み合わせた実践的な問題に挑戦します",
+    description: "中級コースで学んだウィンドウ関数・CTE・EXISTS・集合演算・サブクエリを組み合わせた総合演習です",
     content: `
-<h2>総合演習について</h2>
-<p>ウィンドウ関数・CTE・EXISTS・集合演算・SELF JOIN・ビュー・高度なサブクエリを組み合わせた実践問題です。</p>
+<h2>中級コースのまとめ</h2>
+<p>これまで学んだ中級技術を組み合わせた実践的な問題に挑戦しましょう。</p>
 
-<h2>複雑なSQLを書くコツ</h2>
-<ol>
-  <li>まずCTEで中間テーブルを定義する</li>
-  <li>ウィンドウ関数でランキングや累計を計算する</li>
-  <li>最後にJOINや集計でまとめる</li>
-</ol>
+<ul>
+  <li>ウィンドウ関数（ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD）</li>
+  <li>CTE（WITH句）</li>
+  <li>EXISTS / NOT EXISTS</li>
+  <li>UNION / INTERSECT / EXCEPT</li>
+  <li>SELF JOIN / CROSS JOIN</li>
+  <li>ビュー（CREATE VIEW）</li>
+  <li>高度なサブクエリ</li>
+</ul>
 
-<pre><code><span class="sql-keyword">WITH</span>
-  cte1 <span class="sql-keyword">AS</span> (
-    <span class="sql-keyword">SELECT</span> ..., <span class="sql-function">RANK</span>() <span class="sql-keyword">OVER</span> (...) <span class="sql-keyword">AS</span> rank
-    <span class="sql-keyword">FROM</span> ...
-  )
-<span class="sql-keyword">SELECT</span> ...
-<span class="sql-keyword">FROM</span> cte1
-<span class="sql-keyword">WHERE</span> rank <= <span class="sql-number">3</span>;</code></pre>
+<h2>組み合わせのヒント</h2>
+<pre><code><span class="sql-comment">-- CTEとウィンドウ関数の組み合わせ</span>
+<span class="sql-keyword">WITH</span> ranked <span class="sql-keyword">AS</span> (
+  <span class="sql-keyword">SELECT</span> name, price,
+    <span class="sql-function">RANK</span>() <span class="sql-keyword">OVER</span> (<span class="sql-keyword">PARTITION BY</span> category <span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>) <span class="sql-keyword">AS</span> rk
+  <span class="sql-keyword">FROM</span> products
+)
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> ranked <span class="sql-keyword">WHERE</span> rk = <span class="sql-number">1</span>;</code></pre>
     `,
     exercises: [
       {
         id: "pi-comp-1",
-        question: "CTEとウィンドウ関数・JOINを組み合わせ、部署内salary降順TOP2の従業員のname・salary・部署名・部署内順位を部署名・部署内順位昇順で取得してください",
-        hint: "WITH ranked_employees AS (SELECT ..., RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署内順位 FROM employees e JOIN departments d ...) SELECT ... WHERE 部署内順位 <= 2",
-        answer: "WITH ranked_employees AS (SELECT e.name, e.salary, d.name AS 部署名, RANK() OVER (PARTITION BY e.department_id ORDER BY e.salary DESC) AS 部署内順位 FROM employees e JOIN departments d ON e.department_id = d.id) SELECT name, salary, 部署名, 部署内順位 FROM ranked_employees WHERE 部署内順位 <= 2 ORDER BY 部署名, 部署内順位",
-        expectedColumns: ["name", "salary", "部署名", "部署内順位"],
+        question: "CTEとRANK()を組み合わせて、productsのcategoryごとにprice降順でRANK付けし、各カテゴリで1位の商品のname・category・priceを取得してください",
+        hint: "WITH ranked AS (SELECT ..., RANK() OVER (PARTITION BY category ORDER BY price DESC) AS rk FROM products) SELECT ... WHERE rk = 1",
+        answer: "WITH ranked AS (SELECT name, category, price, RANK() OVER (PARTITION BY category ORDER BY price DESC) AS rk FROM products) SELECT name, category, price FROM ranked WHERE rk = 1",
+        expectedColumns: ["name", "category", "price"],
       },
       {
         id: "pi-comp-2",
-        question: "2つのCTEを使い、注文総売上TOP3の商品名・総数量・総売上を取得してください（order_totals CTE→ top3 CTE→ productsをJOIN）",
-        hint: "WITH order_totals AS (...), top_3 AS (SELECT ... FROM order_totals ORDER BY 総売上 DESC LIMIT 3) SELECT p.name AS 商品名, t.総数量, t.総売上 FROM top_3 t JOIN products p ...",
-        answer: "WITH order_totals AS (SELECT o.product_id, SUM(o.quantity) AS 総数量, SUM(p.price * o.quantity) AS 総売上 FROM orders o JOIN products p ON o.product_id = p.id GROUP BY o.product_id), top_3 AS (SELECT product_id, 総数量, 総売上 FROM order_totals ORDER BY 総売上 DESC LIMIT 3) SELECT p.name AS 商品名, t.総数量, t.総売上 FROM top_3 t JOIN products p ON t.product_id = p.id",
-        expectedColumns: ["商品名", "総数量", "総売上"],
+        question: "EXISTSとCTEを組み合わせて、東京ユーザー（CTE）の中で注文が存在するユーザーのname・emailを取得してください",
+        hint: "WITH tokyo AS (SELECT id, name, email FROM users WHERE city = '東京') SELECT name, email FROM tokyo t WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = t.id)",
+        answer: "WITH tokyo AS (SELECT id, name, email FROM users WHERE city = '東京') SELECT name, email FROM tokyo t WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = t.id)",
+        expectedColumns: ["name", "email"],
       },
       {
         id: "pi-comp-3",
-        question: "employeesとdepartmentsをJOINし、部署名・人数・高給与者数（salary>=500000）・平均給与（ROUND）を平均給与降順で取得してください",
-        hint: "SUM(CASE WHEN salary >= 500000 THEN 1 ELSE 0 END) AS 高給与者数",
-        answer: "SELECT 部署名, COUNT(*) AS 人数, SUM(CASE WHEN salary >= 500000 THEN 1 ELSE 0 END) AS 高給与者数, ROUND(AVG(salary)) AS 平均給与 FROM (SELECT e.name, e.salary, d.name AS 部署名 FROM employees e JOIN departments d ON e.department_id = d.id) GROUP BY 部署名 ORDER BY 平均給与 DESC",
-        expectedColumns: ["部署名", "人数", "高給与者数", "平均給与"],
+        question: "UNIONとスカラーサブクエリを組み合わせて、「最高価格商品」（MAX(price)の商品name・price）と「最安価格商品」（MIN(price)の商品name・price）を取得してください",
+        hint: "SELECT name, price FROM products WHERE price = (SELECT MAX(price) FROM products) UNION SELECT name, price FROM products WHERE price = (SELECT MIN(price) FROM products)",
+        answer: "SELECT name, price FROM products WHERE price = (SELECT MAX(price) FROM products) UNION SELECT name, price FROM products WHERE price = (SELECT MIN(price) FROM products)",
+        expectedColumns: ["name", "price"],
       },
       {
         id: "pi-comp-4",
-        question: "EXISTSと相関サブクエリを使い、平均給与より高い従業員が存在する部署の部署名・locationをlocation昇順で取得してください",
-        hint: "WHERE EXISTS (SELECT 1 FROM employees e WHERE e.department_id = d.id AND e.salary > (SELECT AVG(salary) FROM employees))",
-        answer: "SELECT d.name AS 部署名, d.location FROM departments d WHERE EXISTS (SELECT 1 FROM employees e WHERE e.department_id = d.id AND e.salary > (SELECT AVG(salary) FROM employees)) ORDER BY d.location",
-        expectedColumns: ["部署名", "location"],
+        question: "CTEを2つ使い、CTE1はcompleted注文のuser_idのリスト、CTE2はcancelled注文のuser_idのリストとし、CTE1にあってCTE2にない（EXCEPTを使用）user_idをusersテーブルからnameとともに取得してください",
+        hint: "WITH completed_users AS (...), cancelled_users AS (...) SELECT u.id, u.name FROM users u WHERE u.id IN (SELECT user_id FROM completed_users EXCEPT SELECT user_id FROM cancelled_users)",
+        answer: "WITH completed_users AS (SELECT user_id FROM orders WHERE status = 'completed'), cancelled_users AS (SELECT user_id FROM orders WHERE status = 'cancelled') SELECT u.id, u.name FROM users u WHERE u.id IN (SELECT user_id FROM completed_users EXCEPT SELECT user_id FROM cancelled_users)",
+        expectedColumns: ["id", "name"],
       },
       {
         id: "pi-comp-5",
-        question: "ordersとproductsをJOINし、カテゴリ別の注文件数・総数量・平均注文額（ROUND）・最大注文額を集計し、注文件数>=3のカテゴリを総数量降順で取得してください",
-        hint: "GROUP BY category HAVING COUNT(DISTINCT o.id) >= 3 ORDER BY 総数量 DESC",
-        answer: "SELECT p.category AS カテゴリ, COUNT(DISTINCT o.id) AS 注文件数, SUM(o.quantity) AS 総数量, ROUND(AVG(p.price * o.quantity)) AS 平均注文額, MAX(p.price * o.quantity) AS 最大注文額 FROM orders o JOIN products p ON o.product_id = p.id GROUP BY p.category HAVING COUNT(DISTINCT o.id) >= 3 ORDER BY 総数量 DESC",
-        expectedColumns: ["カテゴリ", "注文件数", "総数量", "平均注文額", "最大注文額"],
+        question: "CTEでorder_detailsのorder_idごとの合計金額を求め、LAG()でその前の注文の合計金額を「前回合計」として取得し、合計金額と前回合計の差を「増減」として表示してください（order_id昇順）",
+        hint: "WITH totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
+        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
+        expectedColumns: ["order_id", "合計金額", "前回合計", "増減"],
       },
     ],
   },
   {
     slug: "pi-window-advanced",
-    title: "ウィンドウ関数応用（NTILE・FIRST_VALUE・移動平均）",
+    title: "ウィンドウ関数応用 NTILE・FIRST_VALUE・移動平均",
     level: "intermediate",
     order: 20,
-    description: "NTILE・FIRST_VALUE・LAST_VALUE・移動平均・累計など実践的なウィンドウ関数を学びます",
+    description: "NTILE・FIRST_VALUE・LAST_VALUE・移動平均など上級ウィンドウ関数を学びます",
     content: `
-<h2>NTILE — データをN等分に分ける</h2>
-<p>行を指定した数のグループ（タイル）に均等に分割します。四分位数や十分位数の算出に便利です。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
-  <span class="sql-function">NTILE</span>(<span class="sql-number">4</span>) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary) <span class="sql-keyword">AS</span> 四分位
-<span class="sql-keyword">FROM</span> employees;</code></pre>
+<h2>上級ウィンドウ関数</h2>
+<table>
+  <tr><th>関数</th><th>説明</th></tr>
+  <tr><td>NTILE(n)</td><td>行をn個のバケツに均等分割</td></tr>
+  <tr><td>FIRST_VALUE(col)</td><td>ウィンドウ内の最初の値</td></tr>
+  <tr><td>LAST_VALUE(col)</td><td>ウィンドウ内の最後の値</td></tr>
+  <tr><td>AVG(...) OVER (...)</td><td>移動平均</td></tr>
+</table>
 
-<h2>FIRST_VALUE / LAST_VALUE — グループ内の最初・最後の値</h2>
-<p>パーティション内で最初または最後の行の値を取得します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary, department_id,
-  <span class="sql-function">FIRST_VALUE</span>(name) <span class="sql-keyword">OVER</span> (
-    <span class="sql-keyword">PARTITION BY</span> department_id <span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>
-  ) <span class="sql-keyword">AS</span> 部署最高給与者
-<span class="sql-keyword">FROM</span> employees;</code></pre>
+<h2>使用例</h2>
+<pre><code><span class="sql-comment">-- 価格で4段階に分割</span>
+<span class="sql-keyword">SELECT</span> name, price,
+  <span class="sql-function">NTILE</span>(<span class="sql-number">4</span>) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> price) <span class="sql-keyword">AS</span> 四分位
+<span class="sql-keyword">FROM</span> products;
 
-<h2>移動平均（ROWS BETWEEN）</h2>
-<p><code>ROWS BETWEEN N PRECEDING AND CURRENT ROW</code> でフレームを指定して移動平均を計算します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
-  <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">OVER</span> (
-    <span class="sql-keyword">ORDER BY</span> salary
-    <span class="sql-keyword">ROWS BETWEEN</span> <span class="sql-number">2</span> <span class="sql-keyword">PRECEDING AND CURRENT ROW</span>
-  ) <span class="sql-keyword">AS</span> 移動平均
-<span class="sql-keyword">FROM</span> employees;</code></pre>
-
-<h2>累計（SUM OVER）</h2>
-<p>ORDER BY と組み合わせて累積合計を計算できます。</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary,
-  <span class="sql-function">SUM</span>(salary) <span class="sql-keyword">OVER</span> (<span class="sql-keyword">ORDER BY</span> salary) <span class="sql-keyword">AS</span> 累計給与
-<span class="sql-keyword">FROM</span> employees;</code></pre>
+<span class="sql-comment">-- カテゴリ内で最安値を各行に表示</span>
+<span class="sql-keyword">SELECT</span> name, category, price,
+  <span class="sql-function">FIRST_VALUE</span>(price) <span class="sql-keyword">OVER</span> (
+    <span class="sql-keyword">PARTITION BY</span> category <span class="sql-keyword">ORDER BY</span> price
+  ) <span class="sql-keyword">AS</span> カテゴリ最安値
+<span class="sql-keyword">FROM</span> products;</code></pre>
     `,
     exercises: [
       {
         id: "pi-wadv-1",
-        question: "NTILE(4)を使い、employeesのname・salaryと給与四分位数を「四分位」という列名でsalary昇順に取得してください",
-        hint: "NTILE(4) OVER (ORDER BY salary) AS 四分位",
-        answer: "SELECT name, salary, NTILE(4) OVER (ORDER BY salary) AS 四分位 FROM employees ORDER BY salary",
-        expectedColumns: ["name", "salary", "四分位"],
+        question: "productsテーブルのname・priceと、price昇順でNTILE(4)を「四分位」として取得してください",
+        hint: "NTILE(4) OVER (ORDER BY price) AS 四分位",
+        answer: "SELECT name, price, NTILE(4) OVER (ORDER BY price) AS 四分位 FROM products",
+        expectedColumns: ["name", "price", "四分位"],
       },
       {
         id: "pi-wadv-2",
-        question: "FIRST_VALUEを使い、employeesのname・salary・department_idと、部署内salary降順で最も給与が高い従業員名を「部署最高給与者」として取得してください",
-        hint: "FIRST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署最高給与者",
-        answer: "SELECT name, salary, department_id, FIRST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary DESC) AS 部署最高給与者 FROM employees",
-        expectedColumns: ["name", "salary", "department_id", "部署最高給与者"],
+        question: "productsテーブルのname・category・priceと、カテゴリ内でprice昇順のFIRST_VALUE(price)を「カテゴリ最安値」として取得してください",
+        hint: "FIRST_VALUE(price) OVER (PARTITION BY category ORDER BY price) AS カテゴリ最安値",
+        answer: "SELECT name, category, price, FIRST_VALUE(price) OVER (PARTITION BY category ORDER BY price) AS カテゴリ最安値 FROM products",
+        expectedColumns: ["name", "category", "price", "カテゴリ最安値"],
       },
       {
         id: "pi-wadv-3",
-        question: "LAST_VALUEを使い、employeesのname・salary・department_idと、部署内salary昇順で最も給与が低い従業員名を「部署最低給与者」としてROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWINGで取得してください",
-        hint: "LAST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS 部署最低給与者",
-        answer: "SELECT name, salary, department_id, LAST_VALUE(name) OVER (PARTITION BY department_id ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS 部署最低給与者 FROM employees",
-        expectedColumns: ["name", "salary", "department_id", "部署最低給与者"],
+        question: "order_detailsのidとprice*quantityを「小計」として、id昇順の3行移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下1桁で「移動平均3行」として取得してください",
+        hint: "ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均3行",
+        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均3行 FROM order_details",
+        expectedColumns: ["id", "小計", "移動平均3行"],
       },
       {
         id: "pi-wadv-4",
-        question: "salary昇順で直前2行を含む移動平均をROUNDして「移動平均給与」として、employeesのname・salary・移動平均給与をsalary昇順で取得してください",
-        hint: "ROUND(AVG(salary) OVER (ORDER BY salary ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)) AS 移動平均給与",
-        answer: "SELECT name, salary, ROUND(AVG(salary) OVER (ORDER BY salary ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)) AS 移動平均給与 FROM employees ORDER BY salary",
-        expectedColumns: ["name", "salary", "移動平均給与"],
+        question: "CTEとNTILE(3)を組み合わせて、productsをprice昇順で3グループに分割し、グループ番号が3（最高価格グループ）のname・price・グループを取得してください",
+        hint: "WITH bucketed AS (SELECT name, price, NTILE(3) OVER (ORDER BY price) AS グループ FROM products) SELECT * FROM bucketed WHERE グループ = 3",
+        answer: "WITH bucketed AS (SELECT name, price, NTILE(3) OVER (ORDER BY price) AS グループ FROM products) SELECT name, price, グループ FROM bucketed WHERE グループ = 3",
+        expectedColumns: ["name", "price", "グループ"],
       },
       {
         id: "pi-wadv-5",
-        question: "SUM OVER を使い、employeesのname・salary・salary昇順での累計給与を「累計給与」としてsalary昇順で取得してください",
-        hint: "SUM(salary) OVER (ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計給与",
-        answer: "SELECT name, salary, SUM(salary) OVER (ORDER BY salary ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累計給与 FROM employees ORDER BY salary",
-        expectedColumns: ["name", "salary", "累計給与"],
+        question: "order_detailsのidとprice*quantityを「小計」として、id昇順でFIRST_VALUE(price*quantity)を「初回小計」、SUM(price*quantity)のUNBOUNDED PRECEDING〜CURRENT ROWの累積合計を「累積合計」として取得してください",
+        hint: "FIRST_VALUE(price*quantity) OVER (ORDER BY id) AS 初回小計, SUM(price*quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計",
+        answer: "SELECT id, price * quantity AS 小計, FIRST_VALUE(price * quantity) OVER (ORDER BY id) AS 初回小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_details",
+        expectedColumns: ["id", "小計", "初回小計", "累積合計"],
       },
     ],
   },
 ];
-
-export function getPremiumLessonBySlug(slug: string): Lesson | undefined {
-  return PREMIUM_LESSONS.find((l) => l.slug === slug);
-}
-
-export function getPremiumLessonsByLevel(level: "beginner" | "intermediate"): Lesson[] {
-  return PREMIUM_LESSONS.filter((l) => l.level === level).sort((a, b) => a.order - b.order);
-}

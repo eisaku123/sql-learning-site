@@ -2,18 +2,11 @@ import type { Lesson } from "@/types";
 
 // ブラウザで実行されるサンプルデータベースの初期化SQL
 export const SAMPLE_DB_SQL = `
-CREATE TABLE IF NOT EXISTS departments (
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
-  location TEXT
-);
-CREATE TABLE IF NOT EXISTS employees (
-  id INTEGER PRIMARY KEY,
-  name TEXT,
-  department_id INTEGER,
-  salary INTEGER,
-  hire_date TEXT,
-  FOREIGN KEY (department_id) REFERENCES departments(id)
+  email TEXT,
+  city TEXT
 );
 CREATE TABLE IF NOT EXISTS products (
   id INTEGER PRIMARY KEY,
@@ -24,68 +17,88 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY,
+  user_id INTEGER,
+  order_date TEXT,
+  status TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS order_details (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER,
   product_id INTEGER,
   quantity INTEGER,
-  order_date TEXT,
-  customer_name TEXT,
+  price INTEGER,
+  FOREIGN KEY (order_id) REFERENCES orders(id),
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
-INSERT OR IGNORE INTO departments VALUES
-  (1, '営業部', '東京'),
-  (2, '開発部', '大阪'),
-  (3, '人事部', '東京'),
-  (4, '経理部', '名古屋'),
-  (5, 'マーケティング部', '東京');
-
-INSERT OR IGNORE INTO employees VALUES
-  (1, '田中 太郎', 1, 450000, '2020-04-01'),
-  (2, '鈴木 花子', 2, 520000, '2019-07-15'),
-  (3, '佐藤 次郎', 2, 480000, '2021-01-10'),
-  (4, '山田 美咲', 3, 380000, '2022-04-01'),
-  (5, '中村 健一', 1, 550000, '2018-10-01'),
-  (6, '小林 さくら', 4, 420000, '2020-09-01'),
-  (7, '加藤 雄一', 2, 600000, '2017-04-01'),
-  (8, '吉田 陽子', 5, 460000, '2021-07-01'),
-  (9, '渡辺 勇', 1, 390000, '2023-04-01'),
-  (10, '松本 智子', 3, 410000, '2019-04-01'),
-  (11, '井上 拓也', 2, 530000, '2020-01-15'),
-  (12, '木村 麻衣', 5, 440000, '2022-10-01'),
-  (13, '林 浩二', 4, 470000, '2018-07-01'),
-  (14, NULL, 1, NULL, NULL),
-  (15, NULL, 2, NULL, NULL);
+INSERT OR IGNORE INTO users VALUES
+  (1,  '田中 太郎',   'tanaka@example.com',    '東京'),
+  (2,  '鈴木 花子',   'suzuki@example.com',    '大阪'),
+  (3,  '佐藤 次郎',   'sato@example.com',      '東京'),
+  (4,  '山田 美咲',   'yamada@example.com',    '名古屋'),
+  (5,  '中村 健一',   'nakamura@example.com',  '東京'),
+  (6,  '小林 さくら', 'kobayashi@example.com', '福岡'),
+  (7,  '加藤 雄一',   'kato@example.com',      '大阪'),
+  (8,  '吉田 陽子',   'yoshida@example.com',   '東京'),
+  (9,  '渡辺 勇',     'watanabe@example.com',  '名古屋'),
+  (10, '松本 智子',   'matsumoto@example.com', '大阪'),
+  (11, '井上 拓也',   'inoue@example.com',     '東京'),
+  (12, '木村 麻衣',   NULL,                    '福岡'),
+  (13, '林 浩二',     'hayashi@example.com',   '大阪'),
+  (14, '清水 理恵',   NULL,                    NULL),
+  (15, '山口 誠',     'yamaguchi@example.com', '東京');
 
 INSERT OR IGNORE INTO products VALUES
-  (1, 'ノートPC', 'パソコン', 120000, 50),
-  (2, 'マウス', '周辺機器', 3500, 200),
-  (3, 'キーボード', '周辺機器', 8000, 150),
-  (4, 'モニター', 'ディスプレイ', 45000, 30),
-  (5, 'USBハブ', '周辺機器', 2500, 300),
-  (6, 'デスクトップPC', 'パソコン', 180000, 20),
-  (7, 'ヘッドセット', '周辺機器', 12000, 80),
-  (8, 'Webカメラ', '周辺機器', 7500, 60),
-  (9, 'タブレット', 'パソコン', 65000, NULL),
-  (10, 'プリンター', '周辺機器', 25000, NULL);
+  (1,  'Laptop',    'PC',          120000, 50),
+  (2,  'Mouse',     'Accessory',   3500,   200),
+  (3,  'Keyboard',  'Accessory',   8000,   150),
+  (4,  'Monitor',   'Display',     45000,  30),
+  (5,  'USB Hub',   'Accessory',   2500,   300),
+  (6,  'Desktop',   'PC',          180000, 20),
+  (7,  'Headset',   'Accessory',   12000,  80),
+  (8,  'Webcam',    'Accessory',   7500,   60),
+  (9,  'Tablet',    'PC',          65000,  NULL),
+  (10, 'Printer',   'Peripheral',  25000,  NULL);
 
 INSERT OR IGNORE INTO orders VALUES
-  (1, 1, 2, '2024-01-15', '株式会社ABC'),
-  (2, 2, 10, '2024-01-20', '田中商事'),
-  (3, 3, 5, '2024-02-01', '鈴木工業'),
-  (4, 1, 1, '2024-02-10', '山田商店'),
-  (5, 4, 3, '2024-02-15', '株式会社XYZ'),
-  (6, 5, 20, '2024-03-01', '佐藤商会'),
-  (7, 2, 15, '2024-03-10', '中村企業'),
-  (8, 7, 4, '2024-03-15', '小林商店'),
-  (9, 1, 3, '2024-04-01', '加藤株式会社'),
-  (10, 9, 2, '2024-04-10', '吉田商事'),
-  (11, 3, 8, '2024-04-20', '渡辺工業'),
-  (12, 6, 1, '2024-05-01', '松本商会'),
-  (13, 4, 2, '2024-05-10', '井上企業'),
-  (14, 8, 6, '2024-05-20', '木村商店'),
-  (15, 10, 3, '2024-06-01', '林商事'),
-  (16, 2, 3, '2023-11-15', '木村商事'),
-  (17, 4, 1, '2023-12-01', '青木工業'),
-  (18, 1, 2, '2023-08-20', '橋本商店');
+  (1,  1,  '2024-01-15', 'completed'),
+  (2,  2,  '2024-01-20', 'completed'),
+  (3,  3,  '2024-02-01', 'completed'),
+  (4,  1,  '2024-02-10', 'completed'),
+  (5,  4,  '2024-02-15', 'pending'),
+  (6,  5,  '2024-03-01', 'completed'),
+  (7,  2,  '2024-03-10', 'completed'),
+  (8,  6,  '2024-03-15', 'cancelled'),
+  (9,  1,  '2024-04-01', 'completed'),
+  (10, 7,  '2024-04-10', 'pending'),
+  (11, 3,  '2024-04-20', 'completed'),
+  (12, 8,  '2024-05-01', 'completed'),
+  (13, 4,  '2024-05-10', 'completed'),
+  (14, 9,  '2024-05-20', 'pending'),
+  (15, 10, '2024-06-01', 'completed');
+
+INSERT OR IGNORE INTO order_details VALUES
+  (1,  1,  1, 2, 120000),
+  (2,  1,  2, 1, 3500),
+  (3,  2,  3, 3, 8000),
+  (4,  3,  4, 1, 45000),
+  (5,  4,  2, 5, 3500),
+  (6,  5,  1, 1, 120000),
+  (7,  5,  3, 2, 8000),
+  (8,  6,  5, 10, 2500),
+  (9,  7,  7, 2, 12000),
+  (10, 8,  2, 3, 3500),
+  (11, 9,  1, 1, 120000),
+  (12, 9,  4, 1, 45000),
+  (13, 10, 9, 1, 65000),
+  (14, 11, 3, 4, 8000),
+  (15, 12, 6, 1, 180000),
+  (16, 13, 4, 2, 45000),
+  (17, 14, 8, 3, 7500),
+  (18, 15, 10, 2, 25000),
+  (19, 6,  2, 5, 3500),
+  (20, 7,  1, 1, 120000);
 `;
 
 export const LESSONS: Lesson[] = [
@@ -106,32 +119,32 @@ export const LESSONS: Lesson[] = [
 <h2>テーブルの構造</h2>
 <p>データは<strong>テーブル（表）</strong>に格納されます。テーブルは<strong>列（カラム）</strong>と<strong>行（レコード）</strong>で構成されます。</p>
 
-<pre><code>┌─────┬──────────┬────────────┬──────────┐
-│ id  │ name     │ department │ salary   │
-├─────┼──────────┼────────────┼──────────┤
-│  1  │ 田中太郎  │ 営業部      │ 450000   │
-│  2  │ 鈴木花子  │ 開発部      │ 520000   │
-└─────┴──────────┴────────────┴──────────┘</code></pre>
+<pre><code>┌─────┬────────────┬──────────────────────────┬──────────┐
+│ id  │ name       │ email                    │ city     │
+├─────┼────────────┼──────────────────────────┼──────────┤
+│  1  │ 田中 太郎  │ tanaka@example.com       │ 東京     │
+│  2  │ 鈴木 花子  │ suzuki@example.com       │ 大阪     │
+└─────┴────────────┴──────────────────────────┴──────────┘</code></pre>
 
 <h2>このサイトで使うテーブル</h2>
 <p>このサイトでは以下の4つのテーブルを使って学習します：</p>
 <ul>
-  <li><code>employees</code> — 従業員テーブル（15名のデータ）</li>
-  <li><code>departments</code> — 部署テーブル（5部署）</li>
+  <li><code>users</code> — ユーザーテーブル（15名のデータ）</li>
   <li><code>products</code> — 商品テーブル（10商品）</li>
-  <li><code>orders</code> — 注文テーブル（18件）</li>
+  <li><code>orders</code> — 注文テーブル（15件）</li>
+  <li><code>order_details</code> — 注文明細テーブル（20件）</li>
 </ul>
 
 <p>右のエディタで以下のSQLを実行してみましょう：</p>
-<pre><code class="sql-example">SELECT * FROM employees;</code></pre>
+<pre><code class="sql-example">SELECT * FROM users;</code></pre>
     `,
     exercises: [
       {
         id: "intro-1",
-        question: "departmentsテーブルの全データを取得してください",
+        question: "usersテーブルの全データを取得してください",
         hint: "SELECT * FROM テーブル名; で全データを取得できます",
-        answer: "SELECT * FROM departments",
-        expectedColumns: ["id", "name", "location"],
+        answer: "SELECT * FROM users",
+        expectedColumns: ["id", "name", "email", "city"],
       },
       {
         id: "intro-2",
@@ -145,7 +158,7 @@ export const LESSONS: Lesson[] = [
         question: "ordersテーブルの全データを取得してください",
         hint: "テーブル名は orders です",
         answer: "SELECT * FROM orders",
-        expectedColumns: ["id", "product_id", "quantity", "order_date", "customer_name"],
+        expectedColumns: ["id", "user_id", "order_date", "status"],
       },
     ],
   },
@@ -164,17 +177,17 @@ export const LESSONS: Lesson[] = [
 <h2>特定のカラムを取得</h2>
 <p>必要なカラムだけを取得できます。複数の場合はカンマで区切ります。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> name, salary <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> name, city <span class="sql-keyword">FROM</span> users;</code></pre>
 
 <h2>全カラムを取得（アスタリスク）</h2>
 <p><code>*</code>（アスタリスク）を使うと全カラムを取得できます。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users;</code></pre>
 
 <h2>カラムに別名をつける（AS）</h2>
 <p><code>AS</code> を使ってカラムに別名（エイリアス）をつけられます。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> name <span class="sql-keyword">AS</span> 氏名, salary <span class="sql-keyword">AS</span> 給与 <span class="sql-keyword">FROM</span> employees;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> name <span class="sql-keyword">AS</span> ユーザー名, city <span class="sql-keyword">AS</span> 都市 <span class="sql-keyword">FROM</span> users;</code></pre>
 
 <h2>重複を除いて取得（DISTINCT）</h2>
 <p><code>DISTINCT</code> を使うと重複した値を除いて取得できます。</p>
@@ -184,10 +197,10 @@ export const LESSONS: Lesson[] = [
     exercises: [
       {
         id: "select-1",
-        question: "employeesテーブルから name と salary の2カラムだけ取得してください",
+        question: "usersテーブルから name と city の2カラムだけ取得してください",
         hint: "SELECT カラム1, カラム2 FROM テーブル名",
-        answer: "SELECT name, salary FROM employees",
-        expectedColumns: ["name", "salary"],
+        answer: "SELECT name, city FROM users",
+        expectedColumns: ["name", "city"],
       },
       {
         id: "select-2",
@@ -215,51 +228,51 @@ export const LESSONS: Lesson[] = [
 <h2>WHERE句の基本</h2>
 <p>特定の条件に合うデータだけを取得するには <code>WHERE</code> 句を使います。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> salary > <span class="sql-number">500000</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products <span class="sql-keyword">WHERE</span> price > <span class="sql-number">50000</span>;</code></pre>
 
 <h2>比較演算子</h2>
 <table>
   <tr><th>演算子</th><th>意味</th><th>例</th></tr>
-  <tr><td>=</td><td>等しい</td><td>department_id = 2</td></tr>
-  <tr><td>!=, &lt;&gt;</td><td>等しくない</td><td>salary != 0</td></tr>
-  <tr><td>&gt;</td><td>より大きい</td><td>salary &gt; 500000</td></tr>
-  <tr><td>&gt;=</td><td>以上</td><td>salary &gt;= 500000</td></tr>
-  <tr><td>&lt;</td><td>より小さい</td><td>salary &lt; 400000</td></tr>
-  <tr><td>&lt;=</td><td>以下</td><td>salary &lt;= 400000</td></tr>
+  <tr><td>=</td><td>等しい</td><td>category = 'PC'</td></tr>
+  <tr><td>!=, &lt;&gt;</td><td>等しくない</td><td>status != 'cancelled'</td></tr>
+  <tr><td>&gt;</td><td>より大きい</td><td>price &gt; 50000</td></tr>
+  <tr><td>&gt;=</td><td>以上</td><td>price &gt;= 50000</td></tr>
+  <tr><td>&lt;</td><td>より小さい</td><td>price &lt; 10000</td></tr>
+  <tr><td>&lt;=</td><td>以下</td><td>price &lt;= 10000</td></tr>
 </table>
 
 <h2>文字列の条件</h2>
 <p>文字列はシングルクォートで囲みます。</p>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> departments <span class="sql-keyword">WHERE</span> location = <span class="sql-string">'東京'</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> city = <span class="sql-string">'東京'</span>;</code></pre>
 
 <h2>AND・OR で複数条件</h2>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">WHERE</span> department_id = <span class="sql-number">2</span> <span class="sql-keyword">AND</span> salary >= <span class="sql-number">500000</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">WHERE</span> category = <span class="sql-string">'PC'</span> <span class="sql-keyword">AND</span> price >= <span class="sql-number">100000</span>;</code></pre>
 
 <h2>LIKE であいまい検索</h2>
 <p><code>%</code> は任意の文字列、<code>_</code> は任意の1文字を表します。</p>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> name <span class="sql-keyword">LIKE</span> <span class="sql-string">'田%'</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> name <span class="sql-keyword">LIKE</span> <span class="sql-string">'田%'</span>;</code></pre>
 
 <h2>IN で複数値の指定</h2>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> department_id <span class="sql-keyword">IN</span> (<span class="sql-number">1</span>, <span class="sql-number">2</span>);</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> orders <span class="sql-keyword">WHERE</span> status <span class="sql-keyword">IN</span> (<span class="sql-string">'pending'</span>, <span class="sql-string">'cancelled'</span>);</code></pre>
 
 <h2>BETWEEN で範囲指定</h2>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> salary <span class="sql-keyword">BETWEEN</span> <span class="sql-number">400000</span> <span class="sql-keyword">AND</span> <span class="sql-number">500000</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products <span class="sql-keyword">WHERE</span> price <span class="sql-keyword">BETWEEN</span> <span class="sql-number">5000</span> <span class="sql-keyword">AND</span> <span class="sql-number">50000</span>;</code></pre>
     `,
     exercises: [
       {
         id: "where-1",
-        question: "employeesテーブルから salary が 500000 以上の従業員を取得してください",
-        hint: "WHERE salary >= 500000 を使います",
-        answer: "SELECT * FROM employees WHERE salary >= 500000",
-        expectedColumns: ["id", "name", "department_id", "salary", "hire_date"],
+        question: "productsテーブルから price が 50000 以上の商品を取得してください",
+        hint: "WHERE price >= 50000 を使います",
+        answer: "SELECT * FROM products WHERE price >= 50000",
+        expectedColumns: ["id", "name", "category", "price", "stock"],
       },
       {
         id: "where-2",
-        question: "departmentsテーブルから location が '東京' の部署を取得してください",
-        hint: "WHERE location = '東京'",
-        answer: "SELECT * FROM departments WHERE location = '東京'",
-        expectedColumns: ["id", "name", "location"],
+        question: "usersテーブルから city が '東京' のユーザーを取得してください",
+        hint: "WHERE city = '東京'",
+        answer: "SELECT * FROM users WHERE city = '東京'",
+        expectedColumns: ["id", "name", "email", "city"],
       },
       {
         id: "where-3",
@@ -280,7 +293,7 @@ export const LESSONS: Lesson[] = [
 <h2>ORDER BY で並び替え</h2>
 <p>データを特定のカラムで並び替えるには <code>ORDER BY</code> を使います。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products <span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>;</code></pre>
 
 <ul>
   <li><code>ASC</code>（昇順）：小さい順・古い順（デフォルト）</li>
@@ -288,31 +301,31 @@ export const LESSONS: Lesson[] = [
 </ul>
 
 <h2>複数カラムで並び替え</h2>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">ORDER BY</span> department_id <span class="sql-keyword">ASC</span>, salary <span class="sql-keyword">DESC</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">ORDER BY</span> category <span class="sql-keyword">ASC</span>, price <span class="sql-keyword">DESC</span>;</code></pre>
 
 <h2>LIMIT で件数を制限</h2>
 <p>取得する件数を制限するには <code>LIMIT</code> を使います。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">LIMIT</span> <span class="sql-number">5</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products <span class="sql-keyword">LIMIT</span> <span class="sql-number">5</span>;</code></pre>
 
 <h2>OFFSET でスキップ</h2>
 <p><code>OFFSET</code> で先頭から何件スキップするかを指定できます（ページネーションに使用）。</p>
-<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">LIMIT</span> <span class="sql-number">5</span> <span class="sql-keyword">OFFSET</span> <span class="sql-number">5</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> products <span class="sql-keyword">LIMIT</span> <span class="sql-number">5</span> <span class="sql-keyword">OFFSET</span> <span class="sql-number">5</span>;</code></pre>
 
 <h2>WHERE + ORDER BY + LIMIT の組み合わせ</h2>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary <span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">WHERE</span> department_id = <span class="sql-number">2</span>
-<span class="sql-keyword">ORDER BY</span> salary <span class="sql-keyword">DESC</span>
+<pre><code><span class="sql-keyword">SELECT</span> name, price <span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">WHERE</span> category = <span class="sql-string">'PC'</span>
+<span class="sql-keyword">ORDER BY</span> price <span class="sql-keyword">DESC</span>
 <span class="sql-keyword">LIMIT</span> <span class="sql-number">3</span>;</code></pre>
     `,
     exercises: [
       {
         id: "order-1",
-        question: "employeesテーブルをsalaryの降順（高い順）で取得してください",
-        hint: "ORDER BY salary DESC",
-        answer: "SELECT * FROM employees ORDER BY salary DESC",
-        expectedColumns: ["id", "name", "department_id", "salary", "hire_date"],
+        question: "productsテーブルをpriceの降順（高い順）で全件取得してください",
+        hint: "ORDER BY price DESC",
+        answer: "SELECT * FROM products ORDER BY price DESC",
+        expectedColumns: ["id", "name", "category", "price", "stock"],
       },
       {
         id: "order-2",
@@ -323,10 +336,10 @@ export const LESSONS: Lesson[] = [
       },
       {
         id: "order-3",
-        question: "employeesテーブルからsalaryが最も高い3名のname と salary を取得してください",
-        hint: "ORDER BY salary DESC LIMIT 3",
-        answer: "SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3",
-        expectedColumns: ["name", "salary"],
+        question: "productsテーブルから最も価格が高い3商品のname と price を取得してください",
+        hint: "ORDER BY price DESC LIMIT 3",
+        answer: "SELECT name, price FROM products ORDER BY price DESC LIMIT 3",
+        expectedColumns: ["name", "price"],
       },
     ],
   },
@@ -340,53 +353,53 @@ export const LESSONS: Lesson[] = [
 <h2>INSERT でデータを追加</h2>
 <p>テーブルに新しいデータを追加するには <code>INSERT INTO</code> を使います。</p>
 
-<pre><code><span class="sql-keyword">INSERT INTO</span> departments (id, name, location)
-<span class="sql-keyword">VALUES</span> (<span class="sql-number">6</span>, <span class="sql-string">'法務部'</span>, <span class="sql-string">'東京'</span>);</code></pre>
+<pre><code><span class="sql-keyword">INSERT INTO</span> users (id, name, email, city)
+<span class="sql-keyword">VALUES</span> (<span class="sql-number">16</span>, <span class="sql-string">'新田 一郎'</span>, <span class="sql-string">'nitta@example.com'</span>, <span class="sql-string">'札幌'</span>);</code></pre>
 
 <h2>UPDATE でデータを更新</h2>
 <p>既存のデータを更新するには <code>UPDATE</code> を使います。<strong>WHERE を忘れると全行が更新されるので注意！</strong></p>
 
-<pre><code><span class="sql-keyword">UPDATE</span> employees
-<span class="sql-keyword">SET</span> salary = <span class="sql-number">500000</span>
+<pre><code><span class="sql-keyword">UPDATE</span> products
+<span class="sql-keyword">SET</span> price = <span class="sql-number">100000</span>
 <span class="sql-keyword">WHERE</span> id = <span class="sql-number">1</span>;</code></pre>
 
 <h2>DELETE でデータを削除</h2>
 <p>データを削除するには <code>DELETE FROM</code> を使います。<strong>WHERE を忘れると全行が削除されるので注意！</strong></p>
 
-<pre><code><span class="sql-keyword">DELETE FROM</span> departments
-<span class="sql-keyword">WHERE</span> id = <span class="sql-number">6</span>;</code></pre>
+<pre><code><span class="sql-keyword">DELETE FROM</span> users
+<span class="sql-keyword">WHERE</span> id = <span class="sql-number">16</span>;</code></pre>
 
 <h2>実行順序の例</h2>
 <pre><code><span class="sql-comment">-- 1. まず追加</span>
-<span class="sql-keyword">INSERT INTO</span> departments (id, name, location) <span class="sql-keyword">VALUES</span> (<span class="sql-number">6</span>, <span class="sql-string">'法務部'</span>, <span class="sql-string">'東京'</span>);
+<span class="sql-keyword">INSERT INTO</span> users (id, name, email, city) <span class="sql-keyword">VALUES</span> (<span class="sql-number">16</span>, <span class="sql-string">'新田 一郎'</span>, <span class="sql-string">'nitta@example.com'</span>, <span class="sql-string">'札幌'</span>);
 <span class="sql-comment">-- 2. 確認</span>
-<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> departments;
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> users;
 <span class="sql-comment">-- 3. 更新</span>
-<span class="sql-keyword">UPDATE</span> departments <span class="sql-keyword">SET</span> location = <span class="sql-string">'大阪'</span> <span class="sql-keyword">WHERE</span> id = <span class="sql-number">6</span>;
+<span class="sql-keyword">UPDATE</span> users <span class="sql-keyword">SET</span> city = <span class="sql-string">'仙台'</span> <span class="sql-keyword">WHERE</span> id = <span class="sql-number">16</span>;
 <span class="sql-comment">-- 4. 削除</span>
-<span class="sql-keyword">DELETE FROM</span> departments <span class="sql-keyword">WHERE</span> id = <span class="sql-number">6</span>;</code></pre>
+<span class="sql-keyword">DELETE FROM</span> users <span class="sql-keyword">WHERE</span> id = <span class="sql-number">16</span>;</code></pre>
     `,
     exercises: [
       {
         id: "dml-1",
-        question: "departmentsテーブルに id=6, name='法務部', location='東京' のデータを追加して、全データを確認してください",
-        hint: "INSERT INTO departments (id, name, location) VALUES (6, '法務部', '東京'); SELECT * FROM departments;",
-        answer: "INSERT INTO departments (id, name, location) VALUES (6, '法務部', '東京'); SELECT * FROM departments;",
-        expectedColumns: ["id", "name", "location"],
+        question: "usersテーブルに id=16, name='新田 一郎', email='nitta@example.com', city='札幌' のデータを追加して、全データを確認してください",
+        hint: "INSERT INTO users (id, name, email, city) VALUES (16, '新田 一郎', 'nitta@example.com', '札幌'); SELECT * FROM users;",
+        answer: "INSERT INTO users (id, name, email, city) VALUES (16, '新田 一郎', 'nitta@example.com', '札幌'); SELECT * FROM users;",
+        expectedColumns: ["id", "name", "email", "city"],
       },
       {
         id: "dml-2",
-        question: "id=1の従業員のsalaryを500000に更新し、その従業員のデータを確認してください",
-        hint: "UPDATE employees SET salary = 500000 WHERE id = 1;",
-        answer: "UPDATE employees SET salary = 500000 WHERE id = 1; SELECT * FROM employees WHERE id = 1;",
-        expectedColumns: ["id", "name", "department_id", "salary", "hire_date"],
+        question: "id=1のLaptopの price を 100000 に更新し、そのデータを確認してください",
+        hint: "UPDATE products SET price = 100000 WHERE id = 1;",
+        answer: "UPDATE products SET price = 100000 WHERE id = 1; SELECT * FROM products WHERE id = 1;",
+        expectedColumns: ["id", "name", "category", "price", "stock"],
       },
       {
         id: "dml-3",
-        question: "先ほど追加した id=6 の部署を削除して、全部署を確認してください",
-        hint: "DELETE FROM departments WHERE id = 6;",
-        answer: "DELETE FROM departments WHERE id = 6; SELECT * FROM departments;",
-        expectedColumns: ["id", "name", "location"],
+        question: "先ほど追加した id=16 のユーザーを削除して、全ユーザーを確認してください",
+        hint: "DELETE FROM users WHERE id = 16;",
+        answer: "DELETE FROM users WHERE id = 16; SELECT * FROM users;",
+        expectedColumns: ["id", "name", "email", "city"],
       },
     ],
   },
@@ -405,52 +418,53 @@ export const LESSONS: Lesson[] = [
 <h2>INNER JOIN（内部結合）</h2>
 <p>両方のテーブルに一致するデータのみを取得します。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> e.name, d.name <span class="sql-keyword">AS</span> department
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">INNER JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> o.id, u.name, o.order_date, o.status
+<span class="sql-keyword">FROM</span> orders o
+<span class="sql-keyword">INNER JOIN</span> users u <span class="sql-keyword">ON</span> o.user_id = u.id;</code></pre>
 
 <h2>LEFT JOIN（左外部結合）</h2>
 <p>左テーブルの全データ + 右テーブルの一致データを取得。一致しない場合はNULL。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> e.name, d.name <span class="sql-keyword">AS</span> department
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">LEFT JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> u.name, o.order_date
+<span class="sql-keyword">FROM</span> users u
+<span class="sql-keyword">LEFT JOIN</span> orders o <span class="sql-keyword">ON</span> u.id = o.user_id;</code></pre>
 
 <h2>テーブルエイリアス（別名）</h2>
 <p>テーブル名が長い場合、短い別名をつけると便利です。</p>
-<pre><code><span class="sql-comment">-- e が employees、d が departments の別名</span>
-<span class="sql-keyword">SELECT</span> e.name, e.salary, d.name <span class="sql-keyword">AS</span> dept
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id
-<span class="sql-keyword">ORDER BY</span> e.salary <span class="sql-keyword">DESC</span>;</code></pre>
-
-<h2>3テーブルのJOIN</h2>
-<pre><code><span class="sql-keyword">SELECT</span> o.id, p.name, o.quantity, o.customer_name
+<pre><code><span class="sql-comment">-- o が orders、u が users の別名</span>
+<span class="sql-keyword">SELECT</span> o.id, u.name, o.status
 <span class="sql-keyword">FROM</span> orders o
-<span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> o.product_id = p.id
+<span class="sql-keyword">JOIN</span> users u <span class="sql-keyword">ON</span> o.user_id = u.id
 <span class="sql-keyword">ORDER BY</span> o.order_date;</code></pre>
+
+<h2>order_details を使った3テーブルのJOIN</h2>
+<pre><code><span class="sql-keyword">SELECT</span> u.name, p.name <span class="sql-keyword">AS</span> product, od.quantity
+<span class="sql-keyword">FROM</span> orders o
+<span class="sql-keyword">JOIN</span> users u <span class="sql-keyword">ON</span> o.user_id = u.id
+<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
     `,
     exercises: [
       {
         id: "join-1",
-        question: "employeesとdepartmentsをJOINして、従業員名と部署名を取得してください",
-        hint: "JOIN departments d ON e.department_id = d.id",
-        answer: "SELECT e.name, d.name AS department FROM employees e JOIN departments d ON e.department_id = d.id",
-        expectedColumns: ["name", "department"],
+        question: "ordersとusersをJOINして、注文ID・ユーザー名・注文日・ステータスを取得してください",
+        hint: "JOIN users u ON o.user_id = u.id",
+        answer: "SELECT o.id, u.name, o.order_date, o.status FROM orders o JOIN users u ON o.user_id = u.id",
+        expectedColumns: ["id", "name", "order_date", "status"],
       },
       {
         id: "join-2",
-        question: "ordersとproductsをJOINして、注文ID・商品名・数量・顧客名を取得してください",
-        hint: "orders o JOIN products p ON o.product_id = p.id",
-        answer: "SELECT o.id, p.name, o.quantity, o.customer_name FROM orders o JOIN products p ON o.product_id = p.id",
-        expectedColumns: ["id", "name", "quantity", "customer_name"],
+        question: "order_detailsとproductsをJOINして、明細ID・商品名・数量・価格を取得してください",
+        hint: "order_details od JOIN products p ON od.product_id = p.id",
+        answer: "SELECT od.id, p.name, od.quantity, od.price FROM order_details od JOIN products p ON od.product_id = p.id",
+        expectedColumns: ["id", "name", "quantity", "price"],
       },
       {
         id: "join-3",
-        question: "開発部（id=2）の従業員名と給与を、部署名と一緒に取得してください",
-        hint: "JOIN後にWHERE d.id = 2 または WHERE d.name = '開発部'",
-        answer: "SELECT e.name, e.salary, d.name AS department FROM employees e JOIN departments d ON e.department_id = d.id WHERE d.id = 2",
-        expectedColumns: ["name", "salary", "department"],
+        question: "status が 'completed' の注文を、ユーザー名と一緒に取得してください",
+        hint: "JOIN後にWHERE o.status = 'completed'",
+        answer: "SELECT o.id, u.name, o.order_date FROM orders o JOIN users u ON o.user_id = u.id WHERE o.status = 'completed'",
+        expectedColumns: ["id", "name", "order_date"],
       },
     ],
   },
@@ -474,40 +488,40 @@ export const LESSONS: Lesson[] = [
 <h2>GROUP BY でグループ化</h2>
 <p>指定したカラムの値ごとにデータをグループ化して集計します。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> department_id, <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">GROUP BY</span> department_id;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> city, <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数
+<span class="sql-keyword">FROM</span> users
+<span class="sql-keyword">GROUP BY</span> city;</code></pre>
 
 <h2>複数の集計関数</h2>
-<pre><code><span class="sql-keyword">SELECT</span> department_id,
-       <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数,
-       <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">AS</span> 平均給与,
-       <span class="sql-function">MAX</span>(salary) <span class="sql-keyword">AS</span> 最高給与
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">GROUP BY</span> department_id;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> category,
+       <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 商品数,
+       <span class="sql-function">AVG</span>(price) <span class="sql-keyword">AS</span> 平均価格,
+       <span class="sql-function">MAX</span>(price) <span class="sql-keyword">AS</span> 最高価格
+<span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">GROUP BY</span> category;</code></pre>
 
 <h2>HAVING でグループに条件をつける</h2>
 <p><code>WHERE</code>はグループ化前、<code>HAVING</code>はグループ化後の絞り込みです。</p>
 
-<pre><code><span class="sql-keyword">SELECT</span> department_id, <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">GROUP BY</span> department_id
-<span class="sql-keyword">HAVING</span> <span class="sql-function">COUNT</span>(*) >= <span class="sql-number">3</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> city, <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数
+<span class="sql-keyword">FROM</span> users
+<span class="sql-keyword">GROUP BY</span> city
+<span class="sql-keyword">HAVING</span> <span class="sql-function">COUNT</span>(*) >= <span class="sql-number">2</span>;</code></pre>
 
 <h2>JOIN + GROUP BY</h2>
-<pre><code><span class="sql-keyword">SELECT</span> d.name <span class="sql-keyword">AS</span> 部署名, <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> 人数, <span class="sql-function">AVG</span>(e.salary) <span class="sql-keyword">AS</span> 平均給与
-<span class="sql-keyword">FROM</span> employees e
-<span class="sql-keyword">JOIN</span> departments d <span class="sql-keyword">ON</span> e.department_id = d.id
-<span class="sql-keyword">GROUP BY</span> d.name
-<span class="sql-keyword">ORDER BY</span> 平均給与 <span class="sql-keyword">DESC</span>;</code></pre>
+<pre><code><span class="sql-keyword">SELECT</span> u.city, <span class="sql-function">COUNT</span>(o.id) <span class="sql-keyword">AS</span> 注文数
+<span class="sql-keyword">FROM</span> users u
+<span class="sql-keyword">JOIN</span> orders o <span class="sql-keyword">ON</span> u.id = o.user_id
+<span class="sql-keyword">GROUP BY</span> u.city
+<span class="sql-keyword">ORDER BY</span> 注文数 <span class="sql-keyword">DESC</span>;</code></pre>
     `,
     exercises: [
       {
         id: "group-1",
-        question: "employeesテーブルをdepartment_idでグループ化して、各部署の人数を取得してください",
-        hint: "GROUP BY department_id で COUNT(*) を使います",
-        answer: "SELECT department_id, COUNT(*) AS 人数 FROM employees GROUP BY department_id",
-        expectedColumns: ["department_id", "人数"],
+        question: "usersテーブルをcityでグループ化して、各都市のユーザー数を取得してください",
+        hint: "GROUP BY city で COUNT(*) を使います",
+        answer: "SELECT city, COUNT(*) AS 人数 FROM users GROUP BY city",
+        expectedColumns: ["city", "人数"],
       },
       {
         id: "group-2",
@@ -518,10 +532,10 @@ export const LESSONS: Lesson[] = [
       },
       {
         id: "group-3",
-        question: "departmentsとemployeesをJOINして、部署名・人数・平均給与を取得し、人数が3人以上の部署だけ表示してください",
-        hint: "JOIN後にGROUP BY d.name、HAVING COUNT(*) >= 3",
-        answer: "SELECT d.name AS 部署名, COUNT(*) AS 人数, AVG(e.salary) AS 平均給与 FROM employees e JOIN departments d ON e.department_id = d.id GROUP BY d.name HAVING COUNT(*) >= 3",
-        expectedColumns: ["部署名", "人数", "平均給与"],
+        question: "usersテーブルをcityでグループ化して、ユーザー数が2人以上の都市と人数を取得してください",
+        hint: "GROUP BY city、HAVING COUNT(*) >= 2",
+        answer: "SELECT city, COUNT(*) AS 人数 FROM users GROUP BY city HAVING COUNT(*) >= 2",
+        expectedColumns: ["city", "人数"],
       },
     ],
   },
@@ -536,127 +550,118 @@ export const LESSONS: Lesson[] = [
 <p>SQL文の中に別のSQL文を埋め込む技術です。括弧で囲んで記述します。</p>
 
 <h2>WHERE句のサブクエリ</h2>
-<p>全従業員の平均給与より高い給与の従業員を取得：</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, salary
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">WHERE</span> salary > (
-    <span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">FROM</span> employees
+<p>全商品の平均価格より高い商品を取得：</p>
+<pre><code><span class="sql-keyword">SELECT</span> name, price
+<span class="sql-keyword">FROM</span> products
+<span class="sql-keyword">WHERE</span> price > (
+    <span class="sql-keyword">SELECT</span> <span class="sql-function">AVG</span>(price) <span class="sql-keyword">FROM</span> products
 );</code></pre>
 
 <h2>INを使ったサブクエリ</h2>
-<p>東京にある部署の従業員を取得：</p>
-<pre><code><span class="sql-keyword">SELECT</span> name, department_id
-<span class="sql-keyword">FROM</span> employees
-<span class="sql-keyword">WHERE</span> department_id <span class="sql-keyword">IN</span> (
-    <span class="sql-keyword">SELECT</span> id <span class="sql-keyword">FROM</span> departments <span class="sql-keyword">WHERE</span> location = <span class="sql-string">'東京'</span>
+<p>東京在住ユーザーの注文を取得：</p>
+<pre><code><span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> orders
+<span class="sql-keyword">WHERE</span> user_id <span class="sql-keyword">IN</span> (
+    <span class="sql-keyword">SELECT</span> id <span class="sql-keyword">FROM</span> users <span class="sql-keyword">WHERE</span> city = <span class="sql-string">'東京'</span>
 );</code></pre>
 
 <h2>FROM句のサブクエリ（派生テーブル）</h2>
-<pre><code><span class="sql-keyword">SELECT</span> dept_avg.department_id, dept_avg.avg_sal
+<pre><code><span class="sql-keyword">SELECT</span> cat.category, cat.avg_price
 <span class="sql-keyword">FROM</span> (
-    <span class="sql-keyword">SELECT</span> department_id, <span class="sql-function">AVG</span>(salary) <span class="sql-keyword">AS</span> avg_sal
-    <span class="sql-keyword">FROM</span> employees
-    <span class="sql-keyword">GROUP BY</span> department_id
-) dept_avg
-<span class="sql-keyword">WHERE</span> dept_avg.avg_sal > <span class="sql-number">500000</span>;</code></pre>
+    <span class="sql-keyword">SELECT</span> category, <span class="sql-function">AVG</span>(price) <span class="sql-keyword">AS</span> avg_price
+    <span class="sql-keyword">FROM</span> products
+    <span class="sql-keyword">GROUP BY</span> category
+) cat
+<span class="sql-keyword">WHERE</span> cat.avg_price > <span class="sql-number">20000</span>;</code></pre>
     `,
     exercises: [
       {
         id: "sub-1",
-        question: "全従業員の平均給与より高い給与を持つ従業員のnameとsalaryを取得してください",
-        hint: "WHERE salary > (SELECT AVG(salary) FROM employees)",
-        answer: "SELECT name, salary FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)",
-        expectedColumns: ["name", "salary"],
+        question: "全商品の平均価格より高い商品のnameとpriceを取得してください",
+        hint: "WHERE price > (SELECT AVG(price) FROM products)",
+        answer: "SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products)",
+        expectedColumns: ["name", "price"],
       },
       {
         id: "sub-2",
-        question: "東京にある部署（departmentsテーブルで location='東京'）に所属する従業員を取得してください",
-        hint: "WHERE department_id IN (SELECT id FROM departments WHERE location = '東京')",
-        answer: "SELECT * FROM employees WHERE department_id IN (SELECT id FROM departments WHERE location = '東京')",
-        expectedColumns: ["id", "name", "department_id", "salary", "hire_date"],
+        question: "東京在住のユーザー（usersテーブルでcity='東京'）が行った注文を取得してください",
+        hint: "WHERE user_id IN (SELECT id FROM users WHERE city = '東京')",
+        answer: "SELECT * FROM orders WHERE user_id IN (SELECT id FROM users WHERE city = '東京')",
+        expectedColumns: ["id", "user_id", "order_date", "status"],
       },
       {
         id: "sub-3",
-        question: "最も給与が高い従業員のname と salary を取得してください（サブクエリを使って）",
-        hint: "WHERE salary = (SELECT MAX(salary) FROM employees)",
-        answer: "SELECT name, salary FROM employees WHERE salary = (SELECT MAX(salary) FROM employees)",
-        expectedColumns: ["name", "salary"],
+        question: "最も価格が高い商品のname と price を取得してください（サブクエリを使って）",
+        hint: "WHERE price = (SELECT MAX(price) FROM products)",
+        answer: "SELECT name, price FROM products WHERE price = (SELECT MAX(price) FROM products)",
+        expectedColumns: ["name", "price"],
       },
     ],
   },
   {
-    slug: "index",
-    title: "インデックスとパフォーマンス",
+    slug: "junction-table",
+    title: "中間テーブルで多対多を表現する",
     level: "intermediate",
     order: 9,
-    description: "SQLのパフォーマンス最適化とインデックスを学びます",
+    description: "中間テーブル（order_details）を使って多対多の関係を理解します",
     content: `
-<h2>インデックスとは？</h2>
-<p>インデックスは本の索引のようなもので、データの検索を高速化します。</p>
+<h2>多対多の関係とは？</h2>
+<p>1つの注文には複数の商品が含まれ、1つの商品は複数の注文に含まれます。このような<strong>多対多（N:M）</strong>の関係は、直接テーブルを結びつけることができません。</p>
 
-<h2>インデックスの作成</h2>
-<pre><code><span class="sql-comment">-- 単一カラムのインデックス</span>
-<span class="sql-keyword">CREATE INDEX</span> idx_employees_salary <span class="sql-keyword">ON</span> employees(salary);
+<h2>中間テーブルで解決する</h2>
+<p><strong>中間テーブル</strong>（または関連テーブル）を間に挟むことで多対多を表現します。</p>
 
-<span class="sql-comment">-- 複合インデックス</span>
-<span class="sql-keyword">CREATE INDEX</span> idx_employees_dept_salary <span class="sql-keyword">ON</span> employees(department_id, salary);</code></pre>
+<pre><code>orders ─── order_details ─── products
+  1件の注文   N件の明細    1種の商品
+（1）       （多対多）       （1）</code></pre>
 
-<h2>インデックスが効果的な場合</h2>
-<ul>
-  <li>WHERE句で頻繁に使うカラム</li>
-  <li>JOIN条件に使うカラム（外部キー）</li>
-  <li>ORDER BY で頻繁に使うカラム</li>
-</ul>
+<h2>order_details の構造</h2>
+<pre><code>order_details
+  id          — 明細ID
+  order_id    — どの注文か（ordersのid）
+  product_id  — どの商品か（productsのid）
+  quantity    — 数量
+  price       — 単価</code></pre>
 
-<h2>EXPLAIN でクエリを分析</h2>
-<p>SQLiteでは <code>EXPLAIN QUERY PLAN</code> でクエリの実行計画を確認できます。</p>
+<h2>3テーブルを結合して読み解く</h2>
+<pre><code><span class="sql-keyword">SELECT</span>
+  u.name <span class="sql-keyword">AS</span> ユーザー,
+  p.name <span class="sql-keyword">AS</span> 商品,
+  od.quantity <span class="sql-keyword">AS</span> 数量,
+  od.price * od.quantity <span class="sql-keyword">AS</span> 小計
+<span class="sql-keyword">FROM</span> orders o
+<span class="sql-keyword">JOIN</span> users u          <span class="sql-keyword">ON</span> o.user_id = u.id
+<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> products p       <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
 
-<pre><code><span class="sql-keyword">EXPLAIN QUERY PLAN</span>
-<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> employees <span class="sql-keyword">WHERE</span> salary > <span class="sql-number">500000</span>;</code></pre>
-
-<h2>パフォーマンスのベストプラクティス</h2>
-<ul>
-  <li><code>SELECT *</code> より必要なカラムだけを指定する</li>
-  <li>N+1問題を避けてJOINを使う</li>
-  <li>大量データには LIMIT を使う</li>
-  <li>インデックスのあるカラムで絞り込む</li>
-</ul>
-
-<h2>インデックスの確認・削除</h2>
-<pre><code><span class="sql-comment">-- インデックス一覧</span>
-<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> sqlite_master <span class="sql-keyword">WHERE</span> type = <span class="sql-string">'index'</span>;
-
-<span class="sql-comment">-- インデックス削除</span>
-<span class="sql-keyword">DROP INDEX</span> idx_employees_salary;</code></pre>
+<h2>集計への応用</h2>
+<pre><code><span class="sql-keyword">SELECT</span> u.name, <span class="sql-function">SUM</span>(od.price * od.quantity) <span class="sql-keyword">AS</span> 合計金額
+<span class="sql-keyword">FROM</span> orders o
+<span class="sql-keyword">JOIN</span> users u          <span class="sql-keyword">ON</span> o.user_id = u.id
+<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">GROUP BY</span> u.name
+<span class="sql-keyword">ORDER BY</span> 合計金額 <span class="sql-keyword">DESC</span>;</code></pre>
     `,
     exercises: [
       {
-        id: "idx-1",
-        question: "【STEP 1: インデックスなし・遅い検索】まずインデックスを作らずに EXPLAIN QUERY PLAN で salary > 500000 の検索計画を確認してください。結果の detail 列に「SCAN employees」と表示され、全件チェック（遅い）していることが分かります",
-        hint: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
-        answer: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
-        expectedColumns: ["id", "parent", "notused", "detail"],
+        id: "junction-1",
+        question: "orders・order_details・productsを結合して、注文ID・商品名・数量・単価を取得してください",
+        hint: "orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        answer: "SELECT o.id, p.name, od.quantity, od.price FROM orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        expectedColumns: ["id", "name", "quantity", "price"],
       },
       {
-        id: "idx-2",
-        question: "【STEP 2: インデックス作成】salary カラムにインデックス idx_emp_salary を作成して、sqlite_master で登録されたことを確認してください",
-        hint: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
-        answer: "CREATE INDEX idx_emp_salary ON employees(salary); SELECT * FROM sqlite_master WHERE type='index';",
-        expectedColumns: ["type", "name", "tbl_name", "rootpage", "sql"],
+        id: "junction-2",
+        question: "order_detailsとproductsを使って、'Laptop' が含まれる注文のorder_idを取得してください",
+        hint: "JOIN products p ON od.product_id = p.id WHERE p.name = 'Laptop'",
+        answer: "SELECT od.order_id FROM order_details od JOIN products p ON od.product_id = p.id WHERE p.name = 'Laptop'",
+        expectedColumns: ["order_id"],
       },
       {
-        id: "idx-3",
-        question: "【STEP 3: インデックスあり・速い検索】インデックス作成後に同じ EXPLAIN QUERY PLAN を実行してください。detail 列が「SCAN」から「SEARCH employees USING INDEX idx_emp_salary」に変わり、インデックスを使った高速検索になったことが確認できます",
-        hint: "EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
-        answer: "CREATE INDEX IF NOT EXISTS idx_emp_salary ON employees(salary); EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
-        expectedColumns: ["id", "parent", "notused", "detail"],
-      },
-      {
-        id: "idx-4",
-        question: "【STEP 4: インデックス削除・遅い検索に戻る】インデックス idx_emp_salary を削除し、EXPLAIN QUERY PLAN で再び「SCAN employees」に戻ることを確認してください。インデックスがなければ検索速度が落ちることが分かります",
-        hint: "DROP INDEX IF EXISTS idx_emp_salary; の後に EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000; を実行してください",
-        answer: "DROP INDEX IF EXISTS idx_emp_salary; EXPLAIN QUERY PLAN SELECT * FROM employees WHERE salary > 500000;",
-        expectedColumns: ["id", "parent", "notused", "detail"],
+        id: "junction-3",
+        question: "ユーザーごとの合計購入金額（price × quantity の合計）を求めて、金額の高い順に表示してください",
+        hint: "SUM(od.price * od.quantity) AS 合計金額、GROUP BY u.name",
+        answer: "SELECT u.name, SUM(od.price * od.quantity) AS 合計金額 FROM orders o JOIN users u ON o.user_id = u.id JOIN order_details od ON o.id = od.order_id GROUP BY u.name ORDER BY 合計金額 DESC",
+        expectedColumns: ["name", "合計金額"],
       },
     ],
   },
