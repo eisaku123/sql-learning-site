@@ -371,9 +371,9 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
               <thead>
                 <tr>
-                  {result.columns.map((col) => (
+                  {result.columns.map((col, ci) => (
                     <th
-                      key={col}
+                      key={ci}
                       style={{
                         padding: "0.5rem 0.75rem",
                         background: "rgba(102,126,234,0.15)",
