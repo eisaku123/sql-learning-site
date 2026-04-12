@@ -141,7 +141,7 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "数値関数",
     level: "beginner",
     order: 3,
-    description: "ROUND・ABS・CAST・算術演算などの数値操作をproducts・order_detailsテーブルで学びます",
+    description: "ROUND・ABS・CAST・算術演算などの数値操作をproducts・order_productsテーブルで学びます",
     content: `
 <h2>数値関数一覧</h2>
 <table>
@@ -181,9 +181,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-num-3",
-        question: "order_detailsテーブルのidとquantityと、quantityを3で割った余りを「余り」として取得してください",
+        question: "order_productsテーブルのidとquantityと、quantityを3で割った余りを「余り」として取得してください",
         hint: "quantity % 3 AS 余り",
-        answer: "SELECT id, quantity, quantity % 3 AS 余り FROM order_details",
+        answer: "SELECT id, quantity, quantity % 3 AS 余り FROM order_products",
         expectedColumns: ["id", "quantity", "余り"],
       },
       {
@@ -195,9 +195,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-num-5",
-        question: "order_detailsテーブルのidとprice・quantityと、price×quantityをCAST(AS INTEGER)した「小計」を取得してください",
+        question: "order_productsテーブルのidとprice・quantityと、price×quantityをCAST(AS INTEGER)した「小計」を取得してください",
         hint: "CAST(price * quantity AS INTEGER) AS 小計",
-        answer: "SELECT id, price, quantity, CAST(price * quantity AS INTEGER) AS 小計 FROM order_details",
+        answer: "SELECT id, price, quantity, CAST(price * quantity AS INTEGER) AS 小計 FROM order_products",
         expectedColumns: ["id", "price", "quantity", "小計"],
       },
     ],
@@ -409,12 +409,12 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "SELECT計算式と集計",
     level: "beginner",
     order: 7,
-    description: "order_details.price * quantityなどの計算式とSUM・AVG・COUNT・GROUP BYを組み合わせた集計を学びます",
+    description: "order_products.price * quantityなどの計算式とSUM・AVG・COUNT・GROUP BYを組み合わせた集計を学びます",
     content: `
 <h2>SELECT内で計算する</h2>
 <p>SELECT句の中で直接計算式を書けます。</p>
 <pre><code><span class="sql-comment">-- 小計（単価 × 数量）</span>
-<span class="sql-keyword">SELECT</span> id, price * quantity <span class="sql-keyword">AS</span> 小計 <span class="sql-keyword">FROM</span> order_details;</code></pre>
+<span class="sql-keyword">SELECT</span> id, price * quantity <span class="sql-keyword">AS</span> 小計 <span class="sql-keyword">FROM</span> order_products;</code></pre>
 
 <h2>集計関数 + GROUP BY</h2>
 <table>
@@ -428,22 +428,22 @@ export const PREMIUM_LESSONS: Lesson[] = [
 
 <pre><code><span class="sql-comment">-- 注文ごとの合計金額</span>
 <span class="sql-keyword">SELECT</span> order_id, <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">AS</span> 合計金額
-<span class="sql-keyword">FROM</span> order_details
+<span class="sql-keyword">FROM</span> order_products
 <span class="sql-keyword">GROUP BY</span> order_id;</code></pre>
     `,
     exercises: [
       {
         id: "pb-calc-1",
-        question: "order_detailsテーブルのidとprice・quantityと、price×quantityを「小計」として取得してください",
+        question: "order_productsテーブルのidとprice・quantityと、price×quantityを「小計」として取得してください",
         hint: "price * quantity AS 小計",
-        answer: "SELECT id, price, quantity, price * quantity AS 小計 FROM order_details",
+        answer: "SELECT id, price, quantity, price * quantity AS 小計 FROM order_products",
         expectedColumns: ["id", "price", "quantity", "小計"],
       },
       {
         id: "pb-calc-2",
-        question: "order_detailsテーブルをorder_idでグループ化し、各order_idごとのSUM(price * quantity)を「合計金額」として取得してください",
+        question: "order_productsテーブルをorder_idでグループ化し、各order_idごとのSUM(price * quantity)を「合計金額」として取得してください",
         hint: "GROUP BY order_id, SUM(price * quantity) AS 合計金額",
-        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id",
+        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id",
         expectedColumns: ["order_id", "合計金額"],
       },
       {
@@ -462,9 +462,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-calc-5",
-        question: "order_detailsテーブルをorder_idでグループ化し、合計金額が100000以上のorder_idと合計金額を取得してください",
+        question: "order_productsテーブルをorder_idでグループ化し、合計金額が100000以上のorder_idと合計金額を取得してください",
         hint: "HAVING SUM(price * quantity) >= 100000",
-        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id HAVING SUM(price * quantity) >= 100000",
+        answer: "SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id HAVING SUM(price * quantity) >= 100000",
         expectedColumns: ["order_id", "合計金額"],
       },
     ],
@@ -538,61 +538,61 @@ export const PREMIUM_LESSONS: Lesson[] = [
     title: "中間テーブルの応用",
     level: "beginner",
     order: 9,
-    description: "order_detailsを使った多対多の集計・絞り込みなど中間テーブルの活用方法を学びます",
+    description: "order_productsを使った多対多の集計・絞り込みなど中間テーブルの活用方法を学びます",
     content: `
 <h2>中間テーブルとは</h2>
-<p>多対多の関係を表現するために使うテーブルです。<code>order_details</code> は <code>orders</code> と <code>products</code> の中間テーブルです。</p>
+<p>多対多の関係を表現するために使うテーブルです。<code>order_products</code> は <code>orders</code> と <code>products</code> の中間テーブルです。</p>
 
-<pre><code>orders (1) ─── (*) order_details (*) ─── (1) products</code></pre>
+<pre><code>orders (1) ─── (*) order_products (*) ─── (1) products</code></pre>
 
 <h2>中間テーブルを使ったJOIN</h2>
 <pre><code><span class="sql-comment">-- 注文と商品名を取得</span>
 <span class="sql-keyword">SELECT</span> o.id, p.name, od.quantity
 <span class="sql-keyword">FROM</span> orders o
-<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> order_products od <span class="sql-keyword">ON</span> o.id = od.order_id
 <span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
 
 <h2>集計への応用</h2>
 <pre><code><span class="sql-comment">-- 商品ごとの総販売数</span>
 <span class="sql-keyword">SELECT</span> p.name, <span class="sql-function">SUM</span>(od.quantity) <span class="sql-keyword">AS</span> 総販売数
-<span class="sql-keyword">FROM</span> order_details od
+<span class="sql-keyword">FROM</span> order_products od
 <span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id
 <span class="sql-keyword">GROUP BY</span> p.id, p.name;</code></pre>
     `,
     exercises: [
       {
         id: "pb-junc-1",
-        question: "order_detailsとproductsをJOINし、各明細のorder_id・商品name・quantity・priceを取得してください",
+        question: "order_productsとproductsをJOINし、各明細のorder_id・商品name・quantity・priceを取得してください",
         hint: "JOIN products p ON od.product_id = p.id",
-        answer: "SELECT od.order_id, p.name, od.quantity, od.price FROM order_details od JOIN products p ON od.product_id = p.id",
+        answer: "SELECT od.order_id, p.name, od.quantity, od.price FROM order_products od JOIN products p ON od.product_id = p.id",
         expectedColumns: ["order_id", "name", "quantity", "price"],
       },
       {
         id: "pb-junc-2",
-        question: "orders・order_details・productsを3テーブルJOINし、order_id・ユーザーのuser_id・商品name・quantityを取得してください",
-        hint: "FROM orders JOIN order_details ... JOIN products ...",
-        answer: "SELECT o.id AS order_id, o.user_id, p.name, od.quantity FROM orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        question: "orders・order_products・productsを3テーブルJOINし、order_id・ユーザーのuser_id・商品name・quantityを取得してください",
+        hint: "FROM orders JOIN order_products ... JOIN products ...",
+        answer: "SELECT o.id AS order_id, o.user_id, p.name, od.quantity FROM orders o JOIN order_products od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
         expectedColumns: ["order_id", "user_id", "name", "quantity"],
       },
       {
         id: "pb-junc-3",
-        question: "productsとorder_detailsをJOINしてproduct_idでグループ化し、商品nameとSUM(quantity)を「総販売数」として取得してください",
+        question: "productsとorder_productsをJOINしてproduct_idでグループ化し、商品nameとSUM(quantity)を「総販売数」として取得してください",
         hint: "GROUP BY p.id, p.name して SUM(od.quantity)",
-        answer: "SELECT p.name, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name",
+        answer: "SELECT p.name, SUM(od.quantity) AS 総販売数 FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name",
         expectedColumns: ["name", "総販売数"],
       },
       {
         id: "pb-junc-4",
-        question: "order_details・orders・usersを3テーブルJOINし、ユーザーname・order_id・SUM(od.price * od.quantity)を「注文合計」として取得しuser_idとorder_idでグループ化してください",
+        question: "order_products・orders・usersを3テーブルJOINし、ユーザーname・order_id・SUM(od.price * od.quantity)を「注文合計」として取得しuser_idとorder_idでグループ化してください",
         hint: "JOIN orders o ... JOIN users u ... GROUP BY u.id, u.name, o.id",
-        answer: "SELECT u.name, o.id AS order_id, SUM(od.price * od.quantity) AS 注文合計 FROM order_details od JOIN orders o ON od.order_id = o.id JOIN users u ON o.user_id = u.id GROUP BY u.id, u.name, o.id",
+        answer: "SELECT u.name, o.id AS order_id, SUM(od.price * od.quantity) AS 注文合計 FROM order_products od JOIN orders o ON od.order_id = o.id JOIN users u ON o.user_id = u.id GROUP BY u.id, u.name, o.id",
         expectedColumns: ["name", "order_id", "注文合計"],
       },
       {
         id: "pb-junc-5",
-        question: "productsとorder_detailsをJOINし、totalがSUM(od.quantity * od.price)として計算し、totalが50000以上の商品nameとtotalをtotal降順で取得してください",
+        question: "productsとorder_productsをJOINし、totalがSUM(od.quantity * od.price)として計算し、totalが50000以上の商品nameとtotalをtotal降順で取得してください",
         hint: "HAVING SUM(od.quantity * od.price) >= 50000 ORDER BY total DESC",
-        answer: "SELECT p.name, SUM(od.quantity * od.price) AS total FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name HAVING SUM(od.quantity * od.price) >= 50000 ORDER BY total DESC",
+        answer: "SELECT p.name, SUM(od.quantity * od.price) AS total FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name HAVING SUM(od.quantity * od.price) >= 50000 ORDER BY total DESC",
         expectedColumns: ["name", "total"],
       },
     ],
@@ -625,7 +625,7 @@ export const PREMIUM_LESSONS: Lesson[] = [
   <span class="sql-keyword">CASE</span> <span class="sql-keyword">WHEN</span> <span class="sql-function">SUM</span>(od.price * od.quantity) >= <span class="sql-number">200000</span> <span class="sql-keyword">THEN</span> <span class="sql-string">'優良顧客'</span> <span class="sql-keyword">ELSE</span> <span class="sql-string">'一般'</span> <span class="sql-keyword">END</span> <span class="sql-keyword">AS</span> ランク
 <span class="sql-keyword">FROM</span> users u
 <span class="sql-keyword">JOIN</span> orders o <span class="sql-keyword">ON</span> u.id = o.user_id
-<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> order_products od <span class="sql-keyword">ON</span> o.id = od.order_id
 <span class="sql-keyword">WHERE</span> u.city = <span class="sql-string">'東京'</span>
 <span class="sql-keyword">GROUP BY</span> u.id, u.name;</code></pre>
     `,
@@ -653,16 +653,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pb-comp-4",
-        question: "users・orders・order_detailsを3テーブルJOINし、都市別のSUM(od.price * od.quantity)を「売上合計」として都市ごとに集計し、売上合計の降順で取得してください（cityがNULLのユーザーは除く）",
+        question: "users・orders・order_productsを3テーブルJOINし、都市別のSUM(od.price * od.quantity)を「売上合計」として都市ごとに集計し、売上合計の降順で取得してください（cityがNULLのユーザーは除く）",
         hint: "WHERE u.city IS NOT NULL GROUP BY u.city ORDER BY 売上合計 DESC",
-        answer: "SELECT u.city, SUM(od.price * od.quantity) AS 売上合計 FROM users u JOIN orders o ON u.id = o.user_id JOIN order_details od ON o.id = od.order_id WHERE u.city IS NOT NULL GROUP BY u.city ORDER BY 売上合計 DESC",
+        answer: "SELECT u.city, SUM(od.price * od.quantity) AS 売上合計 FROM users u JOIN orders o ON u.id = o.user_id JOIN order_products od ON o.id = od.order_id WHERE u.city IS NOT NULL GROUP BY u.city ORDER BY 売上合計 DESC",
         expectedColumns: ["city", "売上合計"],
       },
       {
         id: "pb-comp-5",
-        question: "productsテーブルとorder_detailsをJOINし、カテゴリ別に平均販売単価（AVG(od.price)）をROUND小数点以下0桁にした「平均販売単価」と、総販売数（SUM(od.quantity)）を取得してカテゴリ名のアルファベット順で表示してください",
+        question: "productsテーブルとorder_productsをJOINし、カテゴリ別に平均販売単価（AVG(od.price)）をROUND小数点以下0桁にした「平均販売単価」と、総販売数（SUM(od.quantity)）を取得してカテゴリ名のアルファベット順で表示してください",
         hint: "GROUP BY p.category ORDER BY p.category",
-        answer: "SELECT p.category, ROUND(AVG(od.price), 0) AS 平均販売単価, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.category ORDER BY p.category",
+        answer: "SELECT p.category, ROUND(AVG(od.price), 0) AS 平均販売単価, SUM(od.quantity) AS 総販売数 FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.category ORDER BY p.category",
         expectedColumns: ["category", "平均販売単価", "総販売数"],
       },
     ],
@@ -724,9 +724,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-rank-4",
-        question: "order_detailsテーブルのidとprice*quantityを「小計」として計算し、小計降順のDENSE_RANK()を「小計順位」として取得してください",
+        question: "order_productsテーブルのidとprice*quantityを「小計」として計算し、小計降順のDENSE_RANK()を「小計順位」として取得してください",
         hint: "DENSE_RANK() OVER (ORDER BY price*quantity DESC) AS 小計順位",
-        answer: "SELECT id, price * quantity AS 小計, DENSE_RANK() OVER (ORDER BY price * quantity DESC) AS 小計順位 FROM order_details",
+        answer: "SELECT id, price * quantity AS 小計, DENSE_RANK() OVER (ORDER BY price * quantity DESC) AS 小計順位 FROM order_products",
         expectedColumns: ["id", "小計", "小計順位"],
       },
       {
@@ -753,13 +753,13 @@ export const PREMIUM_LESSONS: Lesson[] = [
 <span class="sql-keyword">FROM</span> orders;</code></pre>
 
 <h2>移動集計（ROWS BETWEEN）</h2>
-<pre><code><span class="sql-comment">-- order_detailsで累積小計</span>
+<pre><code><span class="sql-comment">-- order_productsで累積小計</span>
 <span class="sql-keyword">SELECT</span> id, price * quantity <span class="sql-keyword">AS</span> 小計,
   <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">OVER</span> (
     <span class="sql-keyword">ORDER BY</span> id
     <span class="sql-keyword">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
   ) <span class="sql-keyword">AS</span> 累積合計
-<span class="sql-keyword">FROM</span> order_details;</code></pre>
+<span class="sql-keyword">FROM</span> order_products;</code></pre>
     `,
     exercises: [
       {
@@ -778,16 +778,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-lag-3",
-        question: "order_detailsテーブルのidとprice*quantityを「小計」として、id昇順の累積合計（ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW）を「累積合計」として取得してください",
+        question: "order_productsテーブルのidとprice*quantityを「小計」として、id昇順の累積合計（ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW）を「累積合計」として取得してください",
         hint: "SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)",
-        answer: "SELECT id, price * quantity AS 小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_details",
+        answer: "SELECT id, price * quantity AS 小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_products",
         expectedColumns: ["id", "小計", "累積合計"],
       },
       {
         id: "pi-lag-4",
-        question: "order_detailsテーブルのidとprice*quantityを「小計」として、直前2行を含む3行の移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下2桁で「移動平均」として取得してください",
+        question: "order_productsテーブルのidとprice*quantityを「小計」として、直前2行を含む3行の移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下2桁で「移動平均」として取得してください",
         hint: "ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS 移動平均",
-        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS 移動平均 FROM order_details",
+        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS 移動平均 FROM order_products",
         expectedColumns: ["id", "小計", "移動平均"],
       },
       {
@@ -819,7 +819,7 @@ export const PREMIUM_LESSONS: Lesson[] = [
 <pre><code><span class="sql-comment">-- 注文合計をCTEで計算して絞り込む</span>
 <span class="sql-keyword">WITH</span> order_totals <span class="sql-keyword">AS</span> (
   <span class="sql-keyword">SELECT</span> order_id, <span class="sql-function">SUM</span>(price * quantity) <span class="sql-keyword">AS</span> 合計金額
-  <span class="sql-keyword">FROM</span> order_details
+  <span class="sql-keyword">FROM</span> order_products
   <span class="sql-keyword">GROUP BY</span> order_id
 )
 <span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> order_totals
@@ -828,16 +828,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
     exercises: [
       {
         id: "pi-cte-1",
-        question: "WITH句を使ってorder_detailsからorder_idごとのSUM(price*quantity)を「合計金額」とするCTE「order_totals」を作り、全件取得してください",
-        hint: "WITH order_totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals",
-        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals",
+        question: "WITH句を使ってorder_productsからorder_idごとのSUM(price*quantity)を「合計金額」とするCTE「order_totals」を作り、全件取得してください",
+        hint: "WITH order_totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_products GROUP BY order_id) SELECT * FROM order_totals",
+        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id) SELECT * FROM order_totals",
         expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pi-cte-2",
-        question: "WITH句でorder_detailsからorder_idごとの合計金額CTEを作り、合計金額が100000以上のorder_idと合計金額を取得してください",
+        question: "WITH句でorder_productsからorder_idごとの合計金額CTEを作り、合計金額が100000以上のorder_idと合計金額を取得してください",
         hint: "WHERE 合計金額 >= 100000",
-        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT * FROM order_totals WHERE 合計金額 >= 100000",
+        answer: "WITH order_totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id) SELECT * FROM order_totals WHERE 合計金額 >= 100000",
         expectedColumns: ["order_id", "合計金額"],
       },
       {
@@ -856,9 +856,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-cte-5",
-        question: "2つのCTEを使ってください。CTE1: order_detailsからorder_idごとの合計金額。CTE2: ordersとusersをJOINしてorder_id・ユーザーnameを取得。最終的にCTE1とCTE2をorder_idで結合し、ユーザー名・order_id・合計金額を取得してください",
+        question: "2つのCTEを使ってください。CTE1: order_productsからorder_idごとの合計金額。CTE2: ordersとusersをJOINしてorder_id・ユーザーnameを取得。最終的にCTE1とCTE2をorder_idで結合し、ユーザー名・order_id・合計金額を取得してください",
         hint: "WITH totals AS (...), order_users AS (...) SELECT ou.name, ou.order_id, t.合計金額 FROM totals t JOIN order_users ou ON ...",
-        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id), order_users AS (SELECT o.id AS order_id, u.name FROM orders o JOIN users u ON o.user_id = u.id) SELECT ou.name, ou.order_id, t.合計金額 FROM totals t JOIN order_users ou ON t.order_id = ou.order_id",
+        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id), order_users AS (SELECT o.id AS order_id, u.name FROM orders o JOIN users u ON o.user_id = u.id) SELECT ou.name, ou.order_id, t.合計金額 FROM totals t JOIN order_users ou ON t.order_id = ou.order_id",
         expectedColumns: ["name", "order_id", "合計金額"],
       },
     ],
@@ -905,21 +905,21 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-exists-3",
-        question: "EXISTSを使って、order_detailsに明細が存在する注文のid・user_id・order_date・statusを取得してください",
-        hint: "WHERE EXISTS (SELECT 1 FROM order_details od WHERE od.order_id = o.id)",
-        answer: "SELECT id, user_id, order_date, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_details od WHERE od.order_id = o.id)",
+        question: "EXISTSを使って、order_productsに明細が存在する注文のid・user_id・order_date・statusを取得してください",
+        hint: "WHERE EXISTS (SELECT 1 FROM order_products od WHERE od.order_id = o.id)",
+        answer: "SELECT id, user_id, order_date, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_products od WHERE od.order_id = o.id)",
         expectedColumns: ["id", "user_id", "order_date", "status"],
       },
       {
         id: "pi-exists-4",
         question: "EXISTSを使って、カテゴリが'PC'の商品が含まれる注文明細が存在するorder_idを持つ注文のid・user_id・statusを取得してください",
-        hint: "WHERE EXISTS (SELECT 1 FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
-        answer: "SELECT id, user_id, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
+        hint: "WHERE EXISTS (SELECT 1 FROM order_products od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
+        answer: "SELECT id, user_id, status FROM orders o WHERE EXISTS (SELECT 1 FROM order_products od JOIN products p ON od.product_id = p.id WHERE od.order_id = o.id AND p.category = 'PC')",
         expectedColumns: ["id", "user_id", "status"],
       },
       {
         id: "pi-exists-5",
-        question: "NOT EXISTSを使って、stockがNULLでない（stock IS NOT NULL）商品の中で、order_detailsに存在するproduct_idを持たないものを取得するのではなく、usersの中でcityが'福岡'でかつ注文が存在しないユーザーのname・emailを取得してください",
+        question: "NOT EXISTSを使って、stockがNULLでない（stock IS NOT NULL）商品の中で、order_productsに存在するproduct_idを持たないものを取得するのではなく、usersの中でcityが'福岡'でかつ注文が存在しないユーザーのname・emailを取得してください",
         hint: "WHERE city = '福岡' AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
         answer: "SELECT name, email FROM users u WHERE city = '福岡' AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)",
         expectedColumns: ["name", "email"],
@@ -1066,7 +1066,7 @@ export const PREMIUM_LESSONS: Lesson[] = [
 <pre><code><span class="sql-comment">-- 注文合計ビューを作成</span>
 <span class="sql-keyword">CREATE VIEW</span> order_summary <span class="sql-keyword">AS</span>
 <span class="sql-keyword">SELECT</span> od.order_id, <span class="sql-function">SUM</span>(od.price * od.quantity) <span class="sql-keyword">AS</span> 合計金額
-<span class="sql-keyword">FROM</span> order_details od
+<span class="sql-keyword">FROM</span> order_products od
 <span class="sql-keyword">GROUP BY</span> od.order_id;
 
 <span class="sql-comment">-- ビューを使う</span>
@@ -1078,9 +1078,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
     exercises: [
       {
         id: "pi-view-1",
-        question: "order_detailsからorder_idごとのSUM(price*quantity)を「合計金額」とするビュー「order_summary」を作成し、SELECT * FROM order_summary; で全件取得してください",
-        hint: "CREATE VIEW order_summary AS SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id",
-        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id; SELECT * FROM order_summary",
+        question: "order_productsからorder_idごとのSUM(price*quantity)を「合計金額」とするビュー「order_summary」を作成し、SELECT * FROM order_summary; で全件取得してください",
+        hint: "CREATE VIEW order_summary AS SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_products GROUP BY order_id",
+        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id; SELECT * FROM order_summary",
         expectedColumns: ["order_id", "合計金額"],
       },
       {
@@ -1092,23 +1092,23 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-view-3",
-        question: "productsとorder_detailsをJOINして、商品ごとのname・category・SUM(od.quantity)を「総販売数」とするビュー「product_sales」を作成し、SELECT * FROM product_sales; で取得してください",
-        hint: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category",
-        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales",
+        question: "productsとorder_productsをJOINして、商品ごとのname・category・SUM(od.quantity)を「総販売数」とするビュー「product_sales」を作成し、SELECT * FROM product_sales; で取得してください",
+        hint: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category",
+        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales",
         expectedColumns: ["name", "category", "総販売数"],
       },
       {
         id: "pi-view-4",
         question: "product_salesビューを作成後、SELECT * FROM product_sales WHERE 総販売数 >= 3; でビューに対してWHEREフィルタをかけて取得してください",
         hint: "CREATE VIEW ... として WHERE 総販売数 >= 3",
-        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_details od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales WHERE 総販売数 >= 3",
+        answer: "CREATE VIEW product_sales AS SELECT p.name, p.category, SUM(od.quantity) AS 総販売数 FROM order_products od JOIN products p ON od.product_id = p.id GROUP BY p.id, p.name, p.category; SELECT * FROM product_sales WHERE 総販売数 >= 3",
         expectedColumns: ["name", "category", "総販売数"],
       },
       {
         id: "pi-view-5",
         question: "order_summaryビューを作成後、ordersテーブルとJOINして、order_id・status・合計金額を取得してください",
         hint: "CREATE VIEW order_summary AS ... ; SELECT os.order_id, o.status, os.合計金額 FROM order_summary os JOIN orders o ON os.order_id = o.id",
-        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id; SELECT os.order_id, o.status, os.合計金額 FROM order_summary os JOIN orders o ON os.order_id = o.id",
+        answer: "CREATE VIEW order_summary AS SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id; SELECT os.order_id, o.status, os.合計金額 FROM order_summary os JOIN orders o ON os.order_id = o.id",
         expectedColumns: ["order_id", "status", "合計金額"],
       },
     ],
@@ -1158,16 +1158,16 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-subq-3",
-        question: "FROM句のサブクエリ（インラインビュー）を使って、order_detailsからorder_idごとの合計金額を求め、その結果から合計金額が最大のorder_idと合計金額を取得してください",
-        hint: "SELECT * FROM (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
-        answer: "SELECT * FROM (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
+        question: "FROM句のサブクエリ（インラインビュー）を使って、order_productsからorder_idごとの合計金額を求め、その結果から合計金額が最大のorder_idと合計金額を取得してください",
+        hint: "SELECT * FROM (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_products GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
+        answer: "SELECT * FROM (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id) ORDER BY 合計金額 DESC LIMIT 1",
         expectedColumns: ["order_id", "合計金額"],
       },
       {
         id: "pi-subq-4",
         question: "IN句のサブクエリを使って、statusが'completed'の注文に含まれるproduct_idを持つ商品のname・category・priceを取得してください",
-        hint: "WHERE id IN (SELECT product_id FROM order_details WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
-        answer: "SELECT name, category, price FROM products WHERE id IN (SELECT product_id FROM order_details WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
+        hint: "WHERE id IN (SELECT product_id FROM order_products WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
+        answer: "SELECT name, category, price FROM products WHERE id IN (SELECT product_id FROM order_products WHERE order_id IN (SELECT id FROM orders WHERE status = 'completed'))",
         expectedColumns: ["name", "category", "price"],
       },
       {
@@ -1239,9 +1239,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-comp-5",
-        question: "CTEでorder_detailsのorder_idごとの合計金額を求め、LAG()でその前の注文の合計金額を「前回合計」として取得し、合計金額と前回合計の差を「増減」として表示してください（order_id昇順）",
-        hint: "WITH totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
-        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_details GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
+        question: "CTEでorder_productsのorder_idごとの合計金額を求め、LAG()でその前の注文の合計金額を「前回合計」として取得し、合計金額と前回合計の差を「増減」として表示してください（order_id昇順）",
+        hint: "WITH totals AS (SELECT order_id, SUM(price*quantity) AS 合計金額 FROM order_products GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
+        answer: "WITH totals AS (SELECT order_id, SUM(price * quantity) AS 合計金額 FROM order_products GROUP BY order_id) SELECT order_id, 合計金額, LAG(合計金額) OVER (ORDER BY order_id) AS 前回合計, 合計金額 - LAG(合計金額) OVER (ORDER BY order_id) AS 増減 FROM totals",
         expectedColumns: ["order_id", "合計金額", "前回合計", "増減"],
       },
     ],
@@ -1292,9 +1292,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-wadv-3",
-        question: "order_detailsのidとprice*quantityを「小計」として、id昇順の3行移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下1桁で「移動平均3行」として取得してください",
+        question: "order_productsのidとprice*quantityを「小計」として、id昇順の3行移動平均（ROWS BETWEEN 2 PRECEDING AND CURRENT ROW）をROUND小数点以下1桁で「移動平均3行」として取得してください",
         hint: "ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均3行",
-        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均3行 FROM order_details",
+        answer: "SELECT id, price * quantity AS 小計, ROUND(AVG(price * quantity) OVER (ORDER BY id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 1) AS 移動平均3行 FROM order_products",
         expectedColumns: ["id", "小計", "移動平均3行"],
       },
       {
@@ -1306,9 +1306,9 @@ export const PREMIUM_LESSONS: Lesson[] = [
       },
       {
         id: "pi-wadv-5",
-        question: "order_detailsのidとprice*quantityを「小計」として、id昇順でFIRST_VALUE(price*quantity)を「初回小計」、SUM(price*quantity)のUNBOUNDED PRECEDING〜CURRENT ROWの累積合計を「累積合計」として取得してください",
+        question: "order_productsのidとprice*quantityを「小計」として、id昇順でFIRST_VALUE(price*quantity)を「初回小計」、SUM(price*quantity)のUNBOUNDED PRECEDING〜CURRENT ROWの累積合計を「累積合計」として取得してください",
         hint: "FIRST_VALUE(price*quantity) OVER (ORDER BY id) AS 初回小計, SUM(price*quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計",
-        answer: "SELECT id, price * quantity AS 小計, FIRST_VALUE(price * quantity) OVER (ORDER BY id) AS 初回小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_details",
+        answer: "SELECT id, price * quantity AS 小計, FIRST_VALUE(price * quantity) OVER (ORDER BY id) AS 初回小計, SUM(price * quantity) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累積合計 FROM order_products",
         expectedColumns: ["id", "小計", "初回小計", "累積合計"],
       },
     ],

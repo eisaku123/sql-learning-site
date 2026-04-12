@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
-CREATE TABLE IF NOT EXISTS order_details (
+CREATE TABLE IF NOT EXISTS order_products (
   id INTEGER PRIMARY KEY,
   order_id INTEGER,
   product_id INTEGER,
@@ -78,7 +78,7 @@ INSERT OR IGNORE INTO orders VALUES
   (14, 9,  '2024-05-20', 'pending'),
   (15, 10, '2024-06-01', 'completed');
 
-INSERT OR IGNORE INTO order_details VALUES
+INSERT OR IGNORE INTO order_products VALUES
   (1,  1,  1, 2, 120000),
   (2,  1,  2, 1, 3500),
   (3,  2,  3, 3, 8000),
@@ -132,7 +132,7 @@ export const LESSONS: Lesson[] = [
   <li><code>users</code> — ユーザーテーブル（15名のデータ）</li>
   <li><code>products</code> — 商品テーブル（10商品）</li>
   <li><code>orders</code> — 注文テーブル（15件）</li>
-  <li><code>order_details</code> — 注文明細テーブル（20件）</li>
+  <li><code>order_products</code> — 注文明細テーブル（20件）</li>
 </ul>
 
 <p>右のエディタで以下のSQLを実行してみましょう：</p>
@@ -437,11 +437,11 @@ export const LESSONS: Lesson[] = [
 <span class="sql-keyword">JOIN</span> users u <span class="sql-keyword">ON</span> o.user_id = u.id
 <span class="sql-keyword">ORDER BY</span> o.order_date;</code></pre>
 
-<h2>order_details を使った3テーブルのJOIN</h2>
+<h2>order_products を使った3テーブルのJOIN</h2>
 <pre><code><span class="sql-keyword">SELECT</span> u.name, p.name <span class="sql-keyword">AS</span> product, od.quantity
 <span class="sql-keyword">FROM</span> orders o
 <span class="sql-keyword">JOIN</span> users u <span class="sql-keyword">ON</span> o.user_id = u.id
-<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> order_products od <span class="sql-keyword">ON</span> o.id = od.order_id
 <span class="sql-keyword">JOIN</span> products p <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
     `,
     exercises: [
@@ -454,9 +454,9 @@ export const LESSONS: Lesson[] = [
       },
       {
         id: "join-2",
-        question: "order_detailsとproductsをJOINして、明細ID・商品名・数量・価格を取得してください",
-        hint: "order_details od JOIN products p ON od.product_id = p.id",
-        answer: "SELECT od.id, p.name, od.quantity, od.price FROM order_details od JOIN products p ON od.product_id = p.id",
+        question: "order_productsとproductsをJOINして、明細ID・商品名・数量・価格を取得してください",
+        hint: "order_products od JOIN products p ON od.product_id = p.id",
+        answer: "SELECT od.id, p.name, od.quantity, od.price FROM order_products od JOIN products p ON od.product_id = p.id",
         expectedColumns: ["id", "name", "quantity", "price"],
       },
       {
@@ -602,7 +602,7 @@ export const LESSONS: Lesson[] = [
     title: "中間テーブルで多対多を表現する",
     level: "intermediate",
     order: 9,
-    description: "中間テーブル（order_details）を使って多対多の関係を理解します",
+    description: "中間テーブル（order_products）を使って多対多の関係を理解します",
     content: `
 <h2>多対多の関係とは？</h2>
 <p>1つの注文には複数の商品が含まれ、1つの商品は複数の注文に含まれます。このような<strong>多対多（N:M）</strong>の関係は、直接テーブルを結びつけることができません。</p>
@@ -610,12 +610,12 @@ export const LESSONS: Lesson[] = [
 <h2>中間テーブルで解決する</h2>
 <p><strong>中間テーブル</strong>（または関連テーブル）を間に挟むことで多対多を表現します。</p>
 
-<pre><code>orders ─── order_details ─── products
+<pre><code>orders ─── order_products ─── products
   1件の注文   N件の明細    1種の商品
 （1）       （多対多）       （1）</code></pre>
 
-<h2>order_details の構造</h2>
-<pre><code>order_details
+<h2>order_products の構造</h2>
+<pre><code>order_products
   id          — 明細ID
   order_id    — どの注文か（ordersのid）
   product_id  — どの商品か（productsのid）
@@ -630,37 +630,37 @@ export const LESSONS: Lesson[] = [
   od.price * od.quantity <span class="sql-keyword">AS</span> 小計
 <span class="sql-keyword">FROM</span> orders o
 <span class="sql-keyword">JOIN</span> users u          <span class="sql-keyword">ON</span> o.user_id = u.id
-<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> order_products od <span class="sql-keyword">ON</span> o.id = od.order_id
 <span class="sql-keyword">JOIN</span> products p       <span class="sql-keyword">ON</span> od.product_id = p.id;</code></pre>
 
 <h2>集計への応用</h2>
 <pre><code><span class="sql-keyword">SELECT</span> u.name, <span class="sql-function">SUM</span>(od.price * od.quantity) <span class="sql-keyword">AS</span> 合計金額
 <span class="sql-keyword">FROM</span> orders o
 <span class="sql-keyword">JOIN</span> users u          <span class="sql-keyword">ON</span> o.user_id = u.id
-<span class="sql-keyword">JOIN</span> order_details od <span class="sql-keyword">ON</span> o.id = od.order_id
+<span class="sql-keyword">JOIN</span> order_products od <span class="sql-keyword">ON</span> o.id = od.order_id
 <span class="sql-keyword">GROUP BY</span> u.name
 <span class="sql-keyword">ORDER BY</span> 合計金額 <span class="sql-keyword">DESC</span>;</code></pre>
     `,
     exercises: [
       {
         id: "junction-1",
-        question: "orders・order_details・productsを結合して、注文ID・商品名・数量・単価を取得してください",
-        hint: "orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
-        answer: "SELECT o.id, p.name, od.quantity, od.price FROM orders o JOIN order_details od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        question: "orders・order_products・productsを結合して、注文ID・商品名・数量・単価を取得してください",
+        hint: "orders o JOIN order_products od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
+        answer: "SELECT o.id, p.name, od.quantity, od.price FROM orders o JOIN order_products od ON o.id = od.order_id JOIN products p ON od.product_id = p.id",
         expectedColumns: ["id", "name", "quantity", "price"],
       },
       {
         id: "junction-2",
-        question: "order_detailsとproductsを使って、'Laptop' が含まれる注文のorder_idを取得してください",
+        question: "order_productsとproductsを使って、'Laptop' が含まれる注文のorder_idを取得してください",
         hint: "JOIN products p ON od.product_id = p.id WHERE p.name = 'Laptop'",
-        answer: "SELECT od.order_id FROM order_details od JOIN products p ON od.product_id = p.id WHERE p.name = 'Laptop'",
+        answer: "SELECT od.order_id FROM order_products od JOIN products p ON od.product_id = p.id WHERE p.name = 'Laptop'",
         expectedColumns: ["order_id"],
       },
       {
         id: "junction-3",
         question: "ユーザーごとの合計購入金額（price × quantity の合計）を求めて、金額の高い順に表示してください",
         hint: "SUM(od.price * od.quantity) AS 合計金額、GROUP BY u.name",
-        answer: "SELECT u.name, SUM(od.price * od.quantity) AS 合計金額 FROM orders o JOIN users u ON o.user_id = u.id JOIN order_details od ON o.id = od.order_id GROUP BY u.name ORDER BY 合計金額 DESC",
+        answer: "SELECT u.name, SUM(od.price * od.quantity) AS 合計金額 FROM orders o JOIN users u ON o.user_id = u.id JOIN order_products od ON o.id = od.order_id GROUP BY u.name ORDER BY 合計金額 DESC",
         expectedColumns: ["name", "合計金額"],
       },
     ],

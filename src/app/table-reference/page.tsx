@@ -6,7 +6,7 @@ const TABLE_LABELS: Record<string, string> = {
   users: "ユーザー",
   products: "商品",
   orders: "注文",
-  order_details: "注文明細",
+  order_products: "注文明細",
 };
 
 const TABLES = {
@@ -68,8 +68,8 @@ const TABLES = {
       [15, 10, "2024-06-01", "completed"],
     ],
   },
-  order_details: {
-    label: "order_details",
+  order_products: {
+    label: "order_products",
     columns: ["id", "order_id", "product_id", "quantity", "price"],
     rows: [
       [1,  1,  1, 2,  120000],
@@ -125,7 +125,7 @@ function ErDiagram() {
       ],
     },
     {
-      key: "order_details", label: "注文明細（中間テーブル）", x: 220, y: 230,
+      key: "order_products", label: "注文明細（中間テーブル）", x: 220, y: 230,
       cols: [
         { name: "id",         note: "PK" },
         { name: "order_id",   note: "FK" },
@@ -180,7 +180,7 @@ function ErDiagram() {
         <text x={390} y={rowY(1, 1) - 4} fill="#667eea" fontSize="9" textAnchor="middle">N</text>
         <text x={248} y={rowY(0, 0) - 4} fill="#667eea" fontSize="9" textAnchor="middle">1</text>
 
-        {/* order_details.order_id → orders.id */}
+        {/* order_products.order_id → orders.id */}
         <line
           x1={rowX(2, "right")} y1={rowY(2, 1)}
           x2={rowX(1, "left")} y2={rowY(1, 0)}
@@ -190,7 +190,7 @@ function ErDiagram() {
         <text x={438} y={rowY(2, 1) - 4} fill="#34d399" fontSize="9" textAnchor="middle">N</text>
         <text x={422} y={rowY(1, 0) + 12} fill="#34d399" fontSize="9" textAnchor="middle">1</text>
 
-        {/* order_details.product_id → products.id */}
+        {/* order_products.product_id → products.id */}
         <line
           x1={rowX(2, "left")} y1={rowY(2, 2)}
           x2={rowX(3, "right")} y2={rowY(3, 0)}
@@ -202,7 +202,7 @@ function ErDiagram() {
 
         {/* テーブルボックス */}
         {tbls.map((t, ti) => {
-          const isJunction = t.key === "order_details";
+          const isJunction = t.key === "order_products";
           return (
             <g key={t.key}>
               {/* ヘッダー */}
@@ -272,8 +272,8 @@ function ErDiagram() {
         <span><span style={{ color: "#fbbf24", fontWeight: 700 }}>PK</span> 主キー</span>
         <span><span style={{ color: "#34d399", fontWeight: 700 }}>FK</span> 外部キー</span>
         <span><span style={{ color: "#667eea" }}>────</span> orders → users</span>
-        <span><span style={{ color: "#34d399" }}>────</span> order_details → orders</span>
-        <span><span style={{ color: "#a78bfa" }}>────</span> order_details → products</span>
+        <span><span style={{ color: "#34d399" }}>────</span> order_products → orders</span>
+        <span><span style={{ color: "#a78bfa" }}>────</span> order_products → products</span>
       </div>
     </div>
   );
