@@ -414,6 +414,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                 onResultError={() => setLastResult(null)}
                 showExplanation={showExplanation}
                 onToggleExplanation={() => setShowExplanation((v) => !v)}
+                showTableButton
               />
             </section>
 

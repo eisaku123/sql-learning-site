@@ -21,10 +21,11 @@ interface SqlEditorProps {
   onResultError?: () => void;
   showExplanation?: boolean;
   onToggleExplanation?: () => void;
+  showTableButton?: boolean;
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "", onResult, onResultError, showExplanation, onToggleExplanation },
+  { initialQuery = "", onResult, onResultError, showExplanation, onToggleExplanation, showTableButton },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
@@ -312,6 +313,26 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
             }}
           >
             {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
+          </button>
+        )}
+        {showTableButton && (
+          <button
+            id="tour-table-button"
+            onClick={() => window.open("/table-reference", "table-reference", "width=820,height=560,resizable=yes,scrollbars=yes")}
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              color: "#8888aa",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "8px",
+              padding: "0.6rem 1rem",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              transition: "all 0.2s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            📋 テーブル
           </button>
         )}
       </div>

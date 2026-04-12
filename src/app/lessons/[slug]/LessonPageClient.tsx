@@ -377,6 +377,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                 onResultError={() => setLastResult(null)}
                 showExplanation={showExplanation}
                 onToggleExplanation={() => setShowExplanation((v) => !v)}
+                showTableButton
               />
             </section>
 
