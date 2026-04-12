@@ -86,11 +86,22 @@ model Announcement {
 }
 
 model Feedback {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   category  String
   message   String
   userId    String?
   userEmail String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isRead    Boolean           @default(false)
+  hasReply  Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  messages  FeedbackMessage[]
+}
+
+model FeedbackMessage {
+  id         String   @id @default(cuid())
+  feedbackId String
+  body       String
+  isAdmin    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 }

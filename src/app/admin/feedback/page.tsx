@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Feedback = {
   id: string;
   category: string;
   message: string;
   userEmail: string | null;
+  userId: string | null;
   isRead: boolean;
+  hasReply: boolean;
   createdAt: string;
 };
 
@@ -49,17 +52,6 @@ export default function AdminFeedbackPage() {
     });
   }
 
-  async function toggleRead(id: string, isRead: boolean) {
-    setFeedbacks((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, isRead: !isRead } : f))
-    );
-    await fetch("/api/admin/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, isRead: !isRead }),
-    });
-  }
-
   const filtered = feedbacks.filter((f) => {
     if (filter === "unread") return !f.isRead;
     if (filter === "bug" || filter === "request" || filter === "other") return f.category === filter;
@@ -73,7 +65,7 @@ export default function AdminFeedbackPage() {
     borderBottom: "1px solid rgba(255,255,255,0.05)",
     color: "#c0c0d8",
     fontSize: "0.875rem",
-    verticalAlign: "top",
+    verticalAlign: "middle",
   };
 
   return (
@@ -89,51 +81,35 @@ export default function AdminFeedbackPage() {
         </div>
 
         {/* ボタン表示ON/OFF */}
-        <div
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "12px",
-            padding: "1rem 1.25rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
+        <div style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "12px",
+          padding: "1rem 1.25rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+        }}>
           <div>
             <p style={{ color: "#e0e0f0", fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.2rem" }}>
               「ご意見」ボタン
             </p>
-            <p style={{ color: "#8888aa", fontSize: "0.78rem" }}>
-              サイト上の表示を制御
-            </p>
+            <p style={{ color: "#8888aa", fontSize: "0.78rem" }}>サイト上の表示を制御</p>
           </div>
           <button
             onClick={toggleButton}
             style={{
-              width: "52px",
-              height: "28px",
-              borderRadius: "14px",
-              border: "none",
+              width: "52px", height: "28px", borderRadius: "14px", border: "none",
               background: buttonEnabled ? "#667eea" : "rgba(255,255,255,0.15)",
-              cursor: "pointer",
-              position: "relative",
-              transition: "background 0.2s",
-              flexShrink: 0,
+              cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0,
             }}
           >
-            <span
-              style={{
-                position: "absolute",
-                top: "3px",
-                left: buttonEnabled ? "27px" : "3px",
-                width: "22px",
-                height: "22px",
-                borderRadius: "50%",
-                background: "#fff",
-                transition: "left 0.2s",
-              }}
-            />
+            <span style={{
+              position: "absolute", top: "3px",
+              left: buttonEnabled ? "27px" : "3px",
+              width: "22px", height: "22px", borderRadius: "50%",
+              background: "#fff", transition: "left 0.2s",
+            }} />
           </button>
         </div>
       </div>
@@ -145,14 +121,11 @@ export default function AdminFeedbackPage() {
             key={f}
             onClick={() => setFilter(f)}
             style={{
-              padding: "0.3rem 0.85rem",
-              borderRadius: "20px",
+              padding: "0.3rem 0.85rem", borderRadius: "20px",
               border: `1px solid ${filter === f ? "#667eea" : "rgba(255,255,255,0.12)"}`,
               background: filter === f ? "rgba(102,126,234,0.2)" : "transparent",
               color: filter === f ? "#667eea" : "#8888aa",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
+              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
             }}
           >
             {f === "all" ? "すべて" : f === "unread" ? `未読 (${unreadCount})` : CATEGORY_LABELS[f]}
@@ -170,19 +143,12 @@ export default function AdminFeedbackPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["カテゴリ", "メッセージ", "ユーザー", "日時", "既読"].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: "0.65rem 1rem",
-                      textAlign: "left",
-                      color: "#8888aa",
-                      fontSize: "0.78rem",
-                      fontWeight: 600,
-                      borderBottom: "1px solid rgba(255,255,255,0.08)",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
+                {["カテゴリ", "メッセージ", "ユーザー", "日時", "状態", ""].map((h) => (
+                  <th key={h} style={{
+                    padding: "0.65rem 1rem", textAlign: "left",
+                    color: "#8888aa", fontSize: "0.78rem", fontWeight: 600,
+                    borderBottom: "1px solid rgba(255,255,255,0.08)", letterSpacing: "0.04em",
+                  }}>
                     {h}
                   </th>
                 ))}
@@ -190,28 +156,20 @@ export default function AdminFeedbackPage() {
             </thead>
             <tbody>
               {filtered.map((f) => (
-                <tr
-                  key={f.id}
-                  style={{ background: f.isRead ? "transparent" : "rgba(102,126,234,0.04)" }}
-                >
+                <tr key={f.id} style={{ background: f.isRead ? "transparent" : "rgba(102,126,234,0.04)" }}>
                   <td style={cell}>
-                    <span
-                      style={{
-                        background: `${CATEGORY_COLORS[f.category] ?? "#a78bfa"}22`,
-                        color: CATEGORY_COLORS[f.category] ?? "#a78bfa",
-                        borderRadius: "20px",
-                        padding: "0.2rem 0.6rem",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <span style={{
+                      background: `${CATEGORY_COLORS[f.category] ?? "#a78bfa"}22`,
+                      color: CATEGORY_COLORS[f.category] ?? "#a78bfa",
+                      borderRadius: "20px", padding: "0.2rem 0.6rem",
+                      fontSize: "0.75rem", fontWeight: 700, whiteSpace: "nowrap",
+                    }}>
                       {CATEGORY_LABELS[f.category] ?? f.category}
                     </span>
                   </td>
-                  <td style={{ ...cell, maxWidth: "340px" }}>
+                  <td style={{ ...cell, maxWidth: "300px" }}>
                     <span style={{ color: f.isRead ? "#8888aa" : "#e0e0f0" }}>
-                      {f.message}
+                      {f.message.length > 60 ? f.message.slice(0, 60) + "..." : f.message}
                     </span>
                   </td>
                   <td style={{ ...cell, whiteSpace: "nowrap" }}>
@@ -220,22 +178,48 @@ export default function AdminFeedbackPage() {
                   <td style={{ ...cell, whiteSpace: "nowrap", color: "#8888aa" }}>
                     {new Date(f.createdAt).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </td>
-                  <td style={{ ...cell, textAlign: "center" }}>
-                    <button
-                      onClick={() => toggleRead(f.id, f.isRead)}
+                  <td style={{ ...cell, whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      {!f.isRead && (
+                        <span style={{
+                          background: "rgba(102,126,234,0.2)", color: "#667eea",
+                          borderRadius: "20px", padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem", fontWeight: 700,
+                        }}>未読</span>
+                      )}
+                      {f.hasReply && (
+                        <span style={{
+                          background: "rgba(52,211,153,0.1)", color: "#34d399",
+                          borderRadius: "20px", padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem", fontWeight: 700,
+                        }}>返信済</span>
+                      )}
+                      {!f.userId && (
+                        <span style={{
+                          background: "rgba(255,255,255,0.05)", color: "#546e7a",
+                          borderRadius: "20px", padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem",
+                        }}>ゲスト</span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ ...cell, textAlign: "right" }}>
+                    <Link
+                      href={`/admin/feedback/${f.id}`}
                       style={{
-                        background: f.isRead ? "rgba(255,255,255,0.06)" : "rgba(102,126,234,0.15)",
-                        border: `1px solid ${f.isRead ? "rgba(255,255,255,0.1)" : "rgba(102,126,234,0.3)"}`,
+                        background: "rgba(102,126,234,0.15)",
+                        border: "1px solid rgba(102,126,234,0.3)",
                         borderRadius: "6px",
-                        padding: "0.25rem 0.6rem",
-                        color: f.isRead ? "#546e7a" : "#667eea",
-                        fontSize: "0.75rem",
-                        cursor: "pointer",
+                        padding: "0.3rem 0.75rem",
+                        color: "#667eea",
+                        fontSize: "0.78rem",
                         fontWeight: 600,
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {f.isRead ? "未読に戻す" : "既読"}
-                    </button>
+                      開く →
+                    </Link>
                   </td>
                 </tr>
               ))}

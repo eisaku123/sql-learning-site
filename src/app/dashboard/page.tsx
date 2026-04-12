@@ -13,10 +13,15 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
-  const [progress, exercises, subscription] = await Promise.all([
+  const [progress, exercises, subscription, feedbacks] = await Promise.all([
     prisma.userProgress.findMany({ where: { userId: session.user.id, completed: true } }),
     prisma.userExercise.findMany({ where: { userId: session.user.id, solved: true } }),
     prisma.subscription.findUnique({ where: { userId: session.user.id } }),
+    prisma.feedback.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, category: true, message: true, hasReply: true, createdAt: true, userId: true },
+    }),
   ]);
 
   const isPremium =
@@ -205,7 +210,7 @@ export default async function DashboardPage() {
 
         {/* プレミアムレッスン進捗（加入中のみ） */}
         {isPremium && (
-          <section>
+          <section style={{ marginBottom: "2.5rem" }}>
             <h2 style={{ color: "#e0e0f0", fontSize: "1.1rem", fontWeight: 600, marginBottom: "1.5rem" }}>プレミアムレッスン進捗</h2>
             <LevelSection
               title="プレミアム初級コース"
@@ -223,6 +228,61 @@ export default async function DashboardPage() {
               solvedExIds={solvedExIds}
               hrefPrefix="/premium/lessons"
             />
+          </section>
+        )}
+
+        {/* ご意見履歴 */}
+        {feedbacks.length > 0 && (
+          <section>
+            <h2 style={{ color: "#e0e0f0", fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem" }}>
+              💬 ご意見・ご要望の履歴
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              {feedbacks.map((f) => (
+                <Link key={f.id} href={`/dashboard/feedback/${f.id}`} style={{ textDecoration: "none" }}>
+                  <div style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "12px",
+                    padding: "0.9rem 1.1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "0.75rem",
+                    cursor: "pointer",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 0 }}>
+                      <span style={{
+                        background: "rgba(102,126,234,0.15)", color: "#a78bfa",
+                        borderRadius: "20px", padding: "0.15rem 0.6rem",
+                        fontSize: "0.72rem", fontWeight: 700, flexShrink: 0,
+                      }}>
+                        {{ bug: "🐛 バグ", request: "💡 要望", other: "💬 その他" }[f.category] ?? f.category}
+                      </span>
+                      <span style={{
+                        color: "#c0c0d8", fontSize: "0.85rem",
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {f.message.length > 50 ? f.message.slice(0, 50) + "..." : f.message}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexShrink: 0 }}>
+                      {f.hasReply && (
+                        <span style={{
+                          background: "rgba(52,211,153,0.1)", color: "#34d399",
+                          borderRadius: "20px", padding: "0.15rem 0.5rem",
+                          fontSize: "0.7rem", fontWeight: 700,
+                        }}>返信あり</span>
+                      )}
+                      <span style={{ color: "#546e7a", fontSize: "0.75rem" }}>
+                        {new Date(f.createdAt).toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" })}
+                      </span>
+                      <span style={{ color: "#667eea", fontSize: "0.8rem" }}>→</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </section>
         )}
       </main>

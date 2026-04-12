@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 const CATEGORIES = [
   { value: "bug", label: "🐛 バグ報告" },
@@ -9,6 +10,8 @@ const CATEGORIES = [
 ];
 
 export default function FeedbackButton() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("other");
@@ -130,6 +133,13 @@ export default function FeedbackButton() {
                     </button>
                   ))}
                 </div>
+
+                        {/* ゲスト注記 */}
+                {!isLoggedIn && (
+                  <p style={{ color: "#546e7a", fontSize: "0.75rem", marginBottom: "0.5rem", lineHeight: 1.5 }}>
+                    ※ ログインなしでも送信できますが、返信を受け取るには<br />アカウント登録が必要です。
+                  </p>
+                )}
 
                 {/* テキスト */}
                 <textarea
