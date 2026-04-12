@@ -29,14 +29,25 @@ export default function AdminFeedbackThreadPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const fetchThread = async (silent = false) => {
+    const r = await fetch(`/api/admin/feedback/${id}`);
+    if (r.status === 401) { router.push("/admin/login"); return; }
+    const d = await r.json();
+    if (!d) return;
+    setFeedback((prev) => {
+      if (!prev) return d;
+      // メッセージ数が増えた場合のみ更新（入力中のテキストを守る）
+      if (d.messages.length !== prev.messages.length) return d;
+      return silent ? prev : d;
+    });
+  };
+
   useEffect(() => {
-    fetch(`/api/admin/feedback/${id}`)
-      .then((r) => {
-        if (r.status === 401) { router.push("/admin/login"); return null; }
-        return r.json();
-      })
-      .then((d) => { if (d) setFeedback(d); });
-  }, [id, router]);
+    fetchThread();
+    const timer = setInterval(() => fetchThread(true), 4000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

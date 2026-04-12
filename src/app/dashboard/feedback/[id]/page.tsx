@@ -27,15 +27,25 @@ export default function UserFeedbackThreadPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const fetchThread = async () => {
+    const r = await fetch(`/api/feedback/${id}`);
+    if (r.status === 401) { router.push("/login"); return; }
+    if (!r.ok) { router.push("/dashboard"); return; }
+    const d = await r.json();
+    if (!d) return;
+    setFeedback((prev) => {
+      if (!prev) return d;
+      if (d.messages.length !== prev.messages.length) return d;
+      return prev;
+    });
+  };
+
   useEffect(() => {
-    fetch(`/api/feedback/${id}`)
-      .then((r) => {
-        if (r.status === 401) { router.push("/login"); return null; }
-        if (!r.ok) { router.push("/dashboard"); return null; }
-        return r.json();
-      })
-      .then((d) => { if (d) setFeedback(d); });
-  }, [id, router]);
+    fetchThread();
+    const timer = setInterval(() => fetchThread(), 4000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
