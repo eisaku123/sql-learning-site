@@ -8,9 +8,15 @@ import PremiumLessonCard from "@/components/PremiumLessonCard";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "レッスン一覧",
-  description: "SQL入門から中級まで全9レッスン。SELECT・WHERE・JOIN・GROUP BYなどを体系的に学べます。ブラウザ上で実際にSQLを書いて練習できます。",
+  title: "SQLレッスン・練習問題一覧【初級〜中級】",
+  description: "無料SQLレッスン全9コース一覧。SELECT・WHERE・JOIN・GROUP BY・サブクエリ・中間テーブルなど初心者から中級者まで体系的に学べるSQL練習問題サイト。ブラウザ上で実際にSQLを書いて実行できます。",
+  keywords: ["SQL練習問題", "SQLレッスン", "SQL一覧", "SQL学習", "SELECT文", "JOIN", "GROUP BY", "サブクエリ"],
   alternates: { canonical: "/lessons" },
+  openGraph: {
+    title: "SQLレッスン・練習問題一覧【初級〜中級】| SQLLearn",
+    description: "無料SQLレッスン全9コース一覧。SELECT・WHERE・JOIN・GROUP BY・サブクエリまで体系的に学べるSQL練習問題サイト。",
+    url: "https://www.sql-learning.net/lessons",
+  },
 };
 import LessonCard from "@/components/LessonCard";
 

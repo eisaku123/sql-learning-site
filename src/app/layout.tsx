@@ -13,11 +13,17 @@ import { version } from "../../package.json";
 
 export const metadata: Metadata = {
   title: {
-    default: "SQLLearn - ブラウザで学ぶSQL入門",
-    template: "%s | SQLLearn",
+    default: "SQL練習問題・学習サイト【無料】| ブラウザで学ぶSQL入門 - SQLLearn",
+    template: "%s | SQL練習問題 - SQLLearn",
   },
-  description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料の学習プラットフォーム。初級から中級まで全9レッスン・27問の練習問題を収録。",
-  keywords: ["SQL", "SQL学習", "SQL入門", "データベース", "プログラミング学習", "ブラウザ", "無料"],
+  description: "ブラウザ上でSQLを実行しながら学べる無料の練習問題サイト。SELECT・WHERE・JOIN・GROUP BY・サブクエリまで初級から中級まで全9レッスン・27問収録。インストール不要でSQL初心者でも今すぐ始められます。",
+  keywords: [
+    "SQL", "SQL練習問題", "SQL問題集", "SQL学習", "SQL入門", "SQL初心者",
+    "SQL勉強", "SQL勉強サイト", "SQL練習サイト", "SQLオンライン",
+    "SELECT文", "WHERE句", "JOIN", "GROUP BY", "サブクエリ",
+    "データベース", "データベース入門", "データベース学習",
+    "SQL無料", "SQL無料学習", "プログラミング学習",
+  ],
   metadataBase: new URL("https://www.sql-learning.net"),
   alternates: {
     canonical: "/",
@@ -27,13 +33,13 @@ export const metadata: Metadata = {
     locale: "ja_JP",
     url: "https://www.sql-learning.net",
     siteName: "SQLLearn",
-    title: "SQLLearn - ブラウザで学ぶSQL入門",
-    description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料の学習プラットフォーム。",
+    title: "SQL練習問題・学習サイト【無料】| ブラウザで学ぶSQL入門 - SQLLearn",
+    description: "ブラウザ上でSQLを実行しながら学べる無料の練習問題サイト。SELECT・WHERE・JOIN・GROUP BYを初級から中級まで全9レッスンで学習。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SQLLearn - ブラウザで学ぶSQL入門",
-    description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料の学習プラットフォーム。",
+    title: "SQL練習問題・学習サイト【無料】| ブラウザで学ぶSQL入門 - SQLLearn",
+    description: "ブラウザ上でSQLを実行しながら学べる無料の練習問題サイト。SELECT・WHERE・JOIN・GROUP BYを初級から中級まで全9レッスンで学習。",
   },
   robots: {
     index: true,
@@ -84,6 +90,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ja">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Course",
+              "name": "SQLLearn - SQL練習問題・学習コース",
+              "description": "ブラウザ上でSQLを実行しながら学べる無料の練習問題サイト。SELECT・WHERE・JOIN・GROUP BY・サブクエリまで初級から中級まで全9レッスン・27問収録。",
+              "url": "https://www.sql-learning.net",
+              "inLanguage": "ja",
+              "isAccessibleForFree": true,
+              "provider": {
+                "@type": "Organization",
+                "name": "SQLLearn",
+                "url": "https://www.sql-learning.net",
+              },
+              "teaches": ["SQL", "SELECT文", "WHERE句", "JOIN", "GROUP BY", "サブクエリ", "データベース"],
+              "educationalLevel": "初心者〜中級者",
+              "hasCourseInstance": {
+                "@type": "CourseInstance",
+                "courseMode": "online",
+                "inLanguage": "ja",
+              },
+            }),
+          }}
+        />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-38B8WTM9E7"
           strategy="afterInteractive"

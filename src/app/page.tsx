@@ -4,12 +4,12 @@ import Header from "@/components/Header";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "SQLLearn - ブラウザで学ぶSQL入門",
-  description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料のSQL学習サイト。SELECT・WHERE・JOIN・GROUP BYなど初級から中級まで全9レッスン・27問の練習問題を収録。",
+  title: "SQL練習問題・学習サイト【無料】| ブラウザで学ぶSQL入門 - SQLLearn",
+  description: "ブラウザ上でSQLを実行しながら学べる無料のSQL練習問題サイト。SELECT・WHERE・JOIN・GROUP BY・サブクエリまで初級から中級まで全9レッスン・27問収録。インストール不要でSQL初心者でも今すぐ始められます。",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "SQLLearn - ブラウザで学ぶSQL入門",
-    description: "インストール不要。ブラウザ上でSQLを実行しながら学べる無料のSQL学習サイト。初級から中級まで全9レッスン収録。",
+    title: "SQL練習問題・学習サイト【無料】| ブラウザで学ぶSQL入門 - SQLLearn",
+    description: "ブラウザ上でSQLを実行しながら学べる無料のSQL練習問題サイト。SELECT・WHERE・JOIN・GROUP BYを初級から中級まで全9レッスンで学習。",
     url: "https://www.sql-learning.net",
   },
 };
@@ -38,8 +38,26 @@ export default async function TopPage() {
     },
   ];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "SQLLearn",
+    "url": "https://www.sql-learning.net",
+    "description": "ブラウザ上でSQLを実行しながら学べる無料のSQL練習問題サイト。SELECT・WHERE・JOIN・GROUP BY・サブクエリまで初級から中級まで全9レッスン・27問収録。",
+    "inLanguage": "ja",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.sql-learning.net/lessons",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <main style={{ paddingTop: "60px" }}>
         {/* お知らせバナー */}
