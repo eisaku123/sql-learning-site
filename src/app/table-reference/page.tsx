@@ -3,83 +3,95 @@
 import { useState } from "react";
 
 const TABLE_LABELS: Record<string, string> = {
-  employees: "社員",
-  departments: "部署",
+  users: "ユーザー",
   products: "商品",
   orders: "注文",
+  order_details: "注文明細",
 };
 
 const TABLES = {
-  employees: {
-    label: "employees",
-    columns: ["id", "name", "department_id", "salary", "hire_date"],
+  users: {
+    label: "users",
+    columns: ["id", "name", "email", "city"],
     rows: [
-      [1, "田中 太郎", 1, 450000, "2020-04-01"],
-      [2, "鈴木 花子", 2, 520000, "2019-07-15"],
-      [3, "佐藤 次郎", 2, 480000, "2021-01-10"],
-      [4, "山田 美咲", 3, 380000, "2022-04-01"],
-      [5, "中村 健一", 1, 550000, "2018-10-01"],
-      [6, "小林 さくら", 4, 420000, "2020-09-01"],
-      [7, "加藤 雄一", 2, 600000, "2017-04-01"],
-      [8, "吉田 陽子", 5, 460000, "2021-07-01"],
-      [9, "渡辺 勇", 1, 390000, "2023-04-01"],
-      [10, "松本 智子", 3, 410000, "2019-04-01"],
-      [11, "井上 拓也", 2, 530000, "2020-01-15"],
-      [12, "木村 麻衣", 5, 440000, "2022-10-01"],
-      [13, "林 浩二", 4, 470000, "2018-07-01"],
-      [14, null, 1, null, null],
-      [15, null, 2, null, null],
-    ],
-  },
-  departments: {
-    label: "departments",
-    columns: ["id", "name", "location"],
-    rows: [
-      [1, "営業部", "東京"],
-      [2, "開発部", "大阪"],
-      [3, "人事部", "東京"],
-      [4, "経理部", "名古屋"],
-      [5, "マーケティング部", "東京"],
+      [1,  "田中 太郎",   "tanaka@example.com",    "東京"],
+      [2,  "鈴木 花子",   "suzuki@example.com",    "大阪"],
+      [3,  "佐藤 次郎",   "sato@example.com",      "東京"],
+      [4,  "山田 美咲",   "yamada@example.com",    "名古屋"],
+      [5,  "中村 健一",   "nakamura@example.com",  "東京"],
+      [6,  "小林 さくら", "kobayashi@example.com", "福岡"],
+      [7,  "加藤 雄一",   "kato@example.com",      "大阪"],
+      [8,  "吉田 陽子",   "yoshida@example.com",   "東京"],
+      [9,  "渡辺 勇",     "watanabe@example.com",  "名古屋"],
+      [10, "松本 智子",   "matsumoto@example.com", "大阪"],
+      [11, "井上 拓也",   "inoue@example.com",     "東京"],
+      [12, "木村 麻衣",   null,                    "福岡"],
+      [13, "林 浩二",     "hayashi@example.com",   "大阪"],
+      [14, "清水 理恵",   null,                    null],
+      [15, "山口 誠",     "yamaguchi@example.com", "東京"],
     ],
   },
   products: {
     label: "products",
     columns: ["id", "name", "category", "price", "stock"],
     rows: [
-      [1, "ノートPC", "パソコン", 120000, 50],
-      [2, "マウス", "周辺機器", 3500, 200],
-      [3, "キーボード", "周辺機器", 8000, 150],
-      [4, "モニター", "ディスプレイ", 45000, 30],
-      [5, "USBハブ", "周辺機器", 2500, 300],
-      [6, "デスクトップPC", "パソコン", 180000, 20],
-      [7, "ヘッドセット", "周辺機器", 12000, 80],
-      [8, "Webカメラ", "周辺機器", 7500, 60],
-      [9, "タブレット", "パソコン", 65000, null],
-      [10, "プリンター", "周辺機器", 25000, null],
+      [1,  "Laptop",   "PC",         120000, 50],
+      [2,  "Mouse",    "Accessory",  3500,   200],
+      [3,  "Keyboard", "Accessory",  8000,   150],
+      [4,  "Monitor",  "Display",    45000,  30],
+      [5,  "USB Hub",  "Accessory",  2500,   300],
+      [6,  "Desktop",  "PC",         180000, 20],
+      [7,  "Headset",  "Accessory",  12000,  80],
+      [8,  "Webcam",   "Accessory",  7500,   60],
+      [9,  "Tablet",   "PC",         65000,  null],
+      [10, "Printer",  "Peripheral", 25000,  null],
     ],
   },
   orders: {
     label: "orders",
-    columns: ["id", "product_id", "quantity", "order_date", "customer_name"],
+    columns: ["id", "user_id", "order_date", "status"],
     rows: [
-      [1, 1, 2, "2024-01-15", "株式会社ABC"],
-      [2, 2, 10, "2024-01-20", "田中商事"],
-      [3, 3, 5, "2024-02-01", "鈴木工業"],
-      [4, 1, 1, "2024-02-10", "山田商店"],
-      [5, 4, 3, "2024-02-15", "株式会社XYZ"],
-      [6, 5, 20, "2024-03-01", "佐藤商会"],
-      [7, 2, 15, "2024-03-10", "中村企業"],
-      [8, 7, 4, "2024-03-15", "小林商店"],
-      [9, 1, 3, "2024-04-01", "加藤株式会社"],
-      [10, 9, 2, "2024-04-10", "吉田商事"],
-      [11, 3, 8, "2024-04-20", "渡辺工業"],
-      [12, 6, 1, "2024-05-01", "松本商会"],
-      [13, 4, 2, "2024-05-10", "井上企業"],
-      [14, 8, 6, "2024-05-20", "木村商店"],
-      [15, 10, 3, "2024-06-01", "林商事"],
-      [16, 2, 3, "2023-11-15", "木村商事"],
-      [17, 4, 1, "2023-12-01", "青木工業"],
-      [18, 1, 2, "2023-08-20", "橋本商店"],
+      [1,  1,  "2024-01-15", "completed"],
+      [2,  2,  "2024-01-20", "completed"],
+      [3,  3,  "2024-02-01", "completed"],
+      [4,  1,  "2024-02-10", "completed"],
+      [5,  4,  "2024-02-15", "pending"],
+      [6,  5,  "2024-03-01", "completed"],
+      [7,  2,  "2024-03-10", "completed"],
+      [8,  6,  "2024-03-15", "cancelled"],
+      [9,  1,  "2024-04-01", "completed"],
+      [10, 7,  "2024-04-10", "pending"],
+      [11, 3,  "2024-04-20", "completed"],
+      [12, 8,  "2024-05-01", "completed"],
+      [13, 4,  "2024-05-10", "completed"],
+      [14, 9,  "2024-05-20", "pending"],
+      [15, 10, "2024-06-01", "completed"],
+    ],
+  },
+  order_details: {
+    label: "order_details",
+    columns: ["id", "order_id", "product_id", "quantity", "price"],
+    rows: [
+      [1,  1,  1, 2,  120000],
+      [2,  1,  2, 1,  3500],
+      [3,  2,  3, 3,  8000],
+      [4,  3,  4, 1,  45000],
+      [5,  4,  2, 5,  3500],
+      [6,  5,  1, 1,  120000],
+      [7,  5,  3, 2,  8000],
+      [8,  6,  5, 10, 2500],
+      [9,  7,  7, 2,  12000],
+      [10, 8,  2, 3,  3500],
+      [11, 9,  1, 1,  120000],
+      [12, 9,  4, 1,  45000],
+      [13, 10, 9, 1,  65000],
+      [14, 11, 3, 4,  8000],
+      [15, 12, 6, 1,  180000],
+      [16, 13, 4, 2,  45000],
+      [17, 14, 8, 3,  7500],
+      [18, 15, 10, 2, 25000],
+      [19, 6,  2, 5,  3500],
+      [20, 7,  1, 1,  120000],
     ],
   },
 } as const;
@@ -88,133 +100,166 @@ type TableKey = keyof typeof TABLES;
 type Tab = TableKey | "er";
 
 function ErDiagram() {
-  // テーブルボックスの定義
-  const tables = [
+  const rowH = 22;
+  const headerH = 30;
+  const boxW = 190;
+
+  // テーブル定義
+  const tbls = [
     {
-      name: "departments", label: "部署", x: 30, y: 30,
+      key: "users", label: "ユーザー", x: 20, y: 20,
       cols: [
-        { name: "id", note: "PK" },
-        { name: "name", note: "" },
-        { name: "location", note: "" },
+        { name: "id",    note: "PK" },
+        { name: "name",  note: "" },
+        { name: "email", note: "" },
+        { name: "city",  note: "" },
       ],
     },
     {
-      name: "employees", label: "社員", x: 320, y: 30,
+      key: "orders", label: "注文", x: 430, y: 20,
       cols: [
-        { name: "id", note: "PK" },
-        { name: "name", note: "" },
-        { name: "department_id", note: "FK" },
-        { name: "salary", note: "" },
-        { name: "hire_date", note: "" },
-      ],
-    },
-    {
-      name: "products", label: "商品", x: 30, y: 260,
-      cols: [
-        { name: "id", note: "PK" },
-        { name: "name", note: "" },
-        { name: "category", note: "" },
-        { name: "price", note: "" },
-        { name: "stock", note: "" },
-      ],
-    },
-    {
-      name: "orders", label: "注文", x: 320, y: 260,
-      cols: [
-        { name: "id", note: "PK" },
-        { name: "product_id", note: "FK" },
-        { name: "quantity", note: "" },
+        { name: "id",         note: "PK" },
+        { name: "user_id",    note: "FK" },
         { name: "order_date", note: "" },
-        { name: "customer_name", note: "" },
+        { name: "status",     note: "" },
+      ],
+    },
+    {
+      key: "order_details", label: "注文明細（中間テーブル）", x: 220, y: 230,
+      cols: [
+        { name: "id",         note: "PK" },
+        { name: "order_id",   note: "FK" },
+        { name: "product_id", note: "FK" },
+        { name: "quantity",   note: "" },
+        { name: "price",      note: "" },
+      ],
+    },
+    {
+      key: "products", label: "商品", x: 20, y: 370,
+      cols: [
+        { name: "id",       note: "PK" },
+        { name: "name",     note: "" },
+        { name: "category", note: "" },
+        { name: "price",    note: "" },
+        { name: "stock",    note: "" },
       ],
     },
   ];
 
-  const rowH = 22;
-  const headerH = 30;
-  const boxW = 200;
-
-  // departments: y=30, id row y = 30+30+11 = 71
-  // employees: y=30, department_id row (index 2) y = 30+30+2*22+11 = 115
-  // products: y=260, id row y = 260+30+11 = 301
-  // orders: y=260, product_id row (index 1) y = 260+30+1*22+11 = 323
+  // 各テーブルの特定カラムのy座標を計算
+  const rowY = (tblIdx: number, colIdx: number) =>
+    tbls[tblIdx].y + headerH + colIdx * rowH + rowH / 2;
+  const rowX = (tblIdx: number, side: "left" | "right") =>
+    side === "left" ? tbls[tblIdx].x : tbls[tblIdx].x + boxW;
 
   return (
     <div>
       <p style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.75rem" }}>
         テーブル間のリレーション（外部キー）を示しています
       </p>
-      <svg viewBox="0 0 600 470" style={{ width: "100%", maxWidth: "600px", display: "block" }}>
+      <svg viewBox="0 0 660 540" style={{ width: "100%", maxWidth: "660px", display: "block" }}>
         <defs>
-          <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
             <path d="M0,0 L0,6 L8,3 z" fill="#667eea" />
           </marker>
-          <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
             <path d="M0,0 L0,6 L8,3 z" fill="#34d399" />
+          </marker>
+          <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" />
           </marker>
         </defs>
 
-        {/* リレーション線: employees.department_id → departments.id */}
+        {/* orders.user_id → users.id */}
         <line
-          x1={320} y1={30 + headerH + rowH * 2 + rowH / 2}
-          x2={30 + boxW} y2={30 + headerH + rowH / 2}
+          x1={rowX(1, "left")} y1={rowY(1, 1)}
+          x2={rowX(0, "right")} y2={rowY(0, 0)}
           stroke="#667eea" strokeWidth="1.5" strokeDasharray="5,3"
-          markerEnd="url(#arrow-blue)"
+          markerEnd="url(#arr-blue)"
         />
-        <text x={242} y={108} fill="#667eea" fontSize="10" textAnchor="middle">N</text>
-        <text x={308} y={83} fill="#667eea" fontSize="10" textAnchor="middle">1</text>
+        <text x={390} y={rowY(1, 1) - 4} fill="#667eea" fontSize="9" textAnchor="middle">N</text>
+        <text x={248} y={rowY(0, 0) - 4} fill="#667eea" fontSize="9" textAnchor="middle">1</text>
 
-        {/* リレーション線: orders.product_id → products.id */}
+        {/* order_details.order_id → orders.id */}
         <line
-          x1={320} y1={260 + headerH + rowH + rowH / 2}
-          x2={30 + boxW} y2={260 + headerH + rowH / 2}
+          x1={rowX(2, "right")} y1={rowY(2, 1)}
+          x2={rowX(1, "left")} y2={rowY(1, 0)}
           stroke="#34d399" strokeWidth="1.5" strokeDasharray="5,3"
-          markerEnd="url(#arrow-green)"
+          markerEnd="url(#arr-green)"
         />
-        <text x={242} y={338} fill="#34d399" fontSize="10" textAnchor="middle">N</text>
-        <text x={308} y={316} fill="#34d399" fontSize="10" textAnchor="middle">1</text>
+        <text x={438} y={rowY(2, 1) - 4} fill="#34d399" fontSize="9" textAnchor="middle">N</text>
+        <text x={422} y={rowY(1, 0) + 12} fill="#34d399" fontSize="9" textAnchor="middle">1</text>
+
+        {/* order_details.product_id → products.id */}
+        <line
+          x1={rowX(2, "left")} y1={rowY(2, 2)}
+          x2={rowX(3, "right")} y2={rowY(3, 0)}
+          stroke="#a78bfa" strokeWidth="1.5" strokeDasharray="5,3"
+          markerEnd="url(#arr-purple)"
+        />
+        <text x={208} y={rowY(2, 2) - 4} fill="#a78bfa" fontSize="9" textAnchor="middle">N</text>
+        <text x={228} y={rowY(3, 0) - 4} fill="#a78bfa" fontSize="9" textAnchor="middle">1</text>
 
         {/* テーブルボックス */}
-        {tables.map((t) => {
+        {tbls.map((t, ti) => {
+          const isJunction = t.key === "order_details";
           return (
-            <g key={t.name}>
+            <g key={t.key}>
               {/* ヘッダー */}
-              <rect x={t.x} y={t.y} width={boxW} height={headerH} rx="4" ry="4"
-                fill="rgba(102,126,234,0.25)" stroke="rgba(102,126,234,0.6)" strokeWidth="1" />
-              <text x={t.x + boxW / 2} y={t.y + 19} fill="#e0e0f0" fontSize="12"
-                fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                {t.name}
-              </text>
-              <text x={t.x + boxW / 2} y={t.y + 19} fill="#8888aa" fontSize="10"
-                textAnchor="middle" fontFamily="sans-serif" dy="0">
+              <rect
+                x={t.x} y={t.y} width={boxW} height={headerH} rx="4" ry="4"
+                fill={isJunction ? "rgba(167,139,250,0.25)" : "rgba(102,126,234,0.2)"}
+                stroke={isJunction ? "rgba(167,139,250,0.6)" : "rgba(102,126,234,0.5)"}
+                strokeWidth="1"
+              />
+              <text
+                x={t.x + boxW / 2} y={t.y + 19}
+                fill="#e0e0f0" fontSize="11" fontWeight="bold"
+                textAnchor="middle" fontFamily="monospace"
+              >
+                {t.key}
               </text>
               {/* カラム行 */}
-              <rect x={t.x} y={t.y + headerH} width={boxW} height={t.cols.length * rowH}
-                fill="rgba(255,255,255,0.03)" stroke="rgba(102,126,234,0.3)" strokeWidth="1" />
+              <rect
+                x={t.x} y={t.y + headerH}
+                width={boxW} height={t.cols.length * rowH}
+                fill="rgba(255,255,255,0.02)"
+                stroke={isJunction ? "rgba(167,139,250,0.25)" : "rgba(102,126,234,0.25)"}
+                strokeWidth="1"
+              />
               {t.cols.map((col, i) => (
                 <g key={col.name}>
                   {i > 0 && (
-                    <line x1={t.x} y1={t.y + headerH + i * rowH}
+                    <line
+                      x1={t.x} y1={t.y + headerH + i * rowH}
                       x2={t.x + boxW} y2={t.y + headerH + i * rowH}
-                      stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                      stroke="rgba(255,255,255,0.05)" strokeWidth="1"
+                    />
                   )}
                   {col.note && (
-                    <text x={t.x + 8} y={t.y + headerH + i * rowH + 15}
+                    <text
+                      x={t.x + 8} y={t.y + headerH + i * rowH + 15}
                       fill={col.note === "PK" ? "#fbbf24" : "#34d399"}
-                      fontSize="9" fontFamily="monospace" fontWeight="bold">
+                      fontSize="9" fontFamily="monospace" fontWeight="bold"
+                    >
                       {col.note}
                     </text>
                   )}
-                  <text x={t.x + (col.note ? 32 : 10)} y={t.y + headerH + i * rowH + 15}
+                  <text
+                    x={t.x + (col.note ? 32 : 10)} y={t.y + headerH + i * rowH + 15}
                     fill={col.note === "FK" ? "#34d399" : "#c0c0d8"}
-                    fontSize="11" fontFamily="monospace">
+                    fontSize="11" fontFamily="monospace"
+                  >
                     {col.name}
                   </text>
                 </g>
               ))}
-              {/* テーブル名（日本語） */}
-              <text x={t.x + boxW + 6} y={t.y + headerH / 2 + 5}
-                fill="#8888aa" fontSize="10" fontFamily="sans-serif">
+              {/* 日本語ラベル */}
+              <text
+                x={t.x + boxW + 6} y={t.y + headerH / 2 + 5}
+                fill={isJunction ? "#a78bfa" : "#8888aa"}
+                fontSize="10" fontFamily="sans-serif"
+              >
                 （{t.label}）
               </text>
             </g>
@@ -223,19 +268,20 @@ function ErDiagram() {
       </svg>
 
       {/* 凡例 */}
-      <div style={{ display: "flex", gap: "1.25rem", marginTop: "0.75rem", fontSize: "0.75rem", color: "#8888aa" }}>
+      <div style={{ display: "flex", gap: "1.25rem", marginTop: "0.75rem", fontSize: "0.75rem", color: "#8888aa", flexWrap: "wrap" }}>
         <span><span style={{ color: "#fbbf24", fontWeight: 700 }}>PK</span> 主キー</span>
         <span><span style={{ color: "#34d399", fontWeight: 700 }}>FK</span> 外部キー</span>
-        <span style={{ color: "#667eea" }}>──── </span><span>employees → departments</span>
-        <span style={{ color: "#34d399" }}>──── </span><span>orders → products</span>
+        <span><span style={{ color: "#667eea" }}>────</span> orders → users</span>
+        <span><span style={{ color: "#34d399" }}>────</span> order_details → orders</span>
+        <span><span style={{ color: "#a78bfa" }}>────</span> order_details → products</span>
       </div>
     </div>
   );
 }
 
 export default function TableReferencePage() {
-  const [activeTab, setActiveTab] = useState<Tab>("employees");
-  const table = activeTab !== "er" ? TABLES[activeTab] : null;
+  const [activeTab, setActiveTab] = useState<Tab>("users");
+  const table = activeTab !== "er" ? TABLES[activeTab as TableKey] : null;
 
   return (
     <div
@@ -273,6 +319,7 @@ export default function TableReferencePage() {
           gap: "0.25rem",
           padding: "0.6rem 1.25rem 0",
           borderBottom: "1px solid rgba(255,255,255,0.08)",
+          flexWrap: "wrap",
         }}
       >
         {(Object.keys(TABLES) as TableKey[]).map((key) => (
