@@ -13,6 +13,7 @@ import LessonCompletionModal from "@/components/LessonCompletionModal";
 import LessonTour from "@/components/LessonTour";
 import GuestCompletionModal from "@/components/GuestCompletionModal";
 import type { SqlEditorHandle } from "@/components/SqlEditor";
+import SampleTableViewer from "@/components/SampleTableViewer";
 
 const SqlEditor = dynamic(() => import("@/components/SqlEditor"), { ssr: false });
 
@@ -29,6 +30,9 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [dbReady, setDbReady] = useState(false);
+  const [savedQuery, setSavedQuery] = useState("");
+  const [showExplanation, setShowExplanation] = useState(true);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
   const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? { result: null, error: null }, []);
@@ -38,6 +42,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
     sqlEditorRef.current?.resetDb();
     sqlEditorRef.current?.clearQuery();
     setLastResult(null);
+    setSavedQuery("");
   }, [activeExerciseIdx]);
 
   useEffect(() => {
@@ -87,6 +92,14 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
       if (prev.includes(exerciseId)) return prev;
       return [...prev, exerciseId];
     });
+  }, []);
+
+  // 解説パネル切り替え：クエリ保存 + DB再初期化フラグリセット
+  const handleToggleExplanation = useCallback(() => {
+    const q = sqlEditorRef.current?.getCurrentQuery() ?? "";
+    setSavedQuery(q);
+    setDbReady(false);
+    setShowExplanation((v) => !v);
   }, []);
 
   if (!lesson) {
@@ -185,8 +198,6 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const levelLabel = lesson.level === "beginner" ? "初級" : "中級";
   const levelColor = lesson.level === "beginner" ? "#34d399" : "#667eea";
 
-  const [showExplanation, setShowExplanation] = useState(true);
-
   return (
     <>
       {showFireworks && (
@@ -267,6 +278,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
             minHeight: "calc(100vh - 130px)",
           }}
         >
+          {/* 左パネル：解説表示時は解説テキスト、非表示時は練習問題＋SQLエディタ */}
           {showExplanation ? (
             <div
               id="tour-lesson-content"
@@ -319,6 +331,22 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
+              <section>
+                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+                  SQL エディタ
+                </h3>
+                <SqlEditor
+                  ref={sqlEditorRef as any}
+                  initialQuery={savedQuery}
+                  onResult={(columns, rows) => setLastResult({ columns, rows })}
+                  onResultError={() => setLastResult(null)}
+                  onReady={() => setDbReady(true)}
+                  showExplanation={showExplanation}
+                  onToggleExplanation={handleToggleExplanation}
+                  showTableButton={false}
+                  hideResults
+                />
+              </section>
               {session?.user && lessonCompleted && (
                 <div
                   style={{
@@ -338,16 +366,17 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
             </div>
           )}
 
-          <div
-            style={{
-              padding: "2rem",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.5rem",
-              overflowY: "auto",
-            }}
-          >
-            {showExplanation && (
+          {/* 右パネル：解説表示時は練習問題＋SQLエディタ、非表示時はサンプルテーブル */}
+          {showExplanation ? (
+            <div
+              style={{
+                padding: "2rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.5rem",
+                overflowY: "auto",
+              }}
+            >
               <section id="tour-exercise-panel">
                 <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
                   練習問題
@@ -364,40 +393,60 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   onChangeIdx={setActiveExerciseIdx}
                 />
               </section>
-            )}
-
-            <section>
-              <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-                SQL エディタ
+              <section>
+                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+                  SQL エディタ
+                </h3>
+                <SqlEditor
+                  ref={sqlEditorRef as any}
+                  initialQuery={savedQuery}
+                  onResult={(columns, rows) => setLastResult({ columns, rows })}
+                  onResultError={() => setLastResult(null)}
+                  onReady={() => setDbReady(true)}
+                  showExplanation={showExplanation}
+                  onToggleExplanation={handleToggleExplanation}
+                  showTableButton
+                />
+              </section>
+              {session?.user && lessonCompleted && (
+                <div
+                  style={{
+                    background: "rgba(52,211,153,0.1)",
+                    border: "1px solid rgba(52,211,153,0.4)",
+                    borderRadius: "10px",
+                    color: "#34d399",
+                    padding: "0.75rem",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    textAlign: "center",
+                  }}
+                >
+                  ✅ レッスン完了済み
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: "1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                overflow: "hidden",
+              }}
+            >
+              <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>
+                サンプルテーブル
               </h3>
-              <SqlEditor
-                ref={sqlEditorRef as any}
-                initialQuery=""
-                onResult={(columns, rows) => setLastResult({ columns, rows })}
-                onResultError={() => setLastResult(null)}
-                showExplanation={showExplanation}
-                onToggleExplanation={() => setShowExplanation((v) => !v)}
-                showTableButton
-              />
-            </section>
-
-            {showExplanation && session?.user && lessonCompleted && (
-              <div
-                style={{
-                  background: "rgba(52,211,153,0.1)",
-                  border: "1px solid rgba(52,211,153,0.4)",
-                  borderRadius: "10px",
-                  color: "#34d399",
-                  padding: "0.75rem",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
-                  textAlign: "center",
-                }}
-              >
-                ✅ レッスン完了済み
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <SampleTableViewer
+                  sqlEditorRef={sqlEditorRef}
+                  lastResult={lastResult}
+                  dbReady={dbReady}
+                />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </main>
       <TableReferenceModal />

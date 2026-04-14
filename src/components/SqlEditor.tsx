@@ -13,19 +13,23 @@ export interface SqlEditorHandle {
   resetDb: () => void;
   runCurrentSql: () => { result: { columns: string[]; rows: (string | number | null)[][] } | null; error: string | null };
   clearQuery: () => void;
+  queryTable: (tableName: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
+  getCurrentQuery: () => string;
 }
 
 interface SqlEditorProps {
   initialQuery?: string;
   onResult?: (columns: string[], rows: (string | number | null)[][]) => void;
   onResultError?: () => void;
+  onReady?: () => void;
   showExplanation?: boolean;
   onToggleExplanation?: () => void;
   showTableButton?: boolean;
+  hideResults?: boolean;
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "", onResult, onResultError, showExplanation, onToggleExplanation, showTableButton },
+  { initialQuery = "", onResult, onResultError, onReady, showExplanation, onToggleExplanation, showTableButton, hideResults = false },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
@@ -35,6 +39,8 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "running">("loading");
   const dbRef = useRef<unknown>(null);
   const sqlConstructorRef = useRef<{ Database: new () => { exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } } | null>(null);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
 
   // sql.js をロード
   useEffect(() => {
@@ -53,6 +59,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         db.exec(SAMPLE_DB_SQL);
         dbRef.current = db;
         setStatus("ready");
+        onReadyRef.current?.();
       } catch (e) {
         if (!cancelled) {
           setError("読み込みエラー: " + (e as Error).message);
@@ -122,6 +129,24 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         return { result: null, error: translateError((e as Error).message) };
       }
     },
+    // サンプルテーブルを全件取得（SampleTableViewer用）
+    queryTable: (tableName: string) => {
+      if (!dbRef.current) return null;
+      try {
+        const db = dbRef.current as {
+          exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[];
+        };
+        const res = db.exec(`SELECT * FROM "${tableName}"`);
+        if (res.length > 0) {
+          return { columns: res[0].columns ?? [], rows: res[0].values ?? [] };
+        }
+        return { columns: [], rows: [] };
+      } catch {
+        return null;
+      }
+    },
+    // 現在のエディタ入力テキストを返す（パネル切り替え時の保存用）
+    getCurrentQuery: () => queryRef.current,
   }));
 
   const runQuery = useCallback(() => {
@@ -357,8 +382,8 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         </div>
       )}
 
-      {/* 結果テーブル */}
-      {results.map((result, i) => (
+      {/* 結果テーブル（hideResults=true のときは右パネルのタブに表示するため非表示） */}
+      {!hideResults && results.map((result, i) => (
         <div key={i} style={{ overflowX: "auto" }}>
           <div style={{ color: "#8888aa", fontSize: "0.75rem", marginBottom: "0.4rem" }}>
             {result.rows.length} 件
@@ -414,7 +439,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         </div>
       ))}
 
-      {results.length === 0 && !error && status === "ready" && (
+      {!hideResults && results.length === 0 && !error && status === "ready" && (
         <div
           style={{ color: "#546e7a", fontSize: "0.85rem", textAlign: "center", padding: "1rem" }}
         >
