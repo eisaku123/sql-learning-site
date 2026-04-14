@@ -159,6 +159,30 @@ npm run dev
 
 ## 開発履歴
 
+### v2.2.x（2026-04-15） ブランチ: feature/right-panel-table-tabs
+
+#### 右パネル タブ式サンプルテーブルビューア
+
+**新コンポーネント `SampleTableViewer`**
+- 右パネルにタブ切り替え式のサンプルテーブルを常時表示
+- タブ: `👤 users` / `📦 products` / `🛒 orders` / `🔗 order_products`（全件表示）
+- SQL実行後に `⚡ 実行結果` タブが右端に出現・自動選択
+- 問題切り替え時は実行結果タブをリセットして `users` タブへ戻る
+- `SqlEditorHandle.queryTable(tableName)` で現在のDBからデータ取得
+
+**レイアウト変更（`LessonPageClient`）**
+- `showExplanation = false`（解説非表示）:
+  - 左パネル: 練習問題 + SQLエディタ（`hideResults=true`で結果を非表示）
+  - 右パネル: SampleTableViewer（サンプルテーブル + 実行結果タブ）
+- `showExplanation = true`（解説表示）: 現在と同じ（左＝解説、右＝練習問題＋SQLエディタ）
+
+**`SqlEditor` 拡張**
+- `hideResults?: boolean` — エディタ内結果テーブルを非表示（右パネルに表示するため）
+- `onReady?: () => void` — DB初期化完了時のコールバック
+- `queryTable(tableName)` — テーブル全件取得（SampleTableViewer用）
+- `getCurrentQuery()` — 現在のクエリ文字列取得（解説トグル時の保存用）
+- 解説トグル時にクエリ文字列を保存し、SQLエディタ再マウント後に復元
+
 ### v2.1.x（2026-04-05）
 
 #### ナビゲーション整理
