@@ -327,6 +327,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   lastResult={lastResult}
                   runAnswerSql={runAnswerSql}
                   runCurrentUserSql={runCurrentUserSql}
+                  onUserResult={(columns, rows) => setLastResult({ columns, rows })}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />
@@ -389,6 +390,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                   lastResult={lastResult}
                   runAnswerSql={runAnswerSql}
                   runCurrentUserSql={runCurrentUserSql}
+                  onUserResult={(columns, rows) => setLastResult({ columns, rows })}
                   activeIdx={activeExerciseIdx}
                   onChangeIdx={setActiveExerciseIdx}
                 />

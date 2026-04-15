@@ -13,6 +13,7 @@ interface ExercisePanelProps {
   lastResult: SqlResult | null;
   runAnswerSql: (sql: string) => SqlResult | null;
   runCurrentUserSql: () => { result: SqlResult | null; error: string | null };
+  onUserResult?: (columns: string[], rows: (string | number | null)[][]) => void;
   activeIdx: number;
   onChangeIdx: (idx: number) => void;
 }
@@ -25,6 +26,7 @@ export default function ExercisePanel({
   lastResult,
   runAnswerSql,
   runCurrentUserSql,
+  onUserResult,
   activeIdx,
   onChangeIdx,
 }: ExercisePanelProps) {
@@ -54,6 +56,8 @@ export default function ExercisePanel({
         return;
       }
       userResult = result;
+      // 自動実行結果を親に伝えてサンプルテーブルの実行結果タブに表示
+      onUserResult?.(userResult.columns, userResult.rows);
     }
 
     setChecking(true);
