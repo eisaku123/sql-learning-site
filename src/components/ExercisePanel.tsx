@@ -49,23 +49,20 @@ export default function ExercisePanel({
   }, [lastResult]);
 
   const handleCheck = async () => {
-    // 未実行の場合は自動でユーザーのSQLを実行してから判定
-    let userResult = lastResult;
-    if (!userResult) {
-      const { result, error } = runCurrentUserSql();
-      if (error) {
-        setFeedback({ correct: false, message: `SQL エラー: ${error}` });
-        return;
-      }
-      if (!result) {
-        setFeedback({ correct: false, message: "SQLを入力してから答え合わせしてください" });
-        return;
-      }
-      userResult = result;
-      // 自動実行結果を親に伝えてサンプルテーブルの実行結果タブに表示（feedbackはクリアしない）
-      skipFeedbackClear.current = true;
-      onUserResult?.(userResult.columns, userResult.rows);
+    // 常に現在のエディタ内容で実行（lastResultが古い場合も最新クエリで判定するため）
+    const { result, error } = runCurrentUserSql();
+    if (error) {
+      setFeedback({ correct: false, message: `SQL エラー: ${error}` });
+      return;
     }
+    if (!result) {
+      setFeedback({ correct: false, message: "SQLを入力してから答え合わせしてください" });
+      return;
+    }
+    const userResult = result;
+    // 実行結果を親に伝えてサンプルテーブルの実行結果タブに表示（feedbackはクリアしない）
+    skipFeedbackClear.current = true;
+    onUserResult?.(userResult.columns, userResult.rows);
 
     setChecking(true);
     try {
