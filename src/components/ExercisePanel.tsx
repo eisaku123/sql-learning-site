@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Exercise } from "@/types";
 
 type SqlResult = { columns: string[]; rows: (string | number | null)[][] };
@@ -34,11 +34,17 @@ export default function ExercisePanel({
   const [showAnswer, setShowAnswer] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
   const [checking, setChecking] = useState(false);
+  // 答え合わせ内のonUserResult呼び出しによるlastResult変化でfeedbackをクリアしないためのフラグ
+  const skipFeedbackClear = useRef(false);
 
   const exercise = exercises[activeIdx];
   const isSolved = solvedIds.includes(exercise.id);
 
   useEffect(() => {
+    if (skipFeedbackClear.current) {
+      skipFeedbackClear.current = false;
+      return;
+    }
     setFeedback(null);
   }, [lastResult]);
 
@@ -56,7 +62,8 @@ export default function ExercisePanel({
         return;
       }
       userResult = result;
-      // 自動実行結果を親に伝えてサンプルテーブルの実行結果タブに表示
+      // 自動実行結果を親に伝えてサンプルテーブルの実行結果タブに表示（feedbackはクリアしない）
+      skipFeedbackClear.current = true;
       onUserResult?.(userResult.columns, userResult.rows);
     }
 
