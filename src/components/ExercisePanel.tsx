@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Exercise } from "@/types";
 
 type SqlResult = { columns: string[]; rows: (string | number | null)[][] };
@@ -13,6 +13,7 @@ interface ExercisePanelProps {
   lastResult: SqlResult | null;
   runAnswerSql: (sql: string) => SqlResult | null;
   runCurrentUserSql: () => { result: SqlResult | null; error: string | null };
+  onUserResult?: (columns: string[], rows: (string | number | null)[][]) => void;
   activeIdx: number;
   onChangeIdx: (idx: number) => void;
 }
@@ -25,6 +26,7 @@ export default function ExercisePanel({
   lastResult,
   runAnswerSql,
   runCurrentUserSql,
+  onUserResult,
   activeIdx,
   onChangeIdx,
 }: ExercisePanelProps) {
@@ -32,29 +34,35 @@ export default function ExercisePanel({
   const [showAnswer, setShowAnswer] = useState(false);
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
   const [checking, setChecking] = useState(false);
+  // 答え合わせ内のonUserResult呼び出しによるlastResult変化でfeedbackをクリアしないためのフラグ
+  const skipFeedbackClear = useRef(false);
 
   const exercise = exercises[activeIdx];
   const isSolved = solvedIds.includes(exercise.id);
 
   useEffect(() => {
+    if (skipFeedbackClear.current) {
+      skipFeedbackClear.current = false;
+      return;
+    }
     setFeedback(null);
   }, [lastResult]);
 
   const handleCheck = async () => {
-    // 未実行の場合は自動でユーザーのSQLを実行してから判定
-    let userResult = lastResult;
-    if (!userResult) {
-      const { result, error } = runCurrentUserSql();
-      if (error) {
-        setFeedback({ correct: false, message: `SQL エラー: ${error}` });
-        return;
-      }
-      if (!result) {
-        setFeedback({ correct: false, message: "SQLを入力してから答え合わせしてください" });
-        return;
-      }
-      userResult = result;
+    // 常に現在のエディタ内容で実行（lastResultが古い場合も最新クエリで判定するため）
+    const { result, error } = runCurrentUserSql();
+    if (error) {
+      setFeedback({ correct: false, message: `SQL エラー: ${error}` });
+      return;
     }
+    if (!result) {
+      setFeedback({ correct: false, message: "SQLを入力してから答え合わせしてください" });
+      return;
+    }
+    const userResult = result;
+    // 実行結果を親に伝えてサンプルテーブルの実行結果タブに表示（feedbackはクリアしない）
+    skipFeedbackClear.current = true;
+    onUserResult?.(userResult.columns, userResult.rows);
 
     setChecking(true);
     try {
@@ -167,7 +175,7 @@ export default function ExercisePanel({
             </span>
           )}
         </h4>
-        <p style={{ color: "#c0c0d8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+        <p style={{ color: "#c0c0d8", fontSize: "1rem", lineHeight: 1.7 }}>
           {exercise.question}
         </p>
       </div>
@@ -274,7 +282,7 @@ export default function ExercisePanel({
             style={{
               color: "#82aaff",
               fontFamily: "monospace",
-              fontSize: "0.85rem",
+              fontSize: "1rem",
               whiteSpace: "pre-wrap",
             }}
           >

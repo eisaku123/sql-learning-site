@@ -16,11 +16,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [userCount, setUserCount] = useState(0);
 
-  // ページ遷移完了時にスピナーを消す
+  // ページ遷移完了時にスピナーを消す＆各種件数を再取得
   useEffect(() => {
     setLoading(false);
   }, [pathname]);
+
+  // 件数を取得（初回 + 30秒ごとに更新）
+  useEffect(() => {
+    const fetchCounts = () => {
+      fetch("/api/admin/feedback/count")
+        .then((r) => r.json())
+        .then((d) => { if (typeof d.count === "number") setUnreadCount(d.count); })
+        .catch(() => {});
+      fetch("/api/admin/users/count")
+        .then((r) => r.json())
+        .then((d) => { if (typeof d.count === "number") setUserCount(d.count); })
+        .catch(() => {});
+    };
+    fetchCounts();
+    const timer = setInterval(fetchCounts, 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (pathname === "/admin/login") return <>{children}</>;
 
@@ -99,6 +118,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav style={{ flex: 1, padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
           {navItems.map((item) => {
             const active = pathname === item.href;
+            const isFeedback = item.href === "/admin/feedback";
+            const isUsers = item.href === "/admin/users";
+            const badgeCount = isFeedback ? unreadCount : isUsers ? userCount : 0;
+            const showBadge = badgeCount > 0;
             return (
               <Link
                 key={item.href}
@@ -118,7 +141,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }}
               >
                 <span>{item.icon}</span>
-                {item.label}
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {showBadge && (
+                  <span
+                    style={{
+                      background: "#34d399",
+                      color: "#0a0a1a",
+                      borderRadius: "20px",
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      padding: "0.1rem 0.45rem",
+                      minWidth: "1.4rem",
+                      textAlign: "center",
+                      lineHeight: 1.6,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}
