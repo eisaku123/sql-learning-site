@@ -110,7 +110,7 @@ Next.js 16 App Router + Prisma 7 + PostgreSQL（Neon）+ sql.js（WebAssembly）
 | `TableReferenceModal` | テーブル参照ボタン（押すと `/table-reference` をポップアップウィンドウで開く） |
 | `Header` | ナビゲーションヘッダー（ログイン状態に応じて表示切替）。進捗リンクは削除済み |
 | `LessonCard` | レッスン一覧カード（中級は未ログイン時に🔒バッジ表示） |
-| `LessonTour` | driver.js を使った初回訪問ガイドツアー（9ステップ）。`localStorage` の `lesson_tour_done` で管理 |
+| `LessonTour` | driver.js を使った初回訪問ガイドツアー（7ステップ）。`localStorage` の `lesson_tour_done` で管理 |
 
 ### テーブル参照ポップアップ（`/table-reference`）
 
@@ -159,7 +159,22 @@ npm run dev
 
 ## 開発履歴
 
-### v2.2.x（2026-04-15） ブランチ: feature/right-panel-table-tabs
+### v2.2.x（2026-04-16） ブランチ: feature/right-panel-table-tabs
+
+#### レイアウト刷新（案A発展版）
+
+**初期表示を練習モードに変更**
+- `showExplanation` デフォルトを `true` → `false` に変更（両レッスンページ）
+- 解説はレッスンヘッダー右端の「📖 解説を読む」ボタン（`id="tour-toggle-explanation"`）でアコーディオン展開
+- アコーディオンに「参考資料」バッジを表示
+- 2カラムグリッドを常時固定：左=練習問題＋SQLエディタ ／ 右=SampleTableViewer
+- SQLエディタが常時左パネルに固定（解説開閉でも再マウントされない）
+- 不要になった `savedQuery` / `setDbReady(false)` リセット / `showExplanation` & `onToggleExplanation` propsを削除
+- 適用範囲：`/lessons/[slug]`（LessonPageClient.tsx）と `/premium/lessons/[slug]`（page.tsx）
+
+**UI削除**
+- セクションラベル「練習問題（〇問）」「SQL エディタ」「サンプルテーブル」を両ページから削除
+- 「✅ レッスン完了済み」バナーを両ページから削除
 
 #### 右パネル タブ式サンプルテーブルビューア
 
@@ -169,19 +184,35 @@ npm run dev
 - SQL実行後に `⚡ 実行結果` タブが右端に出現・自動選択
 - 問題切り替え時は実行結果タブをリセットして `users` タブへ戻る
 - `SqlEditorHandle.queryTable(tableName)` で現在のDBからデータ取得
+- 奇数行に `rgba(255,255,255,0.035)` のゼブラストライプを追加
 
-**レイアウト変更（`LessonPageClient`）**
-- `showExplanation = false`（解説非表示）:
-  - 左パネル: 練習問題 + SQLエディタ（`hideResults=true`で結果を非表示）
-  - 右パネル: SampleTableViewer（サンプルテーブル + 実行結果タブ）
-- `showExplanation = true`（解説表示）: 現在と同じ（左＝解説、右＝練習問題＋SQLエディタ）
+#### 文字サイズ改善
+- 問題文 `0.9rem → 1rem`、解答コード `0.85rem → 1rem`（ExercisePanel）
+- SQLエディタ入力エリア `0.9rem → 1rem`（SqlEditor）
+- サンプルテーブル: タブ `0.78→0.85rem`、テーブル `0.78→0.88rem`、padding拡大
+
+#### SQLエディタ キーワードボタン（D2案）
+- エディタボックス内に3行のボタンエリアを追加（`insertText` 関数でカーソル位置に挿入）
+  - **行1**：▶実行 ｜ ✕クリア ｜ ABC/abc トグル（キーワード表示文字と連動）｜ キーワード13語
+  - **行2**：テーブル名挿入ボタン（黄）— users / products / orders / order_products
+  - **行3**：カラム絞り込みタブ（グレー、挿入しない）＋カラム名挿入ボタン（緑）
+- ABC/abc 切り替えでボタンの文字も `SELECT ↔ select` と連動
+
+#### オンボーディングツアー更新
+- 8ステップ → 7ステップに変更
+- ①解説パネルの紹介を削除、①練習問題から開始
+- ⑦テーブルボタン → ⑥サンプルテーブルビューア（`#tour-table-viewer`）
+- ⑧解説トグル → ⑦解説を読むボタン（ヘッダー右端）
+
+#### デプロイ前に削除が必要なファイル
+- `concept-mockup.html` / `concept-mockup-a2.html` / `concept-mockup-keywords.html` / `concept-mockup-keywords2.html` / `concept-mockup-keywords3.html`
 
 **`SqlEditor` 拡張**
 - `hideResults?: boolean` — エディタ内結果テーブルを非表示（右パネルに表示するため）
 - `onReady?: () => void` — DB初期化完了時のコールバック
 - `queryTable(tableName)` — テーブル全件取得（SampleTableViewer用）
-- `getCurrentQuery()` — 現在のクエリ文字列取得（解説トグル時の保存用）
-- 解説トグル時にクエリ文字列を保存し、SQLエディタ再マウント後に復元
+- `getCurrentQuery()` — 現在のクエリ文字列取得
+- `isUpper` / `colTable` state でキーワードボタンの大小文字とカラム絞り込みを管理
 
 ### v2.1.x（2026-04-05）
 

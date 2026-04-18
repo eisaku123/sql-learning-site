@@ -15,6 +15,7 @@ export interface SqlEditorHandle {
   clearQuery: () => void;
   queryTable: (tableName: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
   getCurrentQuery: () => string;
+  focusEditor: () => void;
 }
 
 interface SqlEditorProps {
@@ -22,14 +23,12 @@ interface SqlEditorProps {
   onResult?: (columns: string[], rows: (string | number | null)[][]) => void;
   onResultError?: () => void;
   onReady?: () => void;
-  showExplanation?: boolean;
-  onToggleExplanation?: () => void;
   showTableButton?: boolean;
   hideResults?: boolean;
 }
 
 const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor(
-  { initialQuery = "", onResult, onResultError, onReady, showExplanation, onToggleExplanation, showTableButton, hideResults = false },
+  { initialQuery = "", onResult, onResultError, onReady, showTableButton, hideResults = false },
   ref
 ) {
   const [query, setQuery] = useState(initialQuery);
@@ -37,10 +36,41 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   const [results, setResults] = useState<QueryResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "running">("loading");
+  const [isUpper, setIsUpper] = useState(true);
+  const [colTable, setColTable] = useState<"users" | "products" | "orders" | "order_products">("users");
   const dbRef = useRef<unknown>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sqlConstructorRef = useRef<{ Database: new () => { exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } } | null>(null);
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+
+  const TABLE_COLS: Record<string, string[]> = {
+    users:          ["id", "name", "email", "city"],
+    products:       ["id", "name", "category", "price", "stock"],
+    orders:         ["id", "user_id", "order_date", "status"],
+    order_products: ["id", "order_id", "product_id", "quantity", "price"],
+  };
+
+  const KEYWORDS = [
+    "SELECT ", "FROM ", "WHERE ", "AND ", "OR ",
+    "ORDER BY ", "GROUP BY ", "HAVING ", "LIMIT ",
+    "JOIN ", "LEFT JOIN ", "IS NULL", "LIKE ",
+  ];
+
+  // カーソル位置にテキストを挿入
+  const insertText = useCallback((text: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart ?? query.length;
+    const end = ta.selectionEnd ?? query.length;
+    const newValue = query.substring(0, start) + text + query.substring(end);
+    setQuery(newValue);
+    queryRef.current = newValue;
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(start + text.length, start + text.length);
+    });
+  }, [query]);
 
   // sql.js をロード
   useEffect(() => {
@@ -147,6 +177,8 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
     },
     // 現在のエディタ入力テキストを返す（パネル切り替え時の保存用）
     getCurrentQuery: () => queryRef.current,
+    // テキストエリアにフォーカスを当てる（再レンダリング後に実行）
+    focusEditor: () => requestAnimationFrame(() => textareaRef.current?.focus()),
   }));
 
   const runQuery = useCallback(() => {
@@ -255,6 +287,7 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
         </div>
         <textarea
           id="tour-sql-editor"
+          ref={textareaRef}
           value={query}
           onChange={(e) => { setQuery(e.target.value); queryRef.current = e.target.value; }}
           onKeyDown={handleKeyDown}
@@ -269,97 +302,241 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
             outline: "none",
             color: isLoading ? "#546e7a" : "#e0e0f0",
             fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
-            fontSize: "0.9rem",
+            fontSize: "1rem",
             lineHeight: 1.6,
             resize: "vertical",
           }}
         />
-      </div>
 
-      {/* 実行ボタン・クリアボタン */}
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-        <button
-          id="tour-run-button"
-          onClick={runQuery}
-          disabled={isLoading || isRunning}
+        {/* ショートカットボタンエリア */}
+        <div id="tour-sql-buttons">
+
+        {/* 行1: 実行・クリア ｜ 大小文字トグル ｜ キーワード */}
+        <div
           style={{
-            background:
-              isLoading || isRunning
-                ? "rgba(102,126,234,0.2)"
-                : "linear-gradient(135deg, #667eea, #764ba2)",
-            color: isLoading || isRunning ? "#8888aa" : "#fff",
-            border: "none",
-            borderRadius: "8px",
-            padding: "0.6rem 1.5rem",
-            cursor: isLoading || isRunning ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            fontSize: "0.9rem",
-            transition: "all 0.2s",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            padding: "0.5rem 0.75rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.38rem",
+            flexWrap: "wrap",
+            background: "rgba(255,255,255,0.01)",
           }}
         >
-          {isLoading ? "⏳ 読み込み中..." : isRunning ? "⚙️ 実行中..." : "▶ 実行"}
-        </button>
-        <button
-          onClick={() => {
-            setQuery("");
-            setResults([]);
-            setError(null);
-          }}
-          disabled={isLoading || isRunning}
+          <button
+            id="tour-run-button"
+            onClick={runQuery}
+            disabled={isLoading || isRunning}
+            style={{
+              background: isLoading || isRunning ? "rgba(102,126,234,0.2)" : "linear-gradient(135deg,#667eea,#764ba2)",
+              color: isLoading || isRunning ? "#8888aa" : "#fff",
+              border: "none", borderRadius: "7px",
+              padding: "0.42rem 1rem",
+              cursor: isLoading || isRunning ? "not-allowed" : "pointer",
+              fontWeight: 600, fontSize: "0.85rem",
+              transition: "all 0.2s", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            {isLoading ? "⏳ 読み込み中..." : isRunning ? "⚙️ 実行中..." : "▶ 実行"}
+          </button>
+          <button
+            onClick={() => { setQuery(""); queryRef.current = ""; setResults([]); setError(null); }}
+            disabled={isLoading || isRunning}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              color: isLoading || isRunning ? "#546e7a" : "#8888aa",
+              border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px",
+              padding: "0.42rem 0.8rem",
+              cursor: isLoading || isRunning ? "not-allowed" : "pointer",
+              fontWeight: 600, fontSize: "0.85rem", flexShrink: 0,
+            }}
+          >
+            ✕ クリア
+          </button>
+          {showTableButton && (
+            <button
+              id="tour-table-button"
+              onClick={() => window.open("/table-reference", "table-reference", "width=820,height=560,resizable=yes,scrollbars=yes")}
+              style={{
+                background: "rgba(255,255,255,0.04)", color: "#8888aa",
+                border: "1px solid rgba(255,255,255,0.1)", borderRadius: "7px",
+                padding: "0.42rem 0.8rem", cursor: "pointer",
+                fontWeight: 600, fontSize: "0.85rem", whiteSpace: "nowrap", flexShrink: 0,
+              }}
+            >
+              📋 テーブル
+            </button>
+          )}
+          {/* 区切り */}
+          <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)", flexShrink: 0, margin: "0 0.05rem" }} />
+          {/* 大小文字トグル */}
+          <div style={{ display: "flex", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "7px", overflow: "hidden", flexShrink: 0 }}>
+            {(["ABC", "abc"] as const).map((label) => {
+              const active = label === "ABC" ? isUpper : !isUpper;
+              return (
+                <button
+                  key={label}
+                  onClick={() => setIsUpper(label === "ABC")}
+                  style={{
+                    padding: "0.3rem 0.65rem", fontSize: "0.75rem", fontWeight: 700,
+                    cursor: "pointer", border: "none",
+                    fontFamily: "'Fira Code','Consolas',monospace",
+                    background: active ? "rgba(102,126,234,0.3)" : "transparent",
+                    color: active ? "#c0cfff" : "#546e7a",
+                    transition: "all 0.12s",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {/* 区切り */}
+          <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)", flexShrink: 0, margin: "0 0.05rem" }} />
+          {/* キーワードボタン */}
+          {KEYWORDS.map((kw) => (
+            <button
+              key={kw}
+              onClick={() => insertText(isUpper ? kw : kw.toLowerCase())}
+              style={{
+                background: "rgba(102,126,234,0.08)",
+                border: "1px solid rgba(102,126,234,0.25)",
+                borderRadius: "6px", color: "#a0b4f8",
+                padding: "0.28rem 0.58rem", fontSize: "0.78rem",
+                fontFamily: "'Fira Code','Consolas',monospace",
+                fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.12s", flexShrink: 0,
+              }}
+            >
+              {isUpper ? kw.trim() : kw.trim().toLowerCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* 行2: テーブル名挿入（黄） */}
+        <div
           style={{
-            background: "rgba(255,255,255,0.05)",
-            color: isLoading || isRunning ? "#546e7a" : "#8888aa",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "8px",
-            padding: "0.6rem 1rem",
-            cursor: isLoading || isRunning ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            fontSize: "0.9rem",
-            transition: "all 0.2s",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "0.45rem 0.75rem",
+            display: "flex", alignItems: "center", gap: "0.38rem", flexWrap: "wrap",
+            background: "rgba(255,255,255,0.005)",
           }}
         >
-          ✕ クリア
-        </button>
-        {onToggleExplanation && (
-          <button
-            id="tour-toggle-explanation"
-            onClick={onToggleExplanation}
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              color: "#8888aa",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              padding: "0.6rem 1rem",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              transition: "all 0.2s",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {showExplanation ? "解説を隠す ←" : "→ 解説を表示"}
-          </button>
-        )}
-        {showTableButton && (
-          <button
-            id="tour-table-button"
-            onClick={() => window.open("/table-reference", "table-reference", "width=820,height=560,resizable=yes,scrollbars=yes")}
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              color: "#8888aa",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              padding: "0.6rem 1rem",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              transition: "all 0.2s",
-              whiteSpace: "nowrap",
-            }}
-          >
-            📋 テーブル
-          </button>
-        )}
+          <span style={{ color: "#546e7a", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
+            テーブル名
+          </span>
+          {(["users", "products", "orders", "order_products"] as const).map((tbl) => (
+            <button
+              key={tbl}
+              onClick={() => insertText(tbl)}
+              style={{
+                background: "rgba(251,191,36,0.07)",
+                border: "1px solid rgba(251,191,36,0.2)",
+                borderRadius: "6px", color: "#d4a844",
+                padding: "0.28rem 0.6rem", fontSize: "0.78rem",
+                fontFamily: "'Fira Code','Consolas',monospace",
+                fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.12s", flexShrink: 0,
+              }}
+            >
+              {tbl}
+            </button>
+          ))}
+        </div>
+
+        {/* 行3: カラム絞り込みタブ（挿入なし）＋カラム名挿入（緑） */}
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "0.45rem 0.75rem",
+            display: "flex", alignItems: "center", gap: "0.38rem", flexWrap: "wrap",
+            background: "rgba(255,255,255,0.005)",
+          }}
+        >
+          <span style={{ color: "#546e7a", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
+            カラム
+          </span>
+          {(["users", "products", "orders", "order_products"] as const).map((tbl) => (
+            <button
+              key={tbl}
+              onClick={() => setColTable(tbl)}
+              style={{
+                background: colTable === tbl ? "rgba(52,211,153,0.1)" : "transparent",
+                border: `1px solid ${colTable === tbl ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: "6px",
+                color: colTable === tbl ? "#34d399" : "#8888aa",
+                padding: "0.25rem 0.52rem", fontSize: "0.72rem",
+                fontFamily: "'Fira Code','Consolas',monospace",
+                fontWeight: colTable === tbl ? 700 : 500,
+                cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.12s", flexShrink: 0,
+              }}
+            >
+              {tbl === "order_products" ? "op" : tbl}
+            </button>
+          ))}
+          <div style={{ width: "1px", height: "18px", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
+          {TABLE_COLS[colTable].map((col) => (
+            <button
+              key={col}
+              onClick={() => insertText(col)}
+              style={{
+                background: "rgba(52,211,153,0.07)",
+                border: "1px solid rgba(52,211,153,0.2)",
+                borderRadius: "6px", color: "#34d399",
+                padding: "0.28rem 0.6rem", fontSize: "0.78rem",
+                fontFamily: "'Fira Code','Consolas',monospace",
+                fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.12s", flexShrink: 0,
+              }}
+            >
+              {col}
+            </button>
+          ))}
+        </div>
+
+        {/* 行4: 記号ボタン（シアン） */}
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            padding: "0.45rem 0.75rem",
+            display: "flex", alignItems: "center", gap: "0.38rem", flexWrap: "wrap",
+            background: "rgba(255,255,255,0.005)",
+          }}
+        >
+          <span style={{ color: "#546e7a", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
+            記号
+          </span>
+          {([
+            { label: "''",  action: () => { const ta = textareaRef.current; if (!ta) return; const s = ta.selectionStart ?? query.length; const e = ta.selectionEnd ?? query.length; const nv = query.substring(0, s) + "''" + query.substring(e); setQuery(nv); queryRef.current = nv; requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(s + 1, s + 1); }); } },
+            { label: "<",   action: () => insertText("<") },
+            { label: ">",   action: () => insertText(">") },
+            { label: "=",   action: () => insertText("=") },
+            { label: "*",   action: () => insertText("*") },
+            { label: "↵",   action: () => insertText("\n") },
+            { label: "␣",   action: () => insertText(" ") },
+            { label: ",",   action: () => insertText(",") },
+          ] as { label: string; action: () => void }[]).map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              style={{
+                background: "rgba(34,211,238,0.07)",
+                border: "1px solid rgba(34,211,238,0.22)",
+                borderRadius: "6px", color: "#22d3ee",
+                padding: "0.28rem 0.7rem",
+                fontSize: label === "<" || label === ">" || label === "=" ? "1rem" : "0.85rem",
+                fontFamily: "'Fira Code','Consolas',monospace",
+                fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                transition: "all 0.12s", flexShrink: 0,
+                minWidth: "2.2rem", textAlign: "center",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        </div>{/* /tour-sql-buttons */}
       </div>
 
       {/* エラー / DML フィードバック */}

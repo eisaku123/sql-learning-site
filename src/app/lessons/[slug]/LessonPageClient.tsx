@@ -31,8 +31,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [dbReady, setDbReady] = useState(false);
-  const [savedQuery, setSavedQuery] = useState("");
-  const [showExplanation, setShowExplanation] = useState(true);
+  const [showExplanation, setShowExplanation] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
   const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? { result: null, error: null }, []);
@@ -42,8 +41,15 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
     sqlEditorRef.current?.resetDb();
     sqlEditorRef.current?.clearQuery();
     setLastResult(null);
-    setSavedQuery("");
+    sqlEditorRef.current?.focusEditor();
   }, [activeExerciseIdx]);
+
+  // ツアーのステップ⑦で解説パネルを開閉
+  useEffect(() => {
+    const onToggle = (e: Event) => setShowExplanation((e as CustomEvent).detail.open);
+    window.addEventListener("lesson-tour-explanation", onToggle);
+    return () => window.removeEventListener("lesson-tour-explanation", onToggle);
+  }, []);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -94,11 +100,8 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
     });
   }, []);
 
-  // 解説パネル切り替え：クエリ保存 + DB再初期化フラグリセット
+  // 解説アコーディオン切り替え
   const handleToggleExplanation = useCallback(() => {
-    const q = sqlEditorRef.current?.getCurrentQuery() ?? "";
-    setSavedQuery(q);
-    setDbReady(false);
     setShowExplanation((v) => !v);
   }, []);
 
@@ -222,15 +225,16 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
       )}
       <Header />
       <main style={{ paddingTop: "60px" }}>
+        {/* レッスンヘッダー */}
         <div
           style={{
             borderBottom: "1px solid rgba(255,255,255,0.06)",
-            padding: "1.5rem 2rem",
+            padding: "1rem 2rem",
             maxWidth: "1400px",
             margin: "0 auto",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
             <Link href="/lessons" style={{ color: "#8888aa", textDecoration: "none", fontSize: "0.85rem" }}>
               ← レッスン一覧
             </Link>
@@ -264,11 +268,32 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
               </span>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h1 style={{ color: "#e0e0f0", fontSize: "1.5rem", fontWeight: 700 }}>{lesson.title}</h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "0.75rem" }}>
+            <h1 style={{ color: "#e0e0f0", fontSize: "1.4rem", fontWeight: 700 }}>{lesson.title}</h1>
+            {/* 解説トグルボタン */}
+            <button
+              id="tour-toggle-explanation"
+              onClick={handleToggleExplanation}
+              style={{
+                background: showExplanation ? "rgba(102,126,234,0.18)" : "rgba(102,126,234,0.08)",
+                border: `1px solid ${showExplanation ? "rgba(102,126,234,0.6)" : "rgba(102,126,234,0.3)"}`,
+                borderRadius: "8px",
+                color: "#667eea",
+                padding: "0.42rem 0.95rem",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.15s",
+                flexShrink: 0,
+              }}
+            >
+              {showExplanation ? "📖 解説を閉じる" : "📖 解説を読む"}
+            </button>
           </div>
         </div>
 
+        {/* 常時2カラムグリッド：左=練習問題+エディタ ／ 右=サンプルテーブル */}
         <div
           style={{
             display: "grid",
@@ -278,16 +303,121 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
             minHeight: "calc(100vh - 130px)",
           }}
         >
-          {/* 左パネル：解説表示時は解説テキスト、非表示時は練習問題＋SQLエディタ */}
-          {showExplanation ? (
+          {/* 左パネル：練習問題 + SQLエディタ */}
+          <div style={{ padding: "1.5rem 2rem", borderRight: "1px solid rgba(255,255,255,0.06)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <section id="tour-exercise-panel">
+              <ExercisePanel
+                exercises={lesson.exercises}
+                lessonSlug={slug}
+                solvedIds={solvedIds}
+                onSolve={handleSolve}
+                lastResult={lastResult}
+                runAnswerSql={runAnswerSql}
+                runCurrentUserSql={runCurrentUserSql}
+                onUserResult={(columns, rows) => setLastResult({ columns, rows })}
+                activeIdx={activeExerciseIdx}
+                onChangeIdx={setActiveExerciseIdx}
+              />
+            </section>
+            <section>
+              <SqlEditor
+                ref={sqlEditorRef as any}
+                onResult={(columns, rows) => setLastResult({ columns, rows })}
+                onResultError={() => setLastResult(null)}
+                onReady={() => { setDbReady(true); setTimeout(() => sqlEditorRef.current?.focusEditor(), 50); }}
+                showTableButton={false}
+                hideResults
+              />
+            </section>
+          </div>
+
+          {/* 右パネル：サンプルテーブル */}
+          <div
+            id="tour-table-viewer"
+            style={{
+              padding: "1.25rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <SampleTableViewer
+                sqlEditorRef={sqlEditorRef}
+                lastResult={lastResult}
+                dbReady={dbReady}
+              />
+            </div>
+          </div>
+
+          {/* 解説スライドパネル（右からオーバーレイ・ビューポート固定） */}
+          <div
+            id="tour-lesson-content"
+            style={{
+              position: "fixed",
+              top: "60px",
+              right: 0,
+              width: "50%",
+              height: "calc(100vh - 60px)",
+              background: "#0f0f24",
+              borderLeft: "1px solid rgba(102,126,234,0.25)",
+              transform: showExplanation ? "translateX(0)" : "translateX(100%)",
+              visibility: showExplanation ? "visible" : "hidden",
+              transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+              display: "flex",
+              flexDirection: "column",
+              zIndex: 10,
+              overflow: "hidden",
+            }}
+          >
+            {/* パネルヘッダー */}
             <div
-              id="tour-lesson-content"
               style={{
-                padding: "2rem",
-                borderRight: "1px solid rgba(255,255,255,0.06)",
-                overflowY: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0.75rem 1.25rem",
+                borderBottom: "1px solid rgba(102,126,234,0.15)",
+                background: "rgba(102,126,234,0.05)",
+                flexShrink: 0,
               }}
             >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span style={{ color: "#a0b4f8", fontSize: "0.82rem", fontWeight: 700 }}>📖 解説</span>
+                <span
+                  style={{
+                    background: "rgba(102,126,234,0.15)",
+                    border: "1px solid rgba(102,126,234,0.3)",
+                    borderRadius: "6px",
+                    padding: "0.08rem 0.5rem",
+                    color: "#a0b4f8",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  参考資料
+                </span>
+              </div>
+              <button
+                onClick={handleToggleExplanation}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "6px",
+                  color: "#8888aa",
+                  padding: "0.3rem 0.65rem",
+                  fontSize: "0.78rem",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s",
+                }}
+              >
+                ✕ 閉じる
+              </button>
+            </div>
+            {/* パネル本文 */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem 1.5rem" }}>
               <div
                 style={{ color: "#c0c0d8", lineHeight: 1.8, fontSize: "0.92rem" }}
                 dangerouslySetInnerHTML={{ __html: lesson.content }}
@@ -296,8 +426,8 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginTop: "3rem",
-                  paddingTop: "1.5rem",
+                  marginTop: "1.5rem",
+                  paddingTop: "1rem",
                   borderTop: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
@@ -313,142 +443,7 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
                 )}
               </div>
             </div>
-          ) : (
-            <div style={{ padding: "2rem", borderRight: "1px solid rgba(255,255,255,0.06)", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <section>
-                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-                  練習問題
-                </h3>
-                <ExercisePanel
-                  exercises={lesson.exercises}
-                  lessonSlug={slug}
-                  solvedIds={solvedIds}
-                  onSolve={handleSolve}
-                  lastResult={lastResult}
-                  runAnswerSql={runAnswerSql}
-                  runCurrentUserSql={runCurrentUserSql}
-                  onUserResult={(columns, rows) => setLastResult({ columns, rows })}
-                  activeIdx={activeExerciseIdx}
-                  onChangeIdx={setActiveExerciseIdx}
-                />
-              </section>
-              <section>
-                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-                  SQL エディタ
-                </h3>
-                <SqlEditor
-                  ref={sqlEditorRef as any}
-                  initialQuery={savedQuery}
-                  onResult={(columns, rows) => setLastResult({ columns, rows })}
-                  onResultError={() => setLastResult(null)}
-                  onReady={() => setDbReady(true)}
-                  showExplanation={showExplanation}
-                  onToggleExplanation={handleToggleExplanation}
-                  showTableButton={false}
-                  hideResults
-                />
-              </section>
-              {session?.user && lessonCompleted && (
-                <div
-                  style={{
-                    background: "rgba(52,211,153,0.1)",
-                    border: "1px solid rgba(52,211,153,0.4)",
-                    borderRadius: "10px",
-                    color: "#34d399",
-                    padding: "0.75rem",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    textAlign: "center",
-                  }}
-                >
-                  ✅ レッスン完了済み
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 右パネル：解説表示時は練習問題＋SQLエディタ、非表示時はサンプルテーブル */}
-          {showExplanation ? (
-            <div
-              style={{
-                padding: "2rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1.5rem",
-                overflowY: "auto",
-              }}
-            >
-              <section id="tour-exercise-panel">
-                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-                  練習問題
-                </h3>
-                <ExercisePanel
-                  exercises={lesson.exercises}
-                  lessonSlug={slug}
-                  solvedIds={solvedIds}
-                  onSolve={handleSolve}
-                  lastResult={lastResult}
-                  runAnswerSql={runAnswerSql}
-                  runCurrentUserSql={runCurrentUserSql}
-                  onUserResult={(columns, rows) => setLastResult({ columns, rows })}
-                  activeIdx={activeExerciseIdx}
-                  onChangeIdx={setActiveExerciseIdx}
-                />
-              </section>
-              <section>
-                <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-                  SQL エディタ
-                </h3>
-                <SqlEditor
-                  ref={sqlEditorRef as any}
-                  initialQuery={savedQuery}
-                  onResult={(columns, rows) => setLastResult({ columns, rows })}
-                  onResultError={() => setLastResult(null)}
-                  onReady={() => setDbReady(true)}
-                  showExplanation={showExplanation}
-                  onToggleExplanation={handleToggleExplanation}
-                  showTableButton
-                />
-              </section>
-              {session?.user && lessonCompleted && (
-                <div
-                  style={{
-                    background: "rgba(52,211,153,0.1)",
-                    border: "1px solid rgba(52,211,153,0.4)",
-                    borderRadius: "10px",
-                    color: "#34d399",
-                    padding: "0.75rem",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    textAlign: "center",
-                  }}
-                >
-                  ✅ レッスン完了済み
-                </div>
-              )}
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: "1.25rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-                overflow: "hidden",
-              }}
-            >
-              <h3 style={{ color: "#8888aa", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", flexShrink: 0 }}>
-                サンプルテーブル
-              </h3>
-              <div style={{ flex: 1, minHeight: 0 }}>
-                <SampleTableViewer
-                  sqlEditorRef={sqlEditorRef}
-                  lastResult={lastResult}
-                  dbReady={dbReady}
-                />
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </main>
       <TableReferenceModal />

@@ -22,10 +22,13 @@ export default function LessonTour() {
         overlayOpacity: 0.6,
         stagePadding: 8,
         stageRadius: 10,
+        disableActiveInteraction: true,
         nextBtnText: "次へ →",
         prevBtnText: "← 戻る",
         doneBtnText: "始める！",
         onDestroyed: () => {
+          const btn = document.getElementById("tour-toggle-explanation");
+          if (btn) btn.style.pointerEvents = "";
           localStorage.setItem(TOUR_KEY, "1");
         },
         steps: [
@@ -38,7 +41,7 @@ export default function LessonTour() {
                     ブラウザだけで本格的なSQLが学べるサービスです。
                   </p>
                   <p style="color:#2a2a4e;font-size:1rem;margin-bottom:1rem;line-height:1.7">
-                    簡単な使い方を <strong style="background:linear-gradient(135deg,#667eea,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.15rem;font-weight:900">8ステップ</strong> でご紹介します。
+                    簡単な使い方を <strong style="background:linear-gradient(135deg,#667eea,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.15rem;font-weight:900">9ステップ</strong> でご紹介します。
                   </p>
                   <p style="color:#666680;font-size:0.8rem">スキップしたい場合は右上の × を押してください</p>
                 </div>
@@ -48,19 +51,9 @@ export default function LessonTour() {
             },
           },
           {
-            element: "#tour-lesson-content",
-            popover: {
-              title: "① 解説を読む",
-              description:
-                "左側にSQLの解説が表示されます。まずここを読んで構文を確認しましょう。",
-              side: "right",
-              align: "start",
-            },
-          },
-          {
             element: "#tour-exercise-panel",
             popover: {
-              title: "② 練習問題に挑戦",
+              title: "① 練習問題に挑戦",
               description:
                 "問題文を読んで、正しいSQLを書いてみましょう。複数問ある場合は番号で切り替えられます。",
               side: "bottom",
@@ -70,9 +63,19 @@ export default function LessonTour() {
           {
             element: "#tour-sql-editor",
             popover: {
-              title: "③ SQLを入力する",
+              title: "② SQLを入力する",
               description:
                 "ここにSQLを入力します。Ctrl+Enter（Mac: ⌘+Enter）でも実行できます。",
+              side: "top",
+              align: "start",
+            },
+          },
+          {
+            element: "#tour-sql-buttons",
+            popover: {
+              title: "③ ショートカットボタン",
+              description:
+                "キーワード・テーブル名・カラム名・記号のボタンをクリックするだけでSQLに挿入できます。タイピングの手間が省けるので活用してみてください。",
               side: "top",
               align: "start",
             },
@@ -82,7 +85,7 @@ export default function LessonTour() {
             popover: {
               title: "④ 実行する",
               description:
-                "「▶ 実行」ボタンを押すと結果が下に表示されます。まず自分のSQLを実行してみましょう。",
+                "「▶ 実行」ボタンを押すと右側に結果が表示されます。まず自分のSQLを実行してみましょう。",
               side: "top",
               align: "start",
             },
@@ -92,7 +95,7 @@ export default function LessonTour() {
             popover: {
               title: "⑤ 答え合わせ",
               description:
-                "SQLを実行したら「答え合わせ」ボタンで正誤を確認できます。正解するとチェックマークが付きます。",
+                "SQLを書いたら「答え合わせ」ボタンで正誤を確認できます。正解するとチェックマークが付きます。",
               side: "bottom",
               align: "start",
             },
@@ -108,22 +111,58 @@ export default function LessonTour() {
             },
           },
           {
-            element: "#tour-table-button",
+            element: "#tour-table-viewer",
+            onHighlightStarted: (_el: Element | undefined, _step: unknown, { driver }: { driver: { refresh: () => void } }) => {
+              window.scrollTo({ top: 0, behavior: "instant" });
+              setTimeout(() => {
+                window.scrollTo({ top: 200, behavior: "smooth" });
+                setTimeout(() => driver.refresh(), 400);
+              }, 10);
+            },
             popover: {
-              title: "⑦ テーブル構造を確認",
+              title: "⑦ サンプルテーブルを確認",
               description:
-                "右下の「📋 テーブル」ボタンでサンプルデータのテーブル構造をいつでも確認できます。カラム名や型がわからなくなったら開いてみましょう。",
-              side: "top",
-              align: "end",
+                "右側でサンプルデータのテーブル構造を常に確認できます。タブでテーブルを切り替えたり、ER図でリレーションを確認できます。SQL実行後は「⚡ 実行結果」タブに自動で切り替わります。",
+              side: "left",
+              align: "start",
             },
           },
           {
             element: "#tour-toggle-explanation",
+            onHighlightStarted: (el: Element | undefined, _step: unknown, { driver }: { driver: { refresh: () => void } }) => {
+              if (el) (el as HTMLElement).style.pointerEvents = "none";
+              window.scrollTo({ top: 0, behavior: "instant" });
+              window.dispatchEvent(new CustomEvent("lesson-tour-explanation", { detail: { open: true } }));
+              setTimeout(() => driver.refresh(), 100);
+            },
+            onDeselected: (el: Element | undefined) => {
+              if (el) (el as HTMLElement).style.pointerEvents = "";
+              // 次へ・戻るどちらでも一度閉じる（step⑧のonHighlightStartedで必要なら再開）
+              window.dispatchEvent(new CustomEvent("lesson-tour-explanation", { detail: { open: false } }));
+            },
             popover: {
-              title: "⑧ 解説の表示・非表示",
+              title: "⑧ 解説を読む",
               description:
-                "このボタンで解説を隠すと、画面を広く使ってSQLエディタと問題に集中できます。解説はいつでも再表示できます。",
-              side: "top",
+                "「📖 解説を読む」ボタンで構文の解説を表示できます。次へ進むと解説の中身を確認できます。",
+              side: "bottom",
+              align: "end",
+            },
+          },
+          {
+            element: "#tour-lesson-content",
+            onHighlightStarted: (_el, _step, { driver }) => {
+              // パネルを開いてからトランジション完了後に位置を再測定
+              window.dispatchEvent(new CustomEvent("lesson-tour-explanation", { detail: { open: true } }));
+              setTimeout(() => driver.refresh(), 400);
+            },
+            onDeselected: () => {
+              window.dispatchEvent(new CustomEvent("lesson-tour-explanation", { detail: { open: false } }));
+            },
+            popover: {
+              title: "⑨ 解説パネル",
+              description:
+                "構文の説明やサンプルコードを確認しながら練習問題に取り組めます。「✕ 閉じる」で非表示にできます。",
+              side: "left",
               align: "start",
             },
           },
@@ -148,6 +187,8 @@ export default function LessonTour() {
 
       // 要素が描画されるまで少し待つ
       setTimeout(() => {
+        // ツアー開始時に解説パネルを必ず閉じる
+        window.dispatchEvent(new CustomEvent("lesson-tour-explanation", { detail: { open: false } }));
         driver?.drive();
       }, 800);
     };

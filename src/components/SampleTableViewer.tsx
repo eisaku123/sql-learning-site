@@ -240,8 +240,8 @@ export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady }:
         key={key}
         onClick={() => setActiveTab(key)}
         style={{
-          padding: "0.5rem 0.9rem",
-          fontSize: "0.78rem",
+          padding: "0.55rem 1rem",
+          fontSize: "0.85rem",
           color,
           background: isActive ? activeBg : "transparent",
           border: "none",
@@ -309,21 +309,21 @@ export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady }:
             <div
               style={{
                 color: "#546e7a",
-                fontSize: "0.7rem",
-                padding: "0.35rem 0.75rem",
+                fontSize: "0.78rem",
+                padding: "0.4rem 0.85rem",
                 borderBottom: "1px solid rgba(255,255,255,0.04)",
               }}
             >
               {tableData.rows.length} 件
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
               <thead>
                 <tr>
                   {tableData.columns.map((col, ci) => (
                     <th
                       key={ci}
                       style={{
-                        padding: "0.42rem 0.75rem",
+                        padding: "0.5rem 0.85rem",
                         background: "rgba(102,126,234,0.12)",
                         borderBottom: "1px solid rgba(255,255,255,0.07)",
                         color: "#667eea",
@@ -341,12 +341,12 @@ export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady }:
               </thead>
               <tbody>
                 {tableData.rows.map((row, ri) => (
-                  <tr key={ri}>
+                  <tr key={ri} style={{ background: ri % 2 === 1 ? "rgba(255,255,255,0.035)" : "transparent" }}>
                     {row.map((cell, ci) => (
                       <td
                         key={ci}
                         style={{
-                          padding: "0.33rem 0.75rem",
+                          padding: "0.42rem 0.85rem",
                           borderBottom: "1px solid rgba(255,255,255,0.04)",
                           color: cell === null ? "#546e7a" : "#e0e0f0",
                           fontFamily: "monospace",

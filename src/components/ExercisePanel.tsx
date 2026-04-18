@@ -175,7 +175,7 @@ export default function ExercisePanel({
             </span>
           )}
         </h4>
-        <p style={{ color: "#c0c0d8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+        <p style={{ color: "#c0c0d8", fontSize: "1rem", lineHeight: 1.7 }}>
           {exercise.question}
         </p>
       </div>
@@ -282,7 +282,7 @@ export default function ExercisePanel({
             style={{
               color: "#82aaff",
               fontFamily: "monospace",
-              fontSize: "0.85rem",
+              fontSize: "1rem",
               whiteSpace: "pre-wrap",
             }}
           >
