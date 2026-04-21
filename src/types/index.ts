@@ -6,6 +6,7 @@ export interface Exercise {
   hint: string;
   answer: string;
   expectedColumns: string[];
+  setupSql?: string; // 問題切り替え時にDBリセット後に自動実行するSQL
 }
 
 export interface Lesson {
