@@ -30,26 +30,48 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [dbReady, setDbReady] = useState(false);
+  const [dbVersion, setDbVersion] = useState(0);
+  const [headerVisible, setHeaderVisible] = useState(true);
   const [activeExerciseIdx, setActiveExerciseIdx] = useState(0);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const handleToggleExplanation = useCallback(() => setShowExplanation((v) => !v), []);
-  const runAnswerSql = useCallback((sql: string) => sqlEditorRef.current?.runSql(sql) ?? null, []);
-  const runCurrentUserSql = useCallback(() => sqlEditorRef.current?.runCurrentSql() ?? { result: null, error: null }, []);
+  const runAnswerSql = useCallback((sql: string) => {
+    // モデル解答は常にフレッシュなDBで実行（ユーザーのINSERT等による汚染を防ぐ）
+    sqlEditorRef.current?.resetDb();
+    return sqlEditorRef.current?.runSql(sql) ?? null;
+  }, []);
+  const runCurrentUserSql = useCallback(() => {
+    // 答え合わせ時はフレッシュなDBでユーザーSQLを実行（INSERT等の重複を防ぐ）
+    sqlEditorRef.current?.resetDb();
+    return sqlEditorRef.current?.runCurrentSql() ?? { result: null, error: null };
+  }, []);
 
   // 問題切り替え時にDBをリセットして前の問題のCREATE TABLEなどを消す
   useEffect(() => {
     sqlEditorRef.current?.resetDb();
+    // setupSql がある問題はリセット後に事前データを投入する
+    const setupSql = lesson?.exercises[activeExerciseIdx]?.setupSql;
+    if (setupSql) sqlEditorRef.current?.execSetupSql(setupSql);
+    // 問題切り替え時は常にSampleTableViewerを再描画（resetDb後のDBを反映）
+    setDbVersion((v) => v + 1);
     sqlEditorRef.current?.clearQuery();
     setLastResult(null);
     sqlEditorRef.current?.focusEditor();
-  }, [activeExerciseIdx]);
+  }, [activeExerciseIdx, lesson?.exercises]);
 
   // ツアーのステップ⑦で解説パネルを開閉
   useEffect(() => {
     const onToggle = (e: Event) => setShowExplanation((e as CustomEvent).detail.open);
     window.addEventListener("lesson-tour-explanation", onToggle);
     return () => window.removeEventListener("lesson-tour-explanation", onToggle);
+  }, []);
+
+  // ヘッダーの表示状態を同期（解説パネルのtopを連動）
+  useEffect(() => {
+    const onVisibility = (e: Event) => setHeaderVisible((e as CustomEvent).detail.visible);
+    window.addEventListener("header-visibility", onVisibility);
+    return () => window.removeEventListener("header-visibility", onVisibility);
   }, []);
 
   // 認証チェック
@@ -215,7 +237,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
         />
       )}
       <Header />
-      <main style={{ paddingTop: "60px" }}>
+      <main style={{ paddingTop: headerVisible ? "60px" : "0px", transition: "padding-top 0.3s ease" }}>
         {/* レッスンヘッダー */}
         <div
           style={{
@@ -347,6 +369,7 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
                 sqlEditorRef={sqlEditorRef}
                 lastResult={lastResult}
                 dbReady={dbReady}
+                dbVersion={dbVersion}
               />
             </div>
           </div>
@@ -355,15 +378,15 @@ export default function PremiumLessonPage({ params }: { params: Promise<{ slug: 
           <div
             style={{
               position: "fixed",
-              top: "60px",
+              top: headerVisible ? "60px" : "0px",
               right: 0,
               width: "50%",
-              height: "calc(100vh - 60px)",
+              height: headerVisible ? "calc(100vh - 60px)" : "100vh",
               background: "#0f0f24",
               borderLeft: "1px solid rgba(102,126,234,0.25)",
               transform: showExplanation ? "translateX(0)" : "translateX(100%)",
               visibility: showExplanation ? "visible" : "hidden",
-              transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), top 0.3s ease, height 0.3s ease",
               display: "flex",
               flexDirection: "column",
               zIndex: 10,

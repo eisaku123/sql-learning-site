@@ -14,6 +14,7 @@ interface Props {
   sqlEditorRef: React.RefObject<SqlEditorHandle | null>;
   lastResult: { columns: string[]; rows: (string | number | null)[][] } | null;
   dbReady: boolean;
+  dbVersion?: number; // setupSql実行後などDB内容が変わった時にインクリメント
 }
 
 // ER図コンポーネント（/table-reference と共通）
@@ -192,7 +193,7 @@ function ErDiagram() {
   );
 }
 
-export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady }: Props) {
+export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady, dbVersion }: Props) {
   const [activeTab, setActiveTab] = useState("users");
   const [tableData, setTableData] = useState<{ columns: string[]; rows: (string | number | null)[][] } | null>(null);
   const activeTabRef = useRef(activeTab);
@@ -223,7 +224,7 @@ export default function SampleTableViewer({ sqlEditorRef, lastResult, dbReady }:
     }
     const data = sqlEditorRef.current.queryTable(activeTab);
     setTableData(data);
-  }, [activeTab, dbReady, lastResult, sqlEditorRef]);
+  }, [activeTab, dbReady, lastResult, sqlEditorRef, dbVersion]);
 
   const hasResult = lastResult !== null;
 

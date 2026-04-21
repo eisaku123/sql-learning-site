@@ -11,6 +11,7 @@ interface QueryResult {
 export interface SqlEditorHandle {
   runSql: (sql: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
   resetDb: () => void;
+  execSetupSql: (sql: string) => void; // 現在のdbRef.currentに直接実行（setupSql用）
   runCurrentSql: () => { result: { columns: string[]; rows: (string | number | null)[][] } | null; error: string | null };
   clearQuery: () => void;
   queryTable: (tableName: string) => { columns: string[]; rows: (string | number | null)[][] } | null;
@@ -38,7 +39,21 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "running">("loading");
   const [isUpper, setIsUpper] = useState(true);
   const [colTable, setColTable] = useState<"users" | "products" | "orders" | "order_products">("users");
-  const dbRef = useRef<unknown>(null);
+
+  // カスタムボタン
+  type CustomButton = { id: string; label: string; text: string };
+  const CUSTOM_BTN_KEY = "sql_custom_buttons";
+  const MAX_CUSTOM_BUTTONS = 10;
+  const [customButtons, setCustomButtons] = useState<CustomButton[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(CUSTOM_BTN_KEY) ?? "[]") as CustomButton[]; } catch { return []; }
+  });
+  const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [editingCustomBtn, setEditingCustomBtn] = useState<CustomButton | null>(null);
+  const [modalLabel, setModalLabel] = useState("");
+  const [modalText, setModalText] = useState("");
+  const dbRef = useRef<{ exec: (sql: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sqlConstructorRef = useRef<{ Database: new () => { exec: (s: string) => { columns?: string[]; values?: (string | number | null)[][] }[] } } | null>(null);
   const onReadyRef = useRef(onReady);
@@ -71,6 +86,35 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       ta.setSelectionRange(start + text.length, start + text.length);
     });
   }, [query]);
+
+  // カスタムボタン helpers
+  const saveCustomButtons = (btns: CustomButton[]) => {
+    setCustomButtons(btns);
+    if (typeof window !== "undefined") localStorage.setItem(CUSTOM_BTN_KEY, JSON.stringify(btns));
+  };
+  const openCustomModal = (btn?: CustomButton) => {
+    setEditingCustomBtn(btn ?? null);
+    setModalLabel(btn?.label ?? "");
+    setModalText(btn?.text ?? "");
+    setShowCustomModal(true);
+  };
+  const closeCustomModal = () => {
+    setShowCustomModal(false);
+    setEditingCustomBtn(null);
+    setModalLabel("");
+    setModalText("");
+  };
+  const handleSaveCustomBtn = () => {
+    const label = modalLabel.trim();
+    const text = modalText.trim();
+    if (!label || !text) return;
+    if (editingCustomBtn) {
+      saveCustomButtons(customButtons.map((b) => b.id === editingCustomBtn.id ? { ...b, label, text } : b));
+    } else {
+      saveCustomButtons([...customButtons, { id: Date.now().toString(), label, text }]);
+    }
+    closeCustomModal();
+  };
 
   // sql.js をロード
   useEffect(() => {
@@ -130,6 +174,11 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
       const db = new sqlConstructorRef.current.Database();
       db.exec(SAMPLE_DB_SQL);
       dbRef.current = db;
+    },
+    // setupSql用：現在のdbRef.currentに直接実行（フレッシュDBを作らない）
+    execSetupSql: (sql: string) => {
+      if (!dbRef.current) return;
+      try { dbRef.current.exec(sql); } catch { /* 無視 */ }
     },
     // エディタの入力・結果をクリア
     clearQuery: () => {
@@ -536,8 +585,151 @@ const SqlEditor = forwardRef<SqlEditorHandle, SqlEditorProps>(function SqlEditor
             </button>
           ))}
         </div>
+
+        {/* 行5: カスタムボタン（オレンジ） */}
+        <div
+          style={{
+            borderTop: "1px dashed rgba(251,146,60,0.25)",
+            padding: "0.4rem 0.75rem",
+            display: "flex", alignItems: "center", gap: "0.38rem", flexWrap: "wrap",
+            background: "rgba(251,146,60,0.015)",
+          }}
+        >
+          <span style={{ color: "rgba(251,146,60,0.55)", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
+            カスタム
+          </span>
+
+          {/* カスタムボタン一覧 */}
+          {customButtons.map((btn) =>
+            isEditingCustom ? (
+              <div key={btn.id} style={{ display: "inline-flex", alignItems: "center", border: "1px solid rgba(251,146,60,0.4)", borderRadius: "7px", overflow: "hidden", flexShrink: 0 }}>
+                <button
+                  onClick={() => openCustomModal(btn)}
+                  style={{ background: "rgba(251,146,60,0.08)", border: "none", color: "#fb923c", padding: "0.28rem 0.7rem", fontSize: "0.82rem", fontFamily: "'Fira Code','Consolas',monospace", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  {btn.label}
+                </button>
+                <button
+                  onClick={() => saveCustomButtons(customButtons.filter((b) => b.id !== btn.id))}
+                  style={{ background: "rgba(239,68,68,0.15)", border: "none", color: "#f87171", padding: "0.28rem 0.4rem", cursor: "pointer", fontSize: "0.8rem" }}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                key={btn.id}
+                onClick={() => insertText(btn.text)}
+                style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.25)", borderRadius: "6px", color: "#fb923c", padding: "0.28rem 0.7rem", fontSize: "0.82rem", fontFamily: "'Fira Code','Consolas',monospace", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.12s", flexShrink: 0 }}
+              >
+                {btn.label}
+              </button>
+            )
+          )}
+
+          {/* 区切り */}
+          {customButtons.length > 0 && (
+            <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+          )}
+
+          {/* 編集トグル */}
+          {customButtons.length > 0 && (
+            <button
+              onClick={() => setIsEditingCustom((v) => !v)}
+              style={{ background: isEditingCustom ? "rgba(251,146,60,0.2)" : "transparent", border: "1px solid rgba(251,146,60,0.3)", borderRadius: "6px", color: "#fb923c", padding: "0.2rem 0.5rem", fontSize: "0.72rem", cursor: "pointer", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "0.2rem" }}
+            >
+              {isEditingCustom ? "✏️ 完了" : "✏️ 編集"}
+            </button>
+          )}
+
+          {/* 追加ボタン */}
+          {customButtons.length < MAX_CUSTOM_BUTTONS && (
+            <button
+              onClick={() => openCustomModal()}
+              style={{ background: "transparent", border: "1px dashed rgba(255,255,255,0.18)", borderRadius: "6px", color: "#8888aa", padding: "0.2rem 0.55rem", fontSize: "0.78rem", cursor: "pointer", flexShrink: 0, transition: "all 0.12s" }}
+            >
+              {customButtons.length === 0 ? "＋ ボタンを追加" : "＋"}
+            </button>
+          )}
+        </div>
         </div>{/* /tour-sql-buttons */}
       </div>
+
+      {/* カスタムボタン追加・編集モーダル */}
+      {showCustomModal && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeCustomModal(); }}
+        >
+          <div style={{ background: "#131325", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", padding: "1.5rem", width: "340px", boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+            <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#e0e0f0", marginBottom: "1.1rem" }}>
+              {editingCustomBtn ? "✏️ カスタムボタンを編集" : "＋ カスタムボタンを追加"}
+            </div>
+
+            <div style={{ marginBottom: "0.9rem" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", color: "#8888aa", marginBottom: "0.3rem" }}>
+                ボタンのラベル <span style={{ color: "#f87171" }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={modalLabel}
+                onChange={(e) => setModalLabel(e.target.value)}
+                placeholder="例: 東京、price > 1000"
+                maxLength={20}
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#e0e0f0", padding: "0.55rem 0.75rem", fontSize: "0.88rem", outline: "none", fontFamily: "'Fira Code','Consolas',monospace" }}
+              />
+              {modalLabel.trim() && (
+                <div style={{ fontSize: "0.72rem", color: "#8888aa", marginTop: "0.3rem" }}>
+                  プレビュー:{" "}
+                  <span style={{ display: "inline-block", background: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.3)", borderRadius: "5px", color: "#fb923c", padding: "0.1rem 0.4rem", fontSize: "0.78rem", fontFamily: "monospace" }}>
+                    {modalLabel.trim()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: "0.9rem" }}>
+              <label style={{ display: "block", fontSize: "0.75rem", color: "#8888aa", marginBottom: "0.3rem" }}>
+                挿入するSQLテキスト <span style={{ color: "#f87171" }}>*</span>
+              </label>
+              <textarea
+                value={modalText}
+                onChange={(e) => setModalText(e.target.value)}
+                placeholder={"例: '東京'\n例: price > 1000\n例: IS NOT NULL"}
+                rows={3}
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#e0e0f0", padding: "0.55rem 0.75rem", fontSize: "0.88rem", outline: "none", fontFamily: "'Fira Code','Consolas',monospace", resize: "vertical" }}
+              />
+              <div style={{ fontSize: "0.72rem", color: "#546e7a", marginTop: "0.25rem" }}>
+                クリックするとカーソル位置に挿入されます
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem" }}>
+              {editingCustomBtn && (
+                <button
+                  onClick={() => { saveCustomButtons(customButtons.filter((b) => b.id !== editingCustomBtn.id)); closeCustomModal(); }}
+                  style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px", color: "#f87171", fontSize: "0.85rem", padding: "0.65rem 0.85rem", cursor: "pointer" }}
+                >
+                  削除
+                </button>
+              )}
+              <button
+                onClick={closeCustomModal}
+                style={{ flex: 1, background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#8888aa", fontSize: "0.88rem", padding: "0.65rem", cursor: "pointer" }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveCustomBtn}
+                disabled={!modalLabel.trim() || !modalText.trim()}
+                style={{ flex: 1, background: modalLabel.trim() && modalText.trim() ? "linear-gradient(135deg,#fb923c,#f97316)" : "rgba(251,146,60,0.2)", border: "none", borderRadius: "8px", color: "#fff", fontSize: "0.88rem", fontWeight: 700, padding: "0.65rem", cursor: modalLabel.trim() && modalText.trim() ? "pointer" : "not-allowed" }}
+              >
+                {editingCustomBtn ? "更新する" : "追加する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* エラー / DML フィードバック */}
       {error && (
