@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import LoadingButton from "@/components/LoadingButton";
 
 const HIDE_DELAY = 1000; // 非操作後に隠れるまでの時間（ms）
 
 export default function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const autoHide = pathname.startsWith("/lessons/") || pathname.startsWith("/premium/lessons/");
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -17,6 +20,11 @@ export default function Header() {
   const mouseYRef = useRef<number | null>(null); // 現在のマウスY座標（null=マウス未移動）
 
   useEffect(() => {
+    if (!autoHide) {
+      setVisible(true);
+      window.dispatchEvent(new CustomEvent("header-visibility", { detail: { visible: true } }));
+      return;
+    }
     const HEADER_HEIGHT = 60;
 
     const startTimer = () => {
@@ -52,17 +60,19 @@ export default function Header() {
       window.removeEventListener("mousemove", onMouseMove);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, []);
+  }, [autoHide]);
 
   return (
     <header
       onMouseEnter={() => {
+        if (!autoHide) return;
         hoveredRef.current = true;
         if (timerRef.current) clearTimeout(timerRef.current);
       }}
       onMouseLeave={() => {
+        if (!autoHide) return;
         hoveredRef.current = false;
-        // マウスが離れたら3秒後に隠す
+        // マウスが離れたら1秒後に隠す
         timerRef.current = setTimeout(() => {
           setVisible(false);
           window.dispatchEvent(new CustomEvent("header-visibility", { detail: { visible: false } }));
