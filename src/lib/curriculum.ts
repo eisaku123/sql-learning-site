@@ -400,6 +400,7 @@ export const LESSONS: Lesson[] = [
         hint: "DELETE FROM users WHERE id = 16;",
         answer: "DELETE FROM users WHERE id = 16; SELECT * FROM users;",
         expectedColumns: ["id", "name", "email", "city"],
+        setupSql: "INSERT INTO users (id, name, email, city) VALUES (16, '新田 一郎', 'nitta@example.com', '札幌');",
       },
     ],
   },
@@ -461,7 +462,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         id: "join-3",
-        question: "status が 'completed' の注文を、ユーザー名と一緒に取得してください",
+        question: "status が 'completed' の注文の 注文ID・ユーザー名・注文日 を取得してください",
         hint: "JOIN後にWHERE o.status = 'completed'",
         answer: "SELECT o.id, u.name, o.order_date FROM orders o JOIN users u ON o.user_id = u.id WHERE o.status = 'completed'",
         expectedColumns: ["id", "name", "order_date"],
@@ -518,14 +519,14 @@ export const LESSONS: Lesson[] = [
     exercises: [
       {
         id: "group-1",
-        question: "usersテーブルをcityでグループ化して、各都市のユーザー数を取得してください",
+        question: "usersテーブルをcityでグループ化して、各都市名とユーザー数を取得してください",
         hint: "GROUP BY city で COUNT(*) を使います",
         answer: "SELECT city, COUNT(*) AS 人数 FROM users GROUP BY city",
         expectedColumns: ["city", "人数"],
       },
       {
         id: "group-2",
-        question: "productsテーブルをcategoryでグループ化して、各カテゴリの商品数と平均価格を取得してください",
+        question: "productsテーブルをcategoryでグループ化して、各カテゴリ名・商品数・平均価格を取得してください",
         hint: "COUNT(*) と AVG(price) を GROUP BY category と組み合わせます",
         answer: "SELECT category, COUNT(*) AS 商品数, AVG(price) AS 平均価格 FROM products GROUP BY category",
         expectedColumns: ["category", "商品数", "平均価格"],
@@ -658,7 +659,7 @@ export const LESSONS: Lesson[] = [
       },
       {
         id: "junction-3",
-        question: "ユーザーごとの合計購入金額（price × quantity の合計）を求めて、金額の高い順に表示してください",
+        question: "ユーザーごとの ユーザー名・合計購入金額（price × quantity の合計）を求めて、金額の高い順に表示してください",
         hint: "SUM(op.price * op.quantity) AS 合計金額、GROUP BY u.name",
         answer: "SELECT u.name, SUM(op.price * op.quantity) AS 合計金額 FROM orders o JOIN users u ON o.user_id = u.id JOIN order_products op ON o.id = op.order_id GROUP BY u.name ORDER BY 合計金額 DESC",
         expectedColumns: ["name", "合計金額"],
