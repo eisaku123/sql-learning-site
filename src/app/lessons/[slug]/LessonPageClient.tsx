@@ -257,10 +257,6 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
-            <Link href="/lessons" style={{ color: "#8888aa", textDecoration: "none", fontSize: "0.85rem" }}>
-              ← レッスン一覧
-            </Link>
-            <span style={{ color: "#546e7a" }}>/</span>
             <span
               style={{
                 background: `${levelColor}1a`,
@@ -312,6 +308,19 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
             >
               {showExplanation ? "📖 解説を閉じる" : "📖 解説を読む"}
             </button>
+            {/* 前後レッスンナビ */}
+            {prevLesson && (
+              <div className="ln-nav-wrap">
+                <Link href={`/lessons/${prevLesson.slug}`} className="ln-nav-btn">← 前へ</Link>
+                <span className="ln-nav-tooltip">{prevLesson.title}</span>
+              </div>
+            )}
+            {nextLesson && (
+              <div className="ln-nav-wrap">
+                <Link href={`/lessons/${nextLesson.slug}`} className="ln-nav-btn">次へ →</Link>
+                <span className="ln-nav-tooltip">{nextLesson.title}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -477,6 +486,11 @@ export default function LessonPageClient({ params }: { params: Promise<{ slug: s
 }
 
 const lessonContentStyle = `
+  .ln-nav-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+  .ln-nav-btn { display: flex; align-items: center; padding: 0.38rem 0.8rem; border-radius: 7px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: #8888aa; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; text-decoration: none; }
+  .ln-nav-btn:hover { border-color: rgba(102,126,234,0.35); background: rgba(102,126,234,0.08); color: #c0c8ff; }
+  .ln-nav-tooltip { position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: #1c1c32; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.72rem; color: #e0e0f0; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 50; }
+  .ln-nav-wrap:hover .ln-nav-tooltip { opacity: 1; }
   .fade-in-up h2 { color: #e0e0f0; font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
   h2 { color: #e0e0f0; font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }
   h3 { color: #e0e0f0; font-size: 0.95rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }

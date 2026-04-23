@@ -8,6 +8,9 @@ export async function POST(req: Request) {
   try {
     const { email, password, name } = await req.json();
 
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: "お名前は必須です" }, { status: 400 });
+    }
     if (!email || !password) {
       return NextResponse.json({ error: "メールアドレスとパスワードは必須です" }, { status: 400 });
     }
@@ -22,7 +25,7 @@ export async function POST(req: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, password: hashed, name: name || null, emailVerified: false },
+      data: { email, password: hashed, name: name.trim(), emailVerified: false },
     });
 
     // 認証トークン生成（24時間有効）

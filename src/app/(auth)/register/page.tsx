@@ -69,12 +69,13 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label style={{ color: "#8888aa", fontSize: "0.85rem", display: "block", marginBottom: "0.4rem" }}>
-              お名前（任意）
+              お名前
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
               placeholder="田中 太郎"
               style={inputStyle}
             />
