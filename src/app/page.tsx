@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
+import PageViewTracker from "@/components/PageViewTracker";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TopPage() {
+  // ページビューは PageViewTracker（クライアント）でカウント
   const announcements = await prisma.announcement.findMany({
     where: { isPublished: true },
     orderBy: { createdAt: "desc" },
@@ -59,6 +61,7 @@ export default async function TopPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
+      <PageViewTracker />
       <main style={{ paddingTop: "60px" }}>
         {/* お知らせバナー */}
         {announcements.map((a) => (

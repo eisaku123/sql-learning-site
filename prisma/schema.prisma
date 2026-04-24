@@ -105,3 +105,8 @@ model FeedbackMessage {
   createdAt  DateTime @default(now())
   feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 }
+
+model PageView {
+  date  String @id // "YYYY-MM-DD"
+  count Int    @default(0)
+}
